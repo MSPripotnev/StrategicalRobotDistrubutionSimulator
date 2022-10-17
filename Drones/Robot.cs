@@ -5,6 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace TacticalAgro {
+    public enum RobotState {
+        Disable,
+        Ready,
+        Going,
+        Carrying
+    }
     public class Robot : IMoveable {
         public PointF Position { get; set; }
         public Target TargetPosition { get; set; }
@@ -18,6 +24,24 @@ namespace TacticalAgro {
         public Robot(int X, int Y) {
             Position = new Point(X, Y);
             Color = Color.Red;
+        }
+        private RobotState state;
+        public RobotState State {
+            get {
+                return state;
+            }
+            set {
+                switch (value) {
+                    case RobotState.Disable:
+                        break;
+                    case RobotState.Ready:
+                        break;
+                    case RobotState.Going:
+                        break;
+                    case RobotState.Carrying:
+                        break;
+                }
+            }
         }
 
         public void Simulate() {

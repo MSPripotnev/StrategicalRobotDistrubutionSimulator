@@ -72,6 +72,7 @@
             // 
             // mapPanel
             // 
+            this.mapPanel.BackColor = System.Drawing.Color.Black;
             this.mapPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mapPanel.Location = new System.Drawing.Point(0, 0);
             this.mapPanel.Name = "mapPanel";
@@ -207,7 +208,7 @@
             this.mainCMS.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newObjectTSMI});
             this.mainCMS.Name = "contextMenuStrip1";
-            this.mainCMS.Size = new System.Drawing.Size(211, 56);
+            this.mainCMS.Size = new System.Drawing.Size(146, 28);
             // 
             // newObjectTSMI
             // 
@@ -216,13 +217,13 @@
             this.newRobotTSMI,
             this.newBaseTSMI});
             this.newObjectTSMI.Name = "newObjectTSMI";
-            this.newObjectTSMI.Size = new System.Drawing.Size(210, 24);
+            this.newObjectTSMI.Size = new System.Drawing.Size(145, 24);
             this.newObjectTSMI.Text = "Добавить";
             // 
             // newObjTSMI
             // 
             this.newObjTSMI.Name = "newObjTSMI";
-            this.newObjTSMI.Size = new System.Drawing.Size(224, 26);
+            this.newObjTSMI.Size = new System.Drawing.Size(142, 26);
             this.newObjTSMI.Tag = "0";
             this.newObjTSMI.Text = "Объект";
             this.newObjTSMI.Click += new System.EventHandler(this.newObjTSMI_Click);
@@ -230,7 +231,7 @@
             // newRobotTSMI
             // 
             this.newRobotTSMI.Name = "newRobotTSMI";
-            this.newRobotTSMI.Size = new System.Drawing.Size(224, 26);
+            this.newRobotTSMI.Size = new System.Drawing.Size(142, 26);
             this.newRobotTSMI.Tag = "1";
             this.newRobotTSMI.Text = "Робот";
             this.newRobotTSMI.Click += new System.EventHandler(this.newObjTSMI_Click);
@@ -238,7 +239,7 @@
             // newBaseTSMI
             // 
             this.newBaseTSMI.Name = "newBaseTSMI";
-            this.newBaseTSMI.Size = new System.Drawing.Size(224, 26);
+            this.newBaseTSMI.Size = new System.Drawing.Size(142, 26);
             this.newBaseTSMI.Tag = "2";
             this.newBaseTSMI.Text = "База";
             this.newBaseTSMI.Click += new System.EventHandler(this.newObjTSMI_Click);

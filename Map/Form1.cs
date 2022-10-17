@@ -1,3 +1,5 @@
+using System.Drawing.Drawing2D;
+
 namespace TacticalAgro {
     public partial class Form1 : Form {
         Director director;
@@ -6,17 +8,17 @@ namespace TacticalAgro {
         public Form1() {
             InitializeComponent();
             Robot[] robots = new Robot[] {
-                new Robot(50, 150),
-                new Robot(150, 250),
-                new Robot(250, 350)
+                new Robot(new Point(50, 150)),
+                new Robot(new Point(150, 250)),
+                new Robot(new Point(250, 350))
             };
             Target[] targets = new Target[] {
-                new Target(650, 250, Color.Green),
-                new Target(350, 250, Color.Green),
-                new Target(250, 250, Color.Green),
-                new Target(550, 250, Color.Green),
+                new Target(new Point(650, 250), Color.Green),
+                new Target(new Point(350, 250), Color.Green),
+                new Target(new Point(250, 250), Color.Green),
+                new Target(new Point(550, 250), Color.Green),
             };
-            Target @base = new Target(650, 450, Color.Blue);
+            Target @base = new Target(new Point(650, 450), Color.Blue);
             director = new Director(robots, targets, @base);
             director.DistributeTask();
         }
@@ -56,6 +58,14 @@ namespace TacticalAgro {
                     e.Graphics.DrawEllipse(pen,
                         obj.Position.X + standartObjectSize / 2, obj.Position.Y + standartObjectSize / 2,
                         standartObjectSize, standartObjectSize);
+                else if (obj is Drone) {
+                    e.Graphics.DrawEllipse(pen,
+                        obj.Position.X, obj.Position.Y,
+                        standartRobotSize, standartRobotSize);
+                } 
+                else if (obj is Obstacle) {
+                    e.Graphics.FillPolygon(new HatchBrush(HatchStyle.Cross, obj.Color));
+                }
             }
         }
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TacticalAgro {
     internal class Director {
-        public const int interactDistance = 20;
+        public const int interactDistance = 10;
         public Robot[] Robots { get; set; }
         public Robot[] FreeRobots {
             get {
@@ -20,15 +20,11 @@ namespace TacticalAgro {
             }
         }
         public Target Base { get; set; }
+        public Obstacle[] Obstacles { get; set; }
         public List<IMoveable> AllObjectsOnMap {
             get {
                 return new List<IMoveable>(Robots).Concat(Targets).Append(Base).ToList();
             }
-        }
-        public static double Distance(PointF p1, PointF p2) {
-            double dx = p2.X - p1.X;
-            double dy = p2.Y - p1.Y;
-            return Math.Sqrt(dx * dx + dy * dy);
         }
         public Director() { }
         public Director(Robot[] robots, Target[] objs, Target @base) {
@@ -49,19 +45,23 @@ namespace TacticalAgro {
                 var ls = Targets.ToList();
                 ls.Add(o);
                 Targets = ls.ToArray();
+            } else if (obj is Obstacle ob) {
+                var ls = Obstacles.ToList();
+                ls.Add(ob);
+                Obstacles = ls.ToArray();
             }
         }
         public void DistributeTask() {
             for (int i = 0; i < Robots.Length; i++) {
                 Robot r = Robots[i];
-                if (r.AttachedObj != null && Distance(r.Position, Base.Position) < interactDistance) {
+                if (r.AttachedObj != null && Analyzer.(r.Position, Base.Position) < interactDistance) {
                     //выгрузка объекта
                     r.AttachedObj.Finished = true;
                     r.AttachedObj = null;
                     r.TargetPosition = null;
                 } else if (r.AttachedObj == null) {
                     //проверка возможности захвата объекта
-                    Target obj = r.FindNearestTarget(Targets);
+                    Target obj = r.FindNearestTarget(Targets.Where(t => !t.Finished && t.ReservedRobot == null).ToArray());
                     if (obj != null && Distance(r.Position, obj.Position) < interactDistance) {
                         r.Take(obj);
                         r.TargetPosition = Base;
