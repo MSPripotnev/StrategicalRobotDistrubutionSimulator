@@ -55,10 +55,16 @@ namespace TacticalAgro {
             for (int i = 0; i < director.AllObjectsOnMap.Count; i++) {
                 IMoveable obj = director.AllObjectsOnMap[i];
                 Pen pen = new Pen(obj.Color, 5);
-                if (obj is Transporter)
+                if (obj is Transporter t) {
                     e.Graphics.DrawEllipse(pen,
                         obj.Position.X, obj.Position.Y,
                         standartRobotSize, standartRobotSize);
+                    if (t.Trajectory.Count > 1) {
+                        pen = new Pen(Color.Gray, 2);
+                        for (int j = 0; j < t.Trajectory.Count; j++)
+                            e.Graphics.DrawCurve(pen, t.Trajectory.ToArray());
+                    }
+                }
                 else if (obj is Target)
                     e.Graphics.DrawEllipse(pen,
                         obj.Position.X + standartObjectSize / 2, obj.Position.Y + standartObjectSize / 2,
@@ -76,8 +82,10 @@ namespace TacticalAgro {
 
         private void startB_Click(object sender, EventArgs e) {
             if (startB.Text == "Запуск") {
-                directorTasks[0].Start();
-                directorTasks[1].Start();
+                if (directorTasks.All(p => !p.IsCompleted)) {
+                    directorTasks[0].Start();
+                    directorTasks[1].Start();
+                }
                 refreshTimer.Start();
                 startB.Text = "Стоп";
             } else {

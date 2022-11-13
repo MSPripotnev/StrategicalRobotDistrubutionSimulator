@@ -15,7 +15,7 @@ namespace TacticalAgro {
     }
     public class Transporter : IMoveable, IDrone {
         public const int InteractDistance = 10;
-        private List<PointF> trajectory = new List<PointF>();
+        public List<PointF> Trajectory { get; set; } = new List<PointF>();
         private RobotState state;
         public RobotState CurrentState {
             get {
@@ -39,7 +39,7 @@ namespace TacticalAgro {
                     case RobotState.Thinking:
                         //trajectory = RAnalyzer.CalculateTrajectory(AttachedObj.Position, Position, cancellationTokenSource.Token).ToList();
                         CalculateTrajectoryTask = new Task(() => {
-                            trajectory = RAnalyzer.CalculateTrajectory(trajectory[^1], Position, cancellationTokenSource.Token).ToList();
+                            Trajectory = RAnalyzer.CalculateTrajectory(Trajectory[^1], Position, cancellationTokenSource.Token).ToList();
                         }, cancellationTokenSource.Token);
                         CalculateTrajectoryTask.Start();
                         break;
@@ -59,11 +59,11 @@ namespace TacticalAgro {
         public PointF Position { get; set; }
         public PointF TargetPosition {
             get {
-                return trajectory.Count > 0 ? trajectory[^1] : Position; //последняя точка пути
+                return Trajectory.Count > 0 ? Trajectory[^1] : Position; //последняя точка пути
             }
             set {
-                trajectory.Clear();
-                trajectory.Add(value);
+                Trajectory.Clear();
+                Trajectory.Add(value);
             }
         }
         public Target? AttachedObj { get; set; } = null;
@@ -74,11 +74,11 @@ namespace TacticalAgro {
         public float Speed { get; set; } = 3F;
         public double DistanceToTarget { 
             get {
-                if (trajectory.Count < 1 && AttachedObj == null) return -1;
+                if (Trajectory.Count < 1 && AttachedObj == null) return -1;
 
-                double s = Analyzer.Distance(Position, trajectory[0]);
-                for (int i = 0; i < trajectory.Count - 1; i++)
-                    s += Analyzer.Distance(trajectory[i], trajectory[i + 1]);
+                double s = Analyzer.Distance(Position, Trajectory[0]);
+                for (int i = 0; i < Trajectory.Count - 1; i++)
+                    s += Analyzer.Distance(Trajectory[i], Trajectory[i + 1]);
                 return s;
             } 
         }
@@ -108,7 +108,7 @@ namespace TacticalAgro {
                         //CurrentState = AttachedObj.ReservedTransporter == null ? RobotState.Ready : RobotState.Carrying;
                     break;
                 case RobotState.Going:
-                    if (trajectory.Count > 0)
+                    if (Trajectory.Count > 0)
                         Move();
                     if (DistanceToTarget > 0 && DistanceToTarget <= InteractDistance) {
                         if (AttachedObj != null)
@@ -117,7 +117,7 @@ namespace TacticalAgro {
                         
                     break;
                 case RobotState.Carrying:
-                    if (trajectory.Count > 0)
+                    if (Trajectory.Count > 0)
                         Move();
                     AttachedObj.Position = new PointF(Position.X, Position.Y);
                     if (DistanceToTarget <= InteractDistance)
@@ -130,12 +130,12 @@ namespace TacticalAgro {
 
         private void Move() {
             IMoveable obj = this;
-            PointF p2 = trajectory[0];
+            PointF p2 = Trajectory[0];
 
             if (Analyzer.Distance(obj.Position, p2) < InteractDistance) {
-                trajectory.RemoveAt(0);
-                if (trajectory.Any())
-                    p2 = trajectory[0];
+                Trajectory.RemoveAt(0);
+                if (Trajectory.Any())
+                    p2 = Trajectory[0];
             }
 
             PointF V = new PointF(p2.X - obj.Position.X, //вектор движения
