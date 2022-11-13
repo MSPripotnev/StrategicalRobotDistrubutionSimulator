@@ -1,5 +1,5 @@
 ﻿namespace TacticalAgro {
-    partial class Form1 {
+    partial class Map {
         /// <summary>
         ///  Required designer variable.
         /// </summary>
@@ -72,7 +72,8 @@
             // 
             // mapPanel
             // 
-            this.mapPanel.BackColor = System.Drawing.Color.Black;
+            this.mapPanel.BackColor = System.Drawing.Color.Transparent;
+            this.mapPanel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.mapPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.mapPanel.Location = new System.Drawing.Point(0, 0);
             this.mapPanel.Name = "mapPanel";
@@ -244,14 +245,14 @@
             this.newBaseTSMI.Text = "База";
             this.newBaseTSMI.Click += new System.EventHandler(this.newObjTSMI_Click);
             // 
-            // Form1
+            // Map
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(951, 512);
             this.Controls.Add(this.splitContainer1);
             this.DoubleBuffered = true;
-            this.Name = "Form1";
+            this.Name = "Map";
             this.Text = "Form1";
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);

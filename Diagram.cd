@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="TacticalAgro.Obstacle" Collapsed="true">
+    <Position X="2.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Map\Obstacle.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TacticalAgro.Target" Collapsed="true">
+    <Position X="1.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAgAAQAAAAAAABAAAAAAAAAgAAAAQA=</HashCode>
+      <FileName>Map\Target.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="TacticalAgro.Analyzer">
+    <Position X="6.75" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAIAgAAAAAAAAAAAACAAAhAABAgAAAAAABAAA=</HashCode>
+      <FileName>Drones\Analyzer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TacticalAgro.Drone">
+    <Position X="9.25" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAgAAAAAAABACAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Drones\Drone.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="TacticalAgro.Robot">
+    <Position X="3.75" Y="4.25" Width="1.5" />
+    <Members>
+      <Field Name="state" Hidden="true" />
+    </Members>
+    <AssociationLine Name="AttachedObj" Type="TacticalAgro.Target" ManuallyRouted="true">
+      <Path>
+        <Point X="4.5" Y="4.25" />
+        <Point X="4.5" Y="3.102" />
+        <Point X="3.662" Y="3.102" />
+        <Point X="3.662" Y="3.281" />
+        <Point X="3" Y="3.281" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQgAAABAAAAAAIAAQAUAAEAhAAACAA=</HashCode>
+      <FileName>Drones\Robot.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="AttachedObj" />
+      <Property Name="TargetPosition" />
+      <Property Name="State" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Enum Name="TacticalAgro.RobotState" Collapsed="true">
+    <Position X="0.75" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAEAAAAAAAAAABAAAAgAAAAgAAAAAAA=</HashCode>
+      <FileName>Drones\Robot.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

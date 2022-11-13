@@ -1,56 +1,61 @@
 using System.Drawing.Drawing2D;
+using System.Threading.Tasks;
 
 namespace TacticalAgro {
-    public partial class Form1 : Form {
+    public partial class Map : Form {
         Director director;
         double workTime = 0;
         int iterations = 0;
-        public Form1() {
+        Task[] directorTasks = new Task[2];
+
+        public Map() {
             InitializeComponent();
-            Robot[] robots = new Robot[] {
-                new Robot(new Point(50, 150)),
-                new Robot(new Point(150, 250)),
-                new Robot(new Point(250, 350))
-            };
-            Target[] targets = new Target[] {
-                new Target(new Point(650, 250), Color.Green),
-                new Target(new Point(350, 250), Color.Green),
-                new Target(new Point(250, 250), Color.Green),
-                new Target(new Point(550, 250), Color.Green),
-            };
-            Target @base = new Target(new Point(650, 450), Color.Blue);
-            director = new Director(robots, targets, @base);
-            director.DistributeTask();
+            director = new Director();
+            directorTasks[0] = new Task(() => { director.Work(); });
+            directorTasks[1] = new Task(() => { director.DistributeTask(); });
         }
 
         private void refreshTimer_Tick(object sender, EventArgs e) {
 
-            director.DistributeTask();
-            director.Work();
             workTime += refreshTimer.Interval;
             iterations++;
-
-            currentObjsCountL.Text = (director.Targets.Length - director.CollectedTargets.Length).ToString();
-            collectedObjsCountL.Text = director.CollectedTargets.Length.ToString();
-            timeCountL.Text = Math.Round(workTime / 1000, 6).ToString() + " s";
-            iterationsCountL.Text = iterations.ToString();
-
-            mapPanel.Invalidate();
-
+            
+            
+            if (directorTasks[0].IsCompleted) {
+                directorTasks[0] = new Task(() => { director.Work(); });
+                directorTasks[0].Start();
+            }
+                
+            if (directorTasks[1].IsCompleted) {
+                directorTasks[1] = new Task(() => { director.DistributeTask(); });
+                directorTasks[1].Start();
+            }
+                
             if (director.checkMission()) {
+                Task.WaitAll(directorTasks);
+                director.Work();
                 refreshTimer.Stop();
                 startB.Text = "Запуск";
-                return;
+                //return;
             }
+            Refresh();
+            mapPanel.Invalidate();
         }
+        public override void Refresh() {
+            base.Refresh();
 
+            collectedObjsCountL.Text = director.CollectedTargets.Length.ToString();
+            currentObjsCountL.Text = (director.Targets.Length - director.CollectedTargets.Length).ToString();
+            timeCountL.Text = Math.Round(workTime / 1000, 6).ToString() + " s";
+            iterationsCountL.Text = iterations.ToString();
+        }
         const int standartRobotSize = 30;
         const int standartObjectSize = 15;
         private void mapPanel_Paint(object sender, PaintEventArgs e) {
             for (int i = 0; i < director.AllObjectsOnMap.Count; i++) {
                 IMoveable obj = director.AllObjectsOnMap[i];
                 Pen pen = new Pen(obj.Color, 5);
-                if (obj is Robot)
+                if (obj is Transporter)
                     e.Graphics.DrawEllipse(pen,
                         obj.Position.X, obj.Position.Y,
                         standartRobotSize, standartRobotSize);
@@ -58,19 +63,21 @@ namespace TacticalAgro {
                     e.Graphics.DrawEllipse(pen,
                         obj.Position.X + standartObjectSize / 2, obj.Position.Y + standartObjectSize / 2,
                         standartObjectSize, standartObjectSize);
-                else if (obj is Drone) {
+                else if (obj is Scout) {
                     e.Graphics.DrawEllipse(pen,
                         obj.Position.X, obj.Position.Y,
                         standartRobotSize, standartRobotSize);
                 } 
-                else if (obj is Obstacle) {
-                    e.Graphics.FillPolygon(new HatchBrush(HatchStyle.Cross, obj.Color));
+                else if (obj is Obstacle o) {
+                    e.Graphics.FillPolygon(new HatchBrush(HatchStyle.LightDownwardDiagonal, obj.Color), o.Borders);
                 }
             }
         }
 
         private void startB_Click(object sender, EventArgs e) {
             if (startB.Text == "Запуск") {
+                directorTasks[0].Start();
+                directorTasks[1].Start();
                 refreshTimer.Start();
                 startB.Text = "Стоп";
             } else {
@@ -94,7 +101,7 @@ namespace TacticalAgro {
                     director.Add(obj);
                     break;
                 case "1":
-                    Robot r = new Robot(newObjectPos.Item1, newObjectPos.Item2);
+                    Transporter r = new Transporter(newObjectPos.Item1, newObjectPos.Item2);
                     director.Add(r);
                     break;
                 case "2":

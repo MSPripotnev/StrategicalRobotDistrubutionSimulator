@@ -8,15 +8,18 @@ namespace TacticalAgro {
     public class Target : IMoveable {
         public PointF Position { get; set; }
         public Color Color { get; set; }
-        public Robot ReservedRobot { get; set; } = null;
+        public Transporter? ReservedTransporter { get; set; } = null;
         public bool Finished { get; set; } = false;
-        public Target(Point pos, Color color) {
+        public Target(PointF pos, Color color) {
             Position = pos;
             Color = color;
         }
         public Target(int X, int Y, Color color) {
-            Position = new Point(X, Y);
+            Position = new PointF(X, Y);
             Color = color;
+        }
+        public static implicit operator PointF(Target target) {
+            return new PointF(target.Position.X, target.Position.Y);
         }
     }
 }

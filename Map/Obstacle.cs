@@ -6,23 +6,27 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace TacticalAgro {
-    public class Obstacle {
-        private PointF[] Position { get; set; }
+    public class Obstacle : IMoveable {
+        public PointF[] Borders { get; private set; }
+        public PointF Position { get; set; }
         public Color Color { get; set; } = Color.DarkSlateGray;
         public Obstacle(PointF[] obstacleBorders) {
-            Position = obstacleBorders;
+            Borders = obstacleBorders;
+            Position = Borders[0];
         }
         public bool PointOnObstacle(PointF testPoint) {
-            bool res = false;
-            int j = Position.Length - 1;
-            for (int i = 0; i < Position.Length; i++) {
-                if ((Position[i].Y < testPoint.Y && Position[j].Y >= testPoint.Y ||
-                    Position[j].Y < testPoint.Y && Position[i].Y >= testPoint.Y) &&
-                    Position[i].X + (testPoint.Y - Position[i].Y) / (Position[j].Y - Position[i].Y) * (Position[j].X - Position[i].X) < testPoint.X)
-                    res = !res;
+            bool pointInside = false;
+            int j = Borders.Length - 1;
+            for (int i = 0; i < Borders.Length; i++) {
+                if ((Borders[i].Y < testPoint.Y && Borders[j].Y >= testPoint.Y ||
+                    Borders[j].Y < testPoint.Y && Borders[i].Y >= testPoint.Y) &&
+                    Borders[i].X + (testPoint.Y - Borders[i].Y) / (Borders[j].Y - Borders[i].Y) * (Borders[j].X - Borders[i].X) < testPoint.X)
+                    pointInside = !pointInside;
                 j = i;
             }
-            return res;
+            double distanceToObstacle = Analyzer.Distance(testPoint, Borders.MinBy(b => Analyzer.Distance(testPoint, b)));
+
+            return pointInside || distanceToObstacle < 0;
         }
     }
 }
