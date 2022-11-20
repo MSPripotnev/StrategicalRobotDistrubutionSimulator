@@ -1,38 +1,29 @@
 using System.Drawing.Drawing2D;
 using System.Threading.Tasks;
-
+/*
 namespace TacticalAgro {
-    public partial class Map : Form {
+    public partial class MapX : Form {
         Director director;
         double workTime = 0;
         int iterations = 0;
         Task[] directorTasks = new Task[2];
 
-        public Map() {
+        public MapX() {
             InitializeComponent();
-            director = new Director();
+            director = new Director(mapPanel.Size);
             directorTasks[0] = new Task(() => { director.Work(); });
             directorTasks[1] = new Task(() => { director.DistributeTask(); });
         }
 
         private void refreshTimer_Tick(object sender, EventArgs e) {
-
             workTime += refreshTimer.Interval;
             iterations++;
-            
-            
-            if (directorTasks[0].IsCompleted) {
-                directorTasks[0] = new Task(() => { director.Work(); });
-                directorTasks[0].Start();
-            }
-                
-            if (directorTasks[1].IsCompleted) {
-                directorTasks[1] = new Task(() => { director.DistributeTask(); });
-                directorTasks[1].Start();
-            }
-                
+            director.Work();
+            Task.Run(() => {
+                director.DistributeTask();
+            });
             if (director.checkMission()) {
-                Task.WaitAll(directorTasks);
+                //Task.WaitAll(directorTasks);
                 director.Work();
                 refreshTimer.Stop();
                 startB.Text = "Запуск";
@@ -49,11 +40,11 @@ namespace TacticalAgro {
             timeCountL.Text = Math.Round(workTime / 1000, 6).ToString() + " s";
             iterationsCountL.Text = iterations.ToString();
         }
-        const int standartRobotSize = 30;
-        const int standartObjectSize = 15;
+        const int standartRobotSize = 10;
+        const int standartObjectSize = 5;
         private void mapPanel_Paint(object sender, PaintEventArgs e) {
             for (int i = 0; i < director.AllObjectsOnMap.Count; i++) {
-                IMoveable obj = director.AllObjectsOnMap[i];
+                IPlaceable obj = director.AllObjectsOnMap[i];
                 Pen pen = new Pen(obj.Color, 5);
                 if (obj is Transporter t) {
                     e.Graphics.DrawEllipse(pen,
@@ -61,13 +52,12 @@ namespace TacticalAgro {
                         standartRobotSize, standartRobotSize);
                     if (t.Trajectory.Count > 1) {
                         pen = new Pen(Color.Gray, 2);
-                        for (int j = 0; j < t.Trajectory.Count; j++)
-                            e.Graphics.DrawCurve(pen, t.Trajectory.ToArray());
+                        e.Graphics.DrawCurve(pen, t.Trajectory.ToArray());
                     }
                 }
                 else if (obj is Target)
                     e.Graphics.DrawEllipse(pen,
-                        obj.Position.X + standartObjectSize / 2, obj.Position.Y + standartObjectSize / 2,
+                        obj.Position.X - standartObjectSize / 2, obj.Position.Y - standartObjectSize / 2,
                         standartObjectSize, standartObjectSize);
                 else if (obj is Scout) {
                     e.Graphics.DrawEllipse(pen,
@@ -84,7 +74,7 @@ namespace TacticalAgro {
             if (startB.Text == "Запуск") {
                 if (directorTasks.All(p => !p.IsCompleted)) {
                     directorTasks[0].Start();
-                    directorTasks[1].Start();
+                    director.DistributeTask();
                 }
                 refreshTimer.Start();
                 startB.Text = "Стоп";
@@ -124,3 +114,4 @@ namespace TacticalAgro {
         }
     }
 }
+*/

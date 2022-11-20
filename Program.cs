@@ -1,3 +1,5 @@
+using System.Windows;
+
 namespace TacticalAgro {
     internal static class Program {
         /// <summary>
@@ -7,8 +9,8 @@ namespace TacticalAgro {
         static void Main() {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
-            Application.Run(new Map());
+            Application application = new Application();
+            application.Run(new Map.MapWPF());
         }
     }
 }

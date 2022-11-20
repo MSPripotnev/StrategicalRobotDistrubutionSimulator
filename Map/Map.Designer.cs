@@ -1,5 +1,6 @@
-﻿namespace TacticalAgro {
-    partial class Map {
+﻿/*
+namespace TacticalAgro {
+    partial class MapX {
         /// <summary>
         ///  Required designer variable.
         /// </summary>
@@ -200,7 +201,7 @@
             // 
             // refreshTimer
             // 
-            this.refreshTimer.Interval = 200;
+            this.refreshTimer.Interval = 100;
             this.refreshTimer.Tick += new System.EventHandler(this.refreshTimer_Tick);
             // 
             // mainCMS
@@ -289,3 +290,4 @@
         private Label collectedObjsCountL;
     }
 }
+*/

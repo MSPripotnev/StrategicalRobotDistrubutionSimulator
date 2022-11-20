@@ -2,20 +2,31 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows;
+using System.Windows.Media;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace TacticalAgro {
-    public class Scout : IMoveable, IDrone {
+    public class Scout : IPlaceable, IDrone {
+        public int InteractDistance { get; init; }
+        public int ViewingDistance { get; init; }
         public float Speed { get; set; } = 0;
-        public PointF Position { get; set; }
+        public Point Position { get; set; }
+        public Point TargetPosition { get; set; }
+        public double DistanceToTarget { get; }
         public Color Color { get; set; }
+        public PointCollection Trajectory { get; set; }
+        public RobotState CurrentState { get; set; }
 
         public const int ViewingRange = 50;
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         public Scout() { }
-        public Scout(PointF point) { 
+        public Scout(Point point) { 
             Position = point;
-            Color = Color.Orange;
+            Color = Colors.Orange;
         }
         public Scout(int x, int y) { }
 
@@ -23,7 +34,11 @@ namespace TacticalAgro {
             
         }
 
-        public int Compare(IMoveable? x, IMoveable? y) {
+        public int Compare(IPlaceable? x, IPlaceable? y) {
+            throw new NotImplementedException();
+        }
+
+        public UIElement Build() {
             throw new NotImplementedException();
         }
     }

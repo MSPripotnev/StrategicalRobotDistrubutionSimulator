@@ -1,20 +1,26 @@
 ﻿using System;
-using System.Drawing;
+using System.Windows;
+using System.Windows.Shapes;
+using System.Windows.Media;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.ComponentModel;
 
 namespace TacticalAgro {
-    public class Obstacle : IMoveable {
-        public PointF[] Borders { get; private set; }
-        public PointF Position { get; set; }
-        public Color Color { get; set; } = Color.DarkSlateGray;
-        public Obstacle(PointF[] obstacleBorders) {
+    public class Obstacle : IPlaceable {
+        public Point[] Borders { get; init; }
+        public Point Position { get; set; }
+        public Color Color { get; set; } = Colors.Gray;
+        public Obstacle(Point[] obstacleBorders) {
             Borders = obstacleBorders;
             Position = Borders[0];
         }
-        public bool PointOnObstacle(PointF testPoint) {
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public bool PointOnObstacle(Point testPoint) {
             bool pointInside = false;
             int j = Borders.Length - 1;
             for (int i = 0; i < Borders.Length; i++) {
@@ -24,9 +30,11 @@ namespace TacticalAgro {
                     pointInside = !pointInside;
                 j = i;
             }
-            double distanceToObstacle = Analyzer.Distance(testPoint, Borders.MinBy(b => Analyzer.Distance(testPoint, b)));
+            return pointInside;
+        }
 
-            return pointInside || distanceToObstacle < 0;
+        public UIElement Build() {
+            return null;
         }
     }
 }
