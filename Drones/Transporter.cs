@@ -21,8 +21,8 @@ namespace TacticalAgro {
     public class Transporter : IPlaceable, IDrone {
         public int InteractDistance { get; init; } = 10;
         public int ViewingDistance { get; init; } = 2;
-        private PointCollection trajectory = new PointCollection();
-        public PointCollection Trajectory {
+        private List<Point> trajectory = new List<Point>();
+        public List<Point> Trajectory {
             get { return trajectory; }
             set {
                 trajectory = value;
@@ -64,12 +64,7 @@ namespace TacticalAgro {
             get => position;
             set {
                 position = value;
-                if (trajectory.Count > 0) {
-                    trajectory.Add(position);
-                    Trajectory = trajectory;
-                }
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
-                trajectory.Remove(position);
             }
         }
         public Point TargetPosition {
@@ -83,7 +78,7 @@ namespace TacticalAgro {
         }
         public Target? AttachedObj { get; set; } = null;
         public Color Color { get; set; } = Colors.Red;
-        public float Speed { get; set; } = 10F;
+        public float Speed { get; set; } = 0.01F;
         public double DistanceToTarget { 
             get {
                 if (Trajectory.Count < 1 || AttachedObj == null) return -1;
@@ -139,7 +134,7 @@ namespace TacticalAgro {
             Point p2 = Trajectory[0];
 
             if (Analyzer.Distance(obj.Position, p2) < InteractDistance) {
-                PointCollection pc = new PointCollection(Trajectory.Skip(1));
+                List<Point> pc = new (Trajectory.Skip(1));
                 if (pc.Any())
                     p2 = pc[0];
                 Trajectory = pc;
@@ -184,8 +179,13 @@ namespace TacticalAgro {
 
             Binding b = new Binding(nameof(Trajectory));
             b.Source = this;
+            b.Converter = new TrajectoryConverter();
             polyline.SetBinding(Polyline.PointsProperty, b);
             return polyline;
+        }
+        public override string ToString() {
+            return Enum.GetName(typeof(RobotState), state) + "_" +  
+                (new Point(Math.Round(position.X, 2), Math.Round(position.Y, 2)).ToString());
         }
     }
 }

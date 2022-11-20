@@ -16,7 +16,7 @@ namespace TacticalAgro {
         public Point TargetPosition { get; set; }
         public double DistanceToTarget { get; }
         public Color Color { get; set; }
-        public PointCollection Trajectory { get; set; }
+        public List<Point> Trajectory { get; set; }
         public RobotState CurrentState { get; set; }
 
         public const int ViewingRange = 50;

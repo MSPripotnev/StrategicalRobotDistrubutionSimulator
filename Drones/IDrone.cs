@@ -14,7 +14,7 @@ namespace TacticalAgro {
 
     public interface IMoveable {
         public float Speed { get; set; }
-        public System.Windows.Media.PointCollection Trajectory { get; set; }
+        public List<Point> Trajectory { get; set; }
         public Point TargetPosition { get; set; }
         public double DistanceToTarget { get; }
     }

@@ -1,8 +1,19 @@
 ﻿using System.Collections;
+using System.Globalization;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace TacticalAgro {
+    public class TrajectoryConverter : IValueConverter {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+            return new PointCollection((List<Point>)value);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+            return DependencyProperty.UnsetValue;
+        }
+    }
     public class AnalyzedPoint {
         public Point Position { get; init; }
         public AnalyzedPoint Previous { get; init; }
@@ -100,14 +111,14 @@ namespace TacticalAgro {
             return res;
         }
         
-        public PointCollection CalculateTrajectory(in Point mainTarget, in Point robotPosition, CancellationToken token) {
+        public Point[] CalculateTrajectory(in Point mainTarget, in Point robotPosition, CancellationToken token) {
             Point[] result;
             List<AnalyzedPoint> openedPoints = new List<AnalyzedPoint>(); //открытый список
             List<AnalyzedPoint> closedPoints = new List<AnalyzedPoint>(); //закрытый список
             AnalyzedPoint? interimP = new(robotPosition);
             openedPoints.Add(new AnalyzedPoint(null, robotPosition, 0, 0));
             AnalyzedPoint currentPoint;
-            if (mainTarget == robotPosition) return new PointCollection(new Point[] { mainTarget });
+            if (mainTarget == robotPosition) return new Point[] { mainTarget };
 
             do {
                 currentPoint = openedPoints.MinBy(p => p.Heuristic);
@@ -134,12 +145,12 @@ namespace TacticalAgro {
                 openedPoints.Remove(currentPoint);
 
                 if (token.IsCancellationRequested) {
-                    return new PointCollection(CreatePathFromLastPoint(currentPoint));
+                    return CreatePathFromLastPoint(currentPoint);
                 }
-                if (!openedPoints.Any()) return new PointCollection(CreatePathFromLastPoint(currentPoint));
+                if (!openedPoints.Any()) return CreatePathFromLastPoint(currentPoint);
             } while (Distance(currentPoint, mainTarget) > Scale*1.1);
             currentPoint = new AnalyzedPoint(currentPoint, mainTarget, currentPoint.Distance+Scale, 0);
-            return new PointCollection(CreatePathFromLastPoint(currentPoint));
+            return CreatePathFromLastPoint(currentPoint);
         }
         private Point[] CreatePathFromLastPoint(AnalyzedPoint p) {
             List<Point> path = new List<Point>();

@@ -19,7 +19,7 @@ namespace TacticalAgro.Map {
     /// </summary>
     public partial class MapWPF : Window {
         Director director;
-        double workTime = 0;
+        TimeSpan workTime = new TimeSpan(0);
         int iterations = 0;
         Task[] directorTasks = new Task[2];
         DispatcherTimer refreshTimer;
@@ -46,8 +46,11 @@ namespace TacticalAgro.Map {
                 startB.Content = "Запуск";
                 //return;
             }
-            director.Work();
-            director.DistributeTask();
+            /*director.Work();
+            this.Dispatcher.BeginInvoke(() => { 
+                director.DistributeTask(); 
+                Task.Delay(100); 
+            });*/
             Refresh();
             //Render();
             //mapCanvas.Invalidate();
@@ -76,7 +79,7 @@ namespace TacticalAgro.Map {
             }
         }
 
-        DateTime startTime;
+        DateTime startTime = DateTime.MinValue, pauseTime;
         Task mainTask;
         CancellationTokenSource tokenSource = new CancellationTokenSource();
         private void startButton_Click(object sender, RoutedEventArgs e) {
@@ -86,7 +89,9 @@ namespace TacticalAgro.Map {
                     director.DistributeTask();
                     while (true) {
                         director.Work();
-                        director.DistributeTask();
+                        Dispatcher.Invoke(new Action(() => {
+                            director.DistributeTask();
+                        }));
                         if (tokenSource.IsCancellationRequested) 
                             break;
                         //Refresh();
@@ -95,9 +100,16 @@ namespace TacticalAgro.Map {
                 refreshTimer.Start();
                 startB.Content = "Стоп";
                 startTime = DateTime.Now;
-                //mainTask.Start();
+                if (startTime == DateTime.MinValue) {
+                    pauseTime = startTime;
+                }
+                else {
+                    workTime += pauseTime - startTime;
+                }
+                mainTask.Start();
             } else {
-                //refreshTimer.Stop();
+                pauseTime = DateTime.Now;
+                refreshTimer.Stop();
                 tokenSource.Cancel();
                 startB.Content = "Запуск";
             }
@@ -145,7 +157,7 @@ namespace TacticalAgro.Map {
             collectedObjsCountL.Content = "Количество собранных целей: " + director.CollectedTargets.Length.ToString();
             currentObjsCountL.Content = "Количество оставшихся целей: " + 
                 (director.Targets.Length - director.CollectedTargets.Length).ToString();
-            timeCountL.Content = "Прошедшее время: " + Math.Round((DateTime.Now - startTime).TotalSeconds, 2) + " s";
+            timeCountL.Content = "Прошедшее время: " + Math.Round(workTime.TotalSeconds + (DateTime.Now - startTime).TotalSeconds, 2) + " s";
             iterationsCountL.Content = "Количество итераций: " + iterations.ToString();
         }
     }

@@ -52,6 +52,12 @@ namespace TacticalAgro {
                     new Point(220, 150),
                     new Point(220, 350),
                     new Point(200, 350),
+                }),
+                new Obstacle(new Point[] {
+                    new Point(300, 300),
+                    new Point(370, 300),
+                    new Point(370, 320),
+                    new Point(300, 320),
                 })
             };
             //Obstacles = new List<Obstacle>();
@@ -59,10 +65,13 @@ namespace TacticalAgro {
                 new Target(new Point(550, 250), Colors.Green),
                 new Target(new Point(350, 250), Colors.Green),
                 new Target(new Point(250, 250), Colors.Green),
+                new Target(new Point(350, 500), Colors.Green),
+                new Target(new Point(550, 500), Colors.Green),
                 new Target(new Point(150, 250), Colors.Green),
                 new Target(new Point(30, 150), Colors.Green),
             };
             Bases = new Target[] {
+                new Target(new Point(100, 100), Colors.Blue),
                 new Target(new Point(550, 450), Colors.Blue)
             };
 
@@ -97,33 +106,33 @@ namespace TacticalAgro {
             }
         }
         public void DistributeTask() {
-            DistributeTaskForFreeTransporters();
-            DistributeTaskForCarryingTransporters();
+            lock (Transporters) {
+                DistributeTaskForFreeTransporters();
+                DistributeTaskForCarryingTransporters();
+            }
         }
         private void DistributeTaskForFreeTransporters() {
-            if (FreeTransporters.Length > 0 && FreeTargets.Length > 0) {
-                //распределение ближайших целей по роботам
-                Task<PointCollection>[] trajectoryTasks = new Task<PointCollection>[FreeTransporters.Length];
-                for (int i = 0; i < FreeTransporters.Length; i++) {
-                    Transporter transporter = FreeTransporters[i];
-                    //Target[] NearTargets = new List<Target>(FreeTargets).ToArray();
-                    //Array.Sort(NearTargets, new RelateDistanceComparer(transporter.Position)); //упорядочивание роботов по расстоянию до цели
-                    //если два транспорта на одну цель - выбираем наименьшего, а второму даём следующую ближайшую
-                    //transporter =: add property NearTargets[FreeTransporters.Length];
-                    Target nearestTarget = FreeTargets.MinBy(
-                        t => Analyzer.Distance(t.Position, transporter.Position));
-                    transporter.AttachedObj = nearestTarget;
-                    transporter.TargetPosition = nearestTarget;
-                    /*trajectoryTasks[i] = Task<PointCollection>.Run(() => {
-                        return RAnalyzer.CalculateTrajectory(
-                            transporter.Trajectory[^1], transporter.Position, cancellationTokenSource.Token);
-                    }, cancellationTokenSource.Token);*/
-                    transporter.Trajectory = RAnalyzer.CalculateTrajectory(transporter.Trajectory[^1], transporter.Position, cancellationTokenSource.Token);
-                }
-                //Task.WaitAll(trajectoryTasks, DistanceCalculationTimeout);
-                //for (int i = 0; i < FreeTransporters.Length; i++)
-                //    FreeTransporters[i].Trajectory = trajectoryTasks[i].Result;
-
+            var freeTransport = new List<Transporter>(FreeTransporters).ToArray();
+            lock (freeTransport)
+                    if (freeTransport.Length > 0 && FreeTargets.Length > 0) {
+                        //распределение ближайших целей по роботам
+                        Task<Point[]>[] trajectoryTasks = new Task<Point[]>[freeTransport.Length];
+                        for (int i = 0; i < freeTransport.Length; i++) {
+                            Transporter transporter = freeTransport[i];
+                            Target nearestTarget = FreeTargets.MinBy(
+                                t => Analyzer.Distance(t.Position, transporter.Position));
+                            transporter.AttachedObj = nearestTarget;
+                            transporter.TargetPosition = nearestTarget;
+                            trajectoryTasks[i] = Task.Run(() => {
+                                return RAnalyzer.CalculateTrajectory(
+                                    nearestTarget.Position, transporter.Position, cancellationTokenSource.Token);
+                            }, cancellationTokenSource.Token);
+                        }
+                        Task.WaitAll(trajectoryTasks, DistanceCalculationTimeout);
+                        for (int i = 0; i < freeTransport.Length; i++)
+                            freeTransport[i].Trajectory = (trajectoryTasks[i].Result).ToList();
+                    }
+            lock (Targets)
                 for (int i = 0; i < FreeTargets.Length; i++) {
                     Target t = FreeTargets[i];
                     var AttachedTransporters = FreeTransporters.Where(p => p.AttachedObj == t).ToArray();
@@ -139,28 +148,24 @@ namespace TacticalAgro {
                         }
                     }
                 }
-            }
         }
         private void DistributeTaskForCarryingTransporters() {
             var CarryingTransporters = Transporters.Where(
                 p => p.CurrentState == RobotState.Carrying && Bases.All(b => b.Position != p.TargetPosition)).ToList();
             if (CarryingTransporters.Count > 0) {
-                Task<PointCollection>[] trajectoryTasks = new Task<PointCollection>[CarryingTransporters.Count];
+                Task<Point[]>[] trajectoryTasks = new Task<Point[]>[CarryingTransporters.Count];
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
                     Transporter transporter = CarryingTransporters[i];
                     transporter.TargetPosition = Bases.MinBy(
                         p => Analyzer.Distance(p.Position, transporter.Position));
-                    /*trajectoryTasks[i] = Task<PointCollection>.Run(() => {
+                    trajectoryTasks[i] = Task.Run(() => {
                         return RAnalyzer.CalculateTrajectory(
-                             transporter.Trajectory[^1], transporter.Position, cancellationTokenSource.Token);
-                    }, cancellationTokenSource.Token);*/
-                    transporter.Trajectory = RAnalyzer.CalculateTrajectory(
-                             transporter.Trajectory[^1], transporter.Position, cancellationTokenSource.Token);
-                    transporter.CurrentState = RobotState.Carrying;
+                             transporter.TargetPosition, transporter.Position, cancellationTokenSource.Token);
+                    }, cancellationTokenSource.Token);
                 }
-                /*Task.WaitAll(trajectoryTasks);
+                Task.WaitAll(trajectoryTasks);
                 for (int i = 0; i < CarryingTransporters.Count; i++)
-                    CarryingTransporters[i].Trajectory = trajectoryTasks[i].Result;*/
+                    CarryingTransporters[i].Trajectory = trajectoryTasks[i].Result.ToList();
             }
         }
         public bool checkMission() {
