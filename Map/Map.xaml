@@ -4,7 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:TacticalAgro.Map"
+        xmlns:local="clr-namespace:TacticalAgro"
         mc:Ignorable="d"
         Title="Map" Height="700" Width="850" MouseDown="Window_MouseDown"
         Loaded="_window_Loaded">
@@ -18,26 +18,39 @@
             <RowDefinition Height="50*"></RowDefinition>
             <RowDefinition Height="25*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Button Grid.ColumnSpan="1" Grid.RowSpan="3">
-            <Button.ContextMenu>
+        <Button Grid.ColumnSpan="1" Grid.RowSpan="3" Grid.Column="0">
+            
+        </Button>
+        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" >
+            <Canvas.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Добавить">
                         <MenuItem Header="Объект" Click="MenuItem_Click" Tag="0"/>
                         <MenuItem Header="Робот" Click="MenuItem_Click" Tag="1"/>
                         <MenuItem Header="Разведчик" Click="MenuItem_Click" Tag="2"/>
                         <MenuItem Header="База" Click="MenuItem_Click" Tag="3"/>
+                        <MenuItem Header="Препятствие" Click="MenuItem_Click" Tag="4"/>
                     </MenuItem>
+                    <MenuItem Header="Удалить" Name="deleteObjectB" Click="deleteObjectB_Click"></MenuItem>
+                    <MenuItem Header="Отмена" Name="undoB" Click="undoB_Click"/>
+                    <MenuItem Header="Завершить" Name="finishObjectB" Click="finishObjectB_Click" IsEnabled="False"></MenuItem>
                 </ContextMenu>
-            </Button.ContextMenu>
-        </Button>
-        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" >
-
+            </Canvas.ContextMenu>
         </Canvas>
-        <Button x:Name="startB" Grid.Column="1" Content="Запуск" HorizontalAlignment="Center" 
+        <Button x:Name="startB" Grid.Column="1" Content="Запуск" HorizontalAlignment="Center" IsEnabled="False"
                 Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="startButton_Click"/>
-        <Label x:Name="collectedObjsCountL" Grid.Column="1" Grid.Row="0" Content="" MaxHeight="50" Margin="0,0,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="currentObjsCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,30,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="timeCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,60,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="iterationsCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,90,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="collectedObjsCountL" Grid.Column="1" Grid.Row="0" MaxHeight="50" Margin="0,0,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="currentObjsCountL" Grid.Column="2" Grid.Row="0" MaxHeight="50" Margin="0,30,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="wayTimeCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,60,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="thinkTimeCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,90,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="allTimeCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,120,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="iterationsCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,150,0,0" VerticalAlignment="Top"/>
+        <Menu x:Name="menu" BorderThickness="2" BorderBrush="Gray" Height="20" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" VerticalAlignment="Top" >
+            <RibbonMenuButton Label="Файл" FlowDirection="LeftToRight" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-5,0,0,0">
+                <MenuItem Header="Создать" Tag="0" Click="FileMenuItem_Click"/>
+                <MenuItem Header="Открыть" Tag="1" Click="FileMenuItem_Click"/>
+                <MenuItem Header="Сохранить" Tag="2" Click="FileMenuItem_Click"/>
+            </RibbonMenuButton>
+        </Menu>
     </Grid>
 </Window>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml.Serialization;
 using System.Windows;
 using System.Windows.Shapes;
 using System.Windows.Media;
@@ -19,9 +20,13 @@ namespace TacticalAgro {
         Broken
     }
     public class Transporter : IPlaceable, IDrone {
+        [XmlIgnore]
         public int InteractDistance { get; init; } = 10;
+        [XmlIgnore]
         public int ViewingDistance { get; init; } = 2;
+        [XmlIgnore]
         private List<Point> trajectory = new List<Point>();
+        [XmlIgnore]
         public List<Point> Trajectory {
             get { return trajectory; }
             set {
@@ -29,7 +34,9 @@ namespace TacticalAgro {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Trajectory)));
             }
         }
+        [XmlIgnore]
         private RobotState state;
+        [XmlIgnore]
         public RobotState CurrentState {
             get {
                 return state;
@@ -59,6 +66,9 @@ namespace TacticalAgro {
                 state = value;
             }
         }
+
+        #region SeriazableProperties
+        [XmlElement(DataType ="Point", ElementName = "position")]
         private Point position;
         public Point Position {
             get => position;
@@ -67,6 +77,7 @@ namespace TacticalAgro {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
             }
         }
+        [XmlIgnore]
         public Point TargetPosition {
             get {
                 return Trajectory.Count > 0 ? Trajectory[^1] : Position; //последняя точка пути
@@ -76,9 +87,14 @@ namespace TacticalAgro {
                 Trajectory.Add(value);
             }
         }
+        [XmlIgnore]
         public Target? AttachedObj { get; set; } = null;
+        [XmlIgnore]
         public Color Color { get; set; } = Colors.Red;
+        [XmlIgnore]
         public float Speed { get; set; } = 0.01F;
+        #endregion
+        [XmlIgnore]
         public double DistanceToTarget { 
             get {
                 if (Trajectory.Count < 1 || AttachedObj == null) return -1;
@@ -93,14 +109,20 @@ namespace TacticalAgro {
         public event PropertyChangedEventHandler PropertyChanged;
 
         #region Constructors
-        public Transporter(Point pos) {
+        public Transporter(Point pos) : this() {
             Position = pos;
-            Color = Colors.Red;
-            CurrentState = RobotState.Ready;
         }
         public Transporter(int X, int Y) : this(new Point(X, Y)) { }
+        public Transporter() {
+            Color = Colors.Red;
+            CurrentState = RobotState.Ready;
+            AttachedObj = null;
+            Speed = 0.01F;
+            InteractDistance = 10;
+        }
         #endregion
 
+        #region Func
         public void Simulate() {
             switch (CurrentState) {
                 case RobotState.Disable:
@@ -187,5 +209,7 @@ namespace TacticalAgro {
             return Enum.GetName(typeof(RobotState), state) + "_" +  
                 (new Point(Math.Round(position.X, 2), Math.Round(position.Y, 2)).ToString());
         }
+        #endregion
+
     }
 }

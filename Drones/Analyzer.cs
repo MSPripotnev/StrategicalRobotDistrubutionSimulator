@@ -58,11 +58,11 @@ namespace TacticalAgro {
     }
     public class Analyzer {
         public float Scale { get; set; }
-        private readonly System.Windows.Size borders;
+        public Size borders { get; init; }
         private double dist = 0;
         private double[] Matrix;
         private readonly List<Target> targets;
-        private readonly List<Obstacle> obstacles;
+        private readonly Obstacle[] obstacles;
         public List<Target> NearTargetsByDistance(in Point basePosition) {
             var vs = new List<Target>(targets);
             Array.Sort(vs.ToArray(), new RelateDistanceComparer(basePosition));
@@ -78,7 +78,7 @@ namespace TacticalAgro {
             double dy = p2.Y - p1.Y;
             return Math.Sqrt(dx * dx + dy * dy);
         }
-        public Analyzer(List<Obstacle> _obstacles, float scale, System.Windows.Size mapSize) {
+        public Analyzer(Obstacle[] _obstacles, float scale, System.Windows.Size mapSize) {
             obstacles = _obstacles;
             Scale = scale;
             borders = mapSize;
@@ -170,8 +170,8 @@ namespace TacticalAgro {
             path.Reverse();
             return path.ToArray();
         }
-        public bool IsPointOnAnyObstacle(Point point, List<Obstacle> obstacles) {
-            for (int j = 0; j < obstacles.Count; j++)
+        public bool IsPointOnAnyObstacle(Point point, Obstacle[] obstacles) {
+            for (int j = 0; j < obstacles.Length; j++)
                 if (obstacles[j].PointOnObstacle(point)
                     || point.X > borders.Width || point.Y > borders.Height
                     || point.X < 0 || point.Y < 0) 

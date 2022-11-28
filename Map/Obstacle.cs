@@ -4,20 +4,25 @@ using System.Windows.Shapes;
 using System.Windows.Media;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 
 namespace TacticalAgro {
     public class Obstacle : IPlaceable {
+        [XmlArray("Points")]
+        [XmlArrayItem("Point")]
         public Point[] Borders { get; init; }
+        [XmlIgnore]
         public Point Position { get; set; }
+        [XmlIgnore]
         public Color Color { get; set; } = Colors.Gray;
         public Obstacle(Point[] obstacleBorders) {
             Borders = obstacleBorders;
             Position = Borders[0];
         }
-
+        public Obstacle() { }
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public bool PointOnObstacle(Point testPoint) {
@@ -34,7 +39,20 @@ namespace TacticalAgro {
         }
 
         public UIElement Build() {
-            return null;
+            UIElement res = null;
+            if (Borders.Length > 0) {
+                var polygon = new Polygon();
+                polygon.Points = new PointCollection(Borders);
+                polygon.Fill = new SolidColorBrush(Colors.DarkSlateGray);
+                res = polygon;
+            } else {
+                var ellipse = new Ellipse();
+                ellipse.Width = ellipse.Height = 5;
+                ellipse.Margin = new Thickness(Position.X, Position.Y, 0,0);
+                res = ellipse;
+            }
+            res.Uid = $"obstacle_{Borders[0]}";
+            return res;
         }
     }
 }

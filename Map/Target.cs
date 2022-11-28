@@ -6,12 +6,14 @@ using System.Windows;
 using System.Windows.Shapes;
 using System.Windows.Media;
 using System.Windows.Data;
+using System.Xml.Serialization;
 using System.Threading.Tasks;
 using System.ComponentModel;
 
 namespace TacticalAgro {
     public class Target : IPlaceable {
         private Point position;
+        [XmlElement(nameof(Point), ElementName = "Position")]
         public Point Position {
             get { return position; }
             set { 
@@ -19,19 +21,18 @@ namespace TacticalAgro {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
             }
         }
+        [XmlIgnore]
         public Color Color { get; set; }
+        [XmlIgnore]
         public Transporter? ReservedTransporter { get; set; } = null;
+        [XmlIgnore]
         public bool Finished { get; set; } = false;
-        public Target(Point pos, Color color) {
+        public Target(Point pos) : this() {
             Position = pos;
-            Color = color;
         }
-        public Target(int X, int Y, Color color) {
-            Position = new Point(X, Y);
-            Color = color;
-        }
-        public static implicit operator Point(Target target) {
-            return new Point(target.Position.X, target.Position.Y);
+        public Target() {
+            Finished = false;
+            Color = Colors.Green;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -53,6 +54,10 @@ namespace TacticalAgro {
             el.SetBinding(System.Windows.Controls.Canvas.TopProperty, binding);
 
             return el;
+        }
+
+        public static implicit operator Target(Base v) {
+            throw new NotImplementedException();
         }
     }
 }
