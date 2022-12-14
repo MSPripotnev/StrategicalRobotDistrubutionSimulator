@@ -21,17 +21,20 @@ namespace TacticalAgro {
     }
     public class Transporter : IPlaceable, IDrone {
         [XmlIgnore]
-        public int InteractDistance { get; init; } = 10;
+        public int InteractDistance { get; init; } = 30;
         [XmlIgnore]
         public int ViewingDistance { get; init; } = 2;
         [XmlIgnore]
         private List<Point> trajectory = new List<Point>();
+        [XmlIgnore]
+        public double TraversedWay { get; set; } = 0;
         [XmlIgnore]
         public List<Point> Trajectory {
             get { return trajectory; }
             set {
                 trajectory = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Trajectory)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TraversedWay)));
             }
         }
         [XmlIgnore]
@@ -68,7 +71,6 @@ namespace TacticalAgro {
         }
 
         #region SeriazableProperties
-        [XmlElement(DataType ="Point", ElementName = "position")]
         private Point position;
         public Point Position {
             get => position;
@@ -92,7 +94,7 @@ namespace TacticalAgro {
         [XmlIgnore]
         public Color Color { get; set; } = Colors.Red;
         [XmlIgnore]
-        public float Speed { get; set; } = 0.01F;
+        public float Speed { get; set; } = 10.0F;
         #endregion
         [XmlIgnore]
         public double DistanceToTarget { 
@@ -103,11 +105,13 @@ namespace TacticalAgro {
                 double s = Analyzer.Distance(Position, Trajectory[0]);
                 for (int i = 0; i < Trajectory.Count - 1; i++)
                     s += Analyzer.Distance(Trajectory[i], Trajectory[i + 1]);
+                s += Analyzer.Distance(trajectory[^1], AttachedObj.Position);
                 return s;
             }
         }
         public event PropertyChangedEventHandler PropertyChanged;
-
+        [XmlIgnore]
+        public List<Target> BlockedTargets { get; set; } = new List<Target>();
         #region Constructors
         public Transporter(Point pos) : this() {
             Position = pos;
@@ -118,7 +122,8 @@ namespace TacticalAgro {
             CurrentState = RobotState.Ready;
             AttachedObj = null;
             Speed = 0.01F;
-            InteractDistance = 10;
+            InteractDistance = 30;
+            BlockedTargets = new List<Target>();
         }
         #endregion
 
@@ -133,9 +138,11 @@ namespace TacticalAgro {
                 case RobotState.Going:
                     if (Trajectory.Count > 0) {
                         Move();
-                        if (DistanceToTarget <= InteractDistance) {
-                            if (AttachedObj != null)
+                        if (Analyzer.Distance(Position, AttachedObj != null ? 
+                            AttachedObj.Position : TargetPosition) <= InteractDistance) {
+                            if (AttachedObj != null) {
                                 CurrentState = RobotState.Carrying;
+                            }
                         }
                     }
                         
@@ -144,7 +151,7 @@ namespace TacticalAgro {
                     if (Trajectory.Count > 0)
                         Move();
                     AttachedObj.Position = new Point(Position.X, Position.Y);
-                    if (DistanceToTarget <= InteractDistance)
+                    if (!Trajectory.Any())
                         CurrentState = RobotState.Ready;
                     break;
                 default:
@@ -155,10 +162,12 @@ namespace TacticalAgro {
             IPlaceable obj = this;
             Point p2 = Trajectory[0];
 
-            if (Analyzer.Distance(obj.Position, p2) < InteractDistance) {
+            if (Analyzer.Distance(obj.Position, p2) < 1) {
                 List<Point> pc = new (Trajectory.Skip(1));
-                if (pc.Any())
+                if (pc.Any()) {
+                    TraversedWay += Analyzer.Distance(p2, pc[0]);
                     p2 = pc[0];
+                }
                 Trajectory = pc;
             }
 
@@ -180,7 +189,8 @@ namespace TacticalAgro {
             el.Fill = new SolidColorBrush(Color);
             el.Stroke = Brushes.Black;
             el.StrokeThickness = 2;
-            el.Margin = new Thickness(-20, -20, 20, 20);
+            el.Margin = new Thickness(-10, -10, 0, 0);
+            System.Windows.Controls.Canvas.SetZIndex(el, 3);
 
             Binding binding = new Binding(nameof(Position) + ".X");
             binding.Source = this;
@@ -197,7 +207,7 @@ namespace TacticalAgro {
             polyline.StrokeThickness = 2;
             polyline.StrokeDashArray = new DoubleCollection(new double[]{ 4.0, 2.0});
             polyline.StrokeDashCap = PenLineCap.Round;
-            polyline.Margin = new Thickness(-10, -10, 0, 0);
+            polyline.Margin = new Thickness(-5, -5, 0, 0);
 
             Binding b = new Binding(nameof(Trajectory));
             b.Source = this;

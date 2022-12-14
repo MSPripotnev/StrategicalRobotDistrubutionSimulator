@@ -59,5 +59,14 @@ namespace TacticalAgro.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Ищет локализованную строку, похожую на G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\testInsideHalf.xml.
+        /// </summary>
+        internal static string defaultFile {
+            get {
+                return ResourceManager.GetString("defaultFile", resourceCulture);
+            }
+        }
     }
 }

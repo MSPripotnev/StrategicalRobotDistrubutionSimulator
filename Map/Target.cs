@@ -44,7 +44,8 @@ namespace TacticalAgro {
             el.Fill = new SolidColorBrush(Color);
             el.Stroke = Brushes.Black;
             el.StrokeThickness = 1;
-            el.Margin = new Thickness(-20, -20, 0, 0);
+            el.Margin = new Thickness(-5, -5, 0, 0);
+            System.Windows.Controls.Canvas.SetZIndex(el, 4);
 
             Binding binding = new Binding(nameof(Position) + ".X");
             binding.Source = this;
@@ -56,8 +57,8 @@ namespace TacticalAgro {
             return el;
         }
 
-        public static implicit operator Target(Base v) {
-            throw new NotImplementedException();
+        public override string ToString() {
+            return Position.ToString();
         }
     }
 }

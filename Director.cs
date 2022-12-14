@@ -11,7 +11,7 @@ using System.ComponentModel;
 
 namespace TacticalAgro {
     public class Director : System.ComponentModel.INotifyPropertyChanged, IDisposable {
-        public const int DistanceCalculationTimeout = 30000;
+        public const int DistanceCalculationTimeout = 20000;
         [XmlIgnore]
         public TimeSpan ThinkingTime { get; private set; } = TimeSpan.Zero;
         [XmlIgnore]
@@ -44,64 +44,31 @@ namespace TacticalAgro {
         [XmlArray("Bases")]
         [XmlArrayItem("Base")]
         public Base[] Bases { get; set; }
+        [XmlArray("Obstacles")]
+        [XmlArrayItem("Obstacle")]
         public Obstacle[] Obstacles { get; set; }
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private CancellationTokenSource cancellationTokenSource = 
+            new CancellationTokenSource(DistanceCalculationTimeout);
         [XmlIgnore]
         public List<IPlaceable> AllObjectsOnMap {
             get {
                 return new List<IPlaceable>(Transporters).Concat(Targets).Concat(Bases).Concat(Obstacles).ToList();
             }
         }
-        private Analyzer RAnalyzer;
-
+        [XmlIgnore]
+        public float Scale { get; set; } = 1.0F;
+        [XmlIgnore]
+        public Size Borders { get; set; }
         public event PropertyChangedEventHandler? PropertyChanged;
-        public Director() { RAnalyzer = new Analyzer(Obstacles, 1.0F, new Size(0,0)); }
-        public Director(System.Windows.Size _mapSize) {
-            Obstacles = new Obstacle[] {
-                new Obstacle(new Point[] {
-                    new Point(400, 300),
-                    new Point(700, 300),
-                    new Point(700, 400),
-                    new Point(400, 400)
-                }),
-                new Obstacle(new Point[] {
-                    new Point(200, 150),
-                    new Point(220, 150),
-                    new Point(220, 350),
-                    new Point(200, 350),
-                }),
-                new Obstacle(new Point[] {
-                    new Point(300, 300),
-                    new Point(370, 300),
-                    new Point(370, 320),
-                    new Point(300, 320),
-                })
-            };
-            Targets = new Target[] {
-                new Target(new Point(550, 250)),
-                new Target(new Point(350, 250)),
-                new Target(new Point(250, 250)),
-                new Target(new Point(350, 500)),
-                new Target(new Point(550, 500)),
-                new Target(new Point(150, 250)),
-                new Target(new Point(30, 150)),
-            };
-            Bases = new Base[] {
-                new Base(new Point(100, 100)),
-                new Base(new Point(550, 450))
-            };
-
-            Transporters = new Transporter[] {
-                new Transporter(new Point(50, 150)),
-                new Transporter(new Point(10, 150)),
-                new Transporter(new Point(150, 250)),
-                new Transporter(new Point(250, 350))
-            };
-
-            RAnalyzer = new Analyzer(Obstacles, 5F, _mapSize);
+        public double TraversedWaySum {
+            get {
+                return Transporters.Sum(p => p.TraversedWay);
+            }
         }
-        public void Refresh(float scale, Size _mapSize) {
-            RAnalyzer = new Analyzer(Obstacles, scale, _mapSize);
+        public Director() { 
+            Scale = 5.0F;
+            ThinkingTime = new TimeSpan(0);
+
         }
         public void Work() {
             for (int i = 0; i < Transporters.Length; i++)
@@ -125,7 +92,6 @@ namespace TacticalAgro {
                 var ls = Obstacles.ToList();
                 ls.Add(ob);
                 Obstacles = ls.ToArray();
-                RAnalyzer = new Analyzer(Obstacles, RAnalyzer.Scale, RAnalyzer.borders);
             }
         }
         public void Remove(IPlaceable obj) {
@@ -145,7 +111,6 @@ namespace TacticalAgro {
                 var ls = Obstacles.ToList();
                 ls.Remove(ob);
                 Obstacles = ls.ToArray();
-                RAnalyzer = new Analyzer(Obstacles, RAnalyzer.Scale, RAnalyzer.borders);
             }
         }
         #region Distribute
@@ -155,36 +120,59 @@ namespace TacticalAgro {
                 DistributeTaskForCarryingTransporters();
             }
         }
+
+        readonly Dictionary<Transporter, Task<Point[]>> trajectoryTasks = new Dictionary<Transporter, Task<Point[]>>();
         private void DistributeTaskForFreeTransporters() {
             var freeTransport = new List<Transporter>(FreeTransporters).ToArray();
             lock (freeTransport)
                 if (freeTransport.Length > 0 && FreeTargets.Length > 0) {
                     CalculateTrajectoryForFreeTransporters(freeTransport);
+                    lock (Targets)
+                        SelectNearestTransporterWithTrajectoryForTarget();
                 }
-            lock (Targets)
-                SelectNearestTransporterWithTrajectoryForTarget();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FreeTargets)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CollectedTargets)));
         }
         private void CalculateTrajectoryForFreeTransporters(Transporter[] freeTransport) {
             //распределение ближайших целей по роботам
-            Task<Point[]>[] trajectoryTasks = new Task<Point[]>[freeTransport.Length];
+            //Task<Point[]>[] trajectoryTasks = new Task<Point[]>[freeTransport.Length];
+            cancellationTokenSource = new CancellationTokenSource(DistanceCalculationTimeout);
             DateTime startTime = DateTime.Now;
             for (int i = 0; i < freeTransport.Length; i++) {
                 Transporter transporter = freeTransport[i];
-                Target nearestTarget = FreeTargets.MinBy(
+                Target? nearestTarget = (FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p))).MinBy(
                     t => Analyzer.Distance(t.Position, transporter.Position));
+                if (nearestTarget == null || trajectoryTasks.ContainsKey(transporter)) {
+                    continue;
+                }
                 transporter.AttachedObj = nearestTarget;
                 transporter.TargetPosition = nearestTarget.Position;
-                trajectoryTasks[i] = Task.Run(() => {
-                    return RAnalyzer.CalculateTrajectory(
-                        nearestTarget.Position, transporter.Position, cancellationTokenSource.Token);
-                }, cancellationTokenSource.Token);
+                //trajectoryTasks.Add(transporter, Task.Run(() => {
+                    transporter.Trajectory = Analyzer.CalculateTrajectory(
+                        nearestTarget.Position, transporter.Position, Obstacles, Borders,
+                        Scale, transporter.InteractDistance, cancellationTokenSource.Token).ToList();
+                if (!transporter.Trajectory.Any()) {
+                    transporter.AttachedObj = null;
+                    transporter.Trajectory.Clear();
+                    transporter.BlockedTargets.Add(nearestTarget);
+                    //MessageBox.Show($"Distance = {Analyzer.Distance(transporter.Trajectory[^1], nearestTarget.Position)}");
+                }
+                //}, cancellationTokenSource.Token));
             }
-            Task.WaitAll(trajectoryTasks, DistanceCalculationTimeout);
+            //Task.WaitAll(trajectoryTasks.Values.ToArray(), DistanceCalculationTimeout);
+            /*if (true) {
+                for (int i = 0; i < freeTransport.Length; i++) {
+                    Transporter transporter = freeTransport[i];
+                    if (trajectoryTasks[transporter].IsCompletedSuccessfully)
+                        freeTransport[i].Trajectory = (trajectoryTasks[freeTransport[i]].Result).ToList();
+                    else if (trajectoryTasks[transporter].IsCanceled) {
+                        transporter.BlockedTargets.Add(transporter.AttachedObj);
+                        transporter.AttachedObj = null;
+                        transporter.Trajectory.Clear();
+                    }
+                }
+            }*/
             ThinkingTime += (DateTime.Now - startTime);
-            for (int i = 0; i < freeTransport.Length; i++)
-                freeTransport[i].Trajectory = (trajectoryTasks[i].Result).ToList();
         }
         private void SelectNearestTransporterWithTrajectoryForTarget() {
             for (int i = 0; i < FreeTargets.Length; i++) {
@@ -206,23 +194,50 @@ namespace TacticalAgro {
         }
         private void DistributeTaskForCarryingTransporters() {
             var CarryingTransporters = Transporters.Where(
-                p => p.CurrentState == RobotState.Carrying && Bases.All(b => b.Position != p.TargetPosition)).ToList();
+                p => p.CurrentState == RobotState.Carrying && 
+                Bases.All(b => Analyzer.Distance(b.Position, p.TargetPosition) > p.InteractDistance)
+                ).ToList();
             if (CarryingTransporters.Count > 0) {
                 Task<Point[]>[] trajectoryTasks = new Task<Point[]>[CarryingTransporters.Count];
                 DateTime startTime = DateTime.Now;
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
                     Transporter transporter = CarryingTransporters[i];
-                    transporter.TargetPosition = Bases.MinBy(
-                        p => Analyzer.Distance(p.Position, transporter.Position)).Position;
-                    trajectoryTasks[i] = Task.Run(() => {
-                        return RAnalyzer.CalculateTrajectory(
-                             transporter.TargetPosition, transporter.Position, cancellationTokenSource.Token);
-                    }, cancellationTokenSource.Token);
+                    var nearBase = Bases.MinBy(p => Analyzer.Distance(p.Position, transporter.Position));
+                    if (Analyzer.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
+                        transporter.TargetPosition = nearBase.Position;
+                        //trajectoryTasks[i] = Task.Run(() => {
+                            transporter.Trajectory = Analyzer.CalculateTrajectory(
+                                 transporter.TargetPosition, transporter.Position, Obstacles, Borders,
+                                 Scale, transporter.InteractDistance, cancellationTokenSource.Token).ToList();
+                        //}, cancellationTokenSource.Token);
+                        if (Analyzer.Distance(transporter.Trajectory[^1], nearBase.Position) < transporter.InteractDistance)
+                            transporter.Trajectory.Add(nearBase.Position);
+                    } else {
+                        transporter.CurrentState = RobotState.Ready;
+                    }
                 }
-                Task.WaitAll(trajectoryTasks);
                 ThinkingTime += (DateTime.Now - startTime);
-                for (int i = 0; i < CarryingTransporters.Count; i++)
-                    CarryingTransporters[i].Trajectory = trajectoryTasks[i].Result.ToList();
+                //Task.WaitAll(trajectoryTasks);
+                /*if (Task.WaitAll(trajectoryTasks, 2 * DistanceCalculationTimeout)) {
+                    for (int i = 0; i < CarryingTransporters.Count; i++)
+                        if (trajectoryTasks[i].Result != Array.Empty<Point>()) {
+                            CarryingTransporters[i].Trajectory = (trajectoryTasks[i].Result).ToList();
+                            CarryingTransporters[i].Trajectory.Add(
+                                Bases.MinBy(p => Analyzer.Distance(p.Position, CarryingTransporters[i].Position)).Position);
+                        }
+                } else {
+                    for (int i = 0; i < CarryingTransporters.Count; i++) {
+                        Transporter transporter = CarryingTransporters[i];
+                        Target? nearestTarget = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p))
+                            .MinBy(t => Analyzer.Distance(t.Position, transporter.Position));
+                        if (!trajectoryTasks[i].IsCompletedSuccessfully) {
+                            transporter.CurrentState = RobotState.Broken;
+                            MessageBox.Show($"Транспортер не может найти путь до базы!", $"Транспортер {i} сломан!",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    cancellationTokenSource.Cancel();
+                }*/
             }
         }
         #endregion
@@ -233,6 +248,8 @@ namespace TacticalAgro {
                     return false;
             return true;
         }
+
+        #region Finalize
         public void Dispose() {
             Serialize("autosave.xml");
         }
@@ -265,5 +282,6 @@ namespace TacticalAgro {
                 if (transporters != null) Transporters = transporters;
             }
         }
+        #endregion
     }
 }

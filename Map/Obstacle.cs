@@ -11,9 +11,16 @@ using System.ComponentModel;
 
 namespace TacticalAgro {
     public class Obstacle : IPlaceable {
+        private Point[] borders;
         [XmlArray("Points")]
         [XmlArrayItem("Point")]
-        public Point[] Borders { get; init; }
+        public Point[] Borders {
+            get { return borders; }
+            set {
+                borders = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Borders)));
+            }
+        }
         [XmlIgnore]
         public Point Position { get; set; }
         [XmlIgnore]
@@ -51,6 +58,7 @@ namespace TacticalAgro {
                 ellipse.Margin = new Thickness(Position.X, Position.Y, 0,0);
                 res = ellipse;
             }
+            System.Windows.Controls.Canvas.SetZIndex(res, 0);
             res.Uid = $"obstacle_{Borders[0]}";
             return res;
         }

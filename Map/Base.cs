@@ -8,14 +8,23 @@ using System.Windows.Shapes;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using System.Windows;
 using System.Windows.Media;
 
 namespace TacticalAgro {
     public class Base : IPlaceable {
         public Base() { }
-        public Point Position { get; set; }
-        [System.Xml.Serialization.XmlIgnore]
+        private Point position;
+        [XmlElement(nameof(Point), ElementName = "Position")]
+        public Point Position {
+            get { return position; }
+            set {
+                position = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
+            }
+        }
+        [XmlIgnore]
         public Color Color { get; set; } = Colors.Blue;
         public Base(Point pos) {
             Position = pos;
@@ -25,12 +34,13 @@ namespace TacticalAgro {
 
         public UIElement Build() {
             Rectangle el = new Rectangle();
-            el.Width = 20;
-            el.Height = 20;
+            el.Width = 30;
+            el.Height = 30;
             el.Fill = new SolidColorBrush(Color);
             el.Stroke = Brushes.Black;
             el.StrokeThickness = 1;
-            el.Margin = new Thickness(-20, -20, 0, 0);
+            el.Margin = new Thickness(-el.Width/2, -el.Height/2, 0, 0);
+            System.Windows.Controls.Canvas.SetZIndex(el, 1);
 
             Binding binding = new Binding(nameof(Position) + ".X");
             binding.Source = this;
