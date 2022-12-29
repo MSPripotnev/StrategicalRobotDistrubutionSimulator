@@ -17,9 +17,8 @@ namespace TacticalAgro.Map {
     public partial class MapWPF : Window {
         Director director;
         static string currentFilePath = "";
-        TimeSpan tempTime = new TimeSpan(0);
-        int iterations = 0;
-        Task[] directorTasks = new Task[2];
+        TimeSpan tempTime = TimeSpan.Zero;
+        DateTime startTime = DateTime.MinValue, pauseTime;
         DispatcherTimer refreshTimer;
         List<Reading> readings = new List<Reading>();
         [XmlArray(ElementName = "Readings")]
@@ -48,7 +47,7 @@ namespace TacticalAgro.Map {
                 transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
                 director.Scale = scaleMax;
                 trajectoryScaleTB.Text = scaleMax.ToString();
-        }
+            }
             for (int i = 0; i < modelsFiles.Length; i++) {
                 string resFileName = $"Results{modelsFiles[i].Substring(modelsFiles[i].Length-4-4)}.xml";
                 if (!File.Exists(resFileName)) {
@@ -62,31 +61,29 @@ namespace TacticalAgro.Map {
                         writer.WriteStartDocument();
                         writer.WriteStartElement("Readings");
                         writer.Close();
+                    }
+                }
             }
         }
+        #region Drawing
         private void DrawPlaceableObjects() {
             for (int i = 0; i < director.AllObjectsOnMap.Count; i++) {
                 IPlaceable obj = director.AllObjectsOnMap[i];
                 var UIObj = obj.Build();
                 mapCanvas.Children.Add(UIObj);
-                
+
                 if (obj is Transporter t) {
                     mapCanvas.Children.Add(t.BuildTrajectory());
                 }
             }
         }
-
-        DateTime startTime = DateTime.MinValue, pauseTime;
-        Task mainTask;
-        CancellationTokenSource tokenSource = new CancellationTokenSource();
-
-        Point lastClickPos = new (0, 0);
+        Point lastClickPos = new(0, 0);
         private Polygon? new_obstacle = null;
         private void Window_MouseDown(object sender, MouseButtonEventArgs e) {
             Point clickPos = e.GetPosition(this);
             //if (e.RightButton == MouseButtonState.Pressed) {
-                lastClickPos = new Point(Math.Round(clickPos.X, 2), 
-                                         Math.Round(clickPos.Y, 2));
+            lastClickPos = new Point(Math.Round(clickPos.X, 2),
+                                     Math.Round(clickPos.Y, 2));
             //}
             if (e.LeftButton == MouseButtonState.Pressed) {
                 if (new_obstacle != null) {
@@ -109,12 +106,11 @@ namespace TacticalAgro.Map {
                 }
             }
         }
-
         private IPlaceable? FindObject(Point pos) {
             if (director == null) return null;
             var obj = director.AllObjectsOnMap
-                .Where(p => Analyzer.Distance(p.Position, pos) < 20)
-                .MinBy(p => Analyzer.Distance(p.Position, pos));
+                .Where(p => PathFinder.Distance(p.Position, pos) < 20)
+                .MinBy(p => PathFinder.Distance(p.Position, pos));
             if (obj == null) {
                 for (int i = 0; i < director.Obstacles.Length; i++)
                     if (director.Obstacles[i].PointOnObstacle(lastClickPos))
@@ -194,9 +190,66 @@ namespace TacticalAgro.Map {
             director.Work();
 #endif
         }
-            director.Work();
+        private void Start() {
+            for (int i = 0; i < menu.Items.Count; i++)
+                (menu.Items[i] as UIElement).IsEnabled = false;
+            tokenSource = new CancellationTokenSource();
+            mainTask = new Task(() => {
+                //director.DistributeTask();
+                tokenSource.Token.Register(() => {
+                    if (pauseTime == DateTime.MinValue) {
+                        for (int i = 0; i < director.Transporters.Length; i++)
+                            director.Transporters[i].Trajectory.Clear();
+                    }
+                });
+                while (!tokenSource.Token.IsCancellationRequested) {
+#if PARALLEL
+                    director.DistributeTask();
+#else
+                    if (director != null) {
+                        director.DistributeTask();
+                        director.Work();
+                    }
 #endif
+                }
+            }, tokenSource.Token, TaskCreationOptions.LongRunning);
+
+            refreshTimer.Start();
+            
+            startTime = pauseTime = DateTime.Now;
+            mainTask.Start();
         }
+        private void Pause() {
+            refreshTimer.Stop();
+            tokenSource.Cancel();
+            pauseTime = DateTime.Now;
+            startB.Content = "Запуск";
+            //pauseTime = startTime;
+        }
+        private void Stop() {
+            tokenSource.Cancel();
+            refreshTimer.Stop();
+            RefreshTime();
+            Refresh();
+            OpenSaveFile(currentFilePath, true);
+            startB.Content = "Запуск";
+            for (int i = 0; i < menu.Items.Count; i++)
+                (menu.Items[i] as UIElement).IsEnabled = true;
+            stopB.IsEnabled = false;
+        }
+        private void RefreshTime() {
+            if (director != null)
+                director.ThinkingTime = TimeSpan.Zero;
+            tempTime = TimeSpan.Zero;
+            pauseTime = DateTime.MinValue;
+            startTime = DateTime.Now;
+        }
+        private void trajectoryScale_TextChanged(object sender, TextChangedEventArgs e) {
+            if (director != null && float.TryParse((sender as TextBox).Text.Replace('.', ','), out float scale))
+                director.Scale = scale;
+        }
+        #endregion
+
         private void OpenSaveFile(string path, bool open) {
             XmlSerializer serializer = new XmlSerializer(typeof(Director));
             if (open)
@@ -204,11 +257,20 @@ namespace TacticalAgro.Map {
                     director = serializer.Deserialize(fs) as Director;
                     director.Borders = mapCanvas.RenderSize;
                     if (director == null) return;
+                    var @base = director.Bases[0];
+                    Transporter[] transporters = new Transporter[transportersCountT];
+                    for (int i = 0; i < transporters.Length; i++) {
+                        transporters[i] = new Transporter(@base.Position);
+                        director.Add(transporters[i]);
+                    }
                     mapCanvas.Children.Clear();
-                    DrawPlaceableObjects();
-                    trajectoryScale_TextChanged(trajectoryScale, null);
+                    if (drawCB.IsChecked == true)
+                        DrawPlaceableObjects();
+                    trajectoryScale_TextChanged(trajectoryScaleTB, null);
                     startB.IsEnabled = true;
-                    currentFilePath = path;
+                    if (currentFilePath != path)
+                        currentFilePath = path;
+                    fs.Close();
                 } 
             else
                 using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
@@ -216,38 +278,10 @@ namespace TacticalAgro.Map {
                     settings.Indent = true;
                     settings.IndentChars = "\t";
                     serializer.Serialize(XmlWriter.Create(fs, settings), director);
+                    fs.Close();
                 }
         }
-        private void Start() {
-            for (int i = 0; i < menu.Items.Count; i++)
-                (menu.Items[i] as UIElement).IsEnabled = false;
-            tokenSource = new CancellationTokenSource();
-            mainTask = new Task(() => {
-                //director.DistributeTask();
-                while (true) {
-#if PARALLEL
-                    director.DistributeTask();
-#else
-                    director.Work();
-                    Dispatcher.Invoke(new Action(() => {
-                        pauseTime = DateTime.Now;
-                        director.DistributeTask();
-                        tempTime -= DateTime.Now - pauseTime;
-                    }));
-#endif
-                    if (tokenSource.IsCancellationRequested)
-                        break;
-                }
-            }, tokenSource.Token, TaskCreationOptions.RunContinuationsAsynchronously);
 
-            refreshTimer.Start();
-            if (startTime == DateTime.MinValue)
-                pauseTime = startTime;
-            else
-                tempTime += pauseTime - startTime;
-            startTime = DateTime.Now;
-            mainTask.Start();
-        }
         #region Buttons
         private void MenuItem_Click(object sender, RoutedEventArgs e) {
             var button = sender as MenuItem;
@@ -299,30 +333,21 @@ namespace TacticalAgro.Map {
 
             lastClickPos = new Point(0, 0);
         }
-        private void startButton_Click(object sender, RoutedEventArgs e) {
+        private void startButton_Click(object sender, RoutedEventArgs e) {            
             if (startB.Content.ToString() == "Запуск") {
+                if (pauseTime > startTime)
+                    tempTime += pauseTime - startTime;
                 Start();
+                pauseTime = startTime;
                 stopB.IsEnabled = true;
                 startB.Content = "Пауза";
             } else {
-                pauseTime = DateTime.Now;
-                refreshTimer.Stop();
-                tokenSource.Cancel();
                 startB.Content = "Запуск";
+                Pause();
             }
         }
         private void stopB_Click(object sender, RoutedEventArgs e) {
-            refreshTimer.Stop();
-            tokenSource.Cancel();
-            startB.Content = "Запуск";
-            OpenSaveFile(currentFilePath, true);
-            for (int i = 0; i < menu.Items.Count; i++)
-                (menu.Items[i] as UIElement).IsEnabled = true;
-            stopB.IsEnabled = false;
-            tempTime = new TimeSpan(0);
-            startTime = DateTime.Now;
-            Refresh();
-            startTime = DateTime.MinValue;
+            Stop();
         }
         private void FileMenuItem_Click(object sender, RoutedEventArgs e) {
             var button = sender as MenuItem;
@@ -425,7 +450,7 @@ namespace TacticalAgro.Map {
         #endregion
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-
+            
         }
 
         public void Refresh() {

@@ -53,10 +53,10 @@ namespace TacticalAgro {
         public RelateDistanceComparer(Point basePosition) { BasePosition = basePosition; }
         public int Compare(object x, object y) {
             return x != null && y != null && x is IPlaceable X && y is IPlaceable Y ?
-                Math.Sign(Analyzer.Distance(X.Position, BasePosition) - Analyzer.Distance(Y.Position, BasePosition)) : 0;
+                Math.Sign(PathFinder.Distance(X.Position, BasePosition) - PathFinder.Distance(Y.Position, BasePosition)) : 0;
         }
     }
-    public static class Analyzer {
+    public static class PathFinder {
         public static double Distance(Point p1, Point p2) {
             double dx = p2.X - p1.X;
             double dy = p2.Y - p1.Y;
@@ -80,15 +80,17 @@ namespace TacticalAgro {
             AnalyzedPoint? interimP = new(robotPosition);
             openedPoints.Add(new AnalyzedPoint(null, robotPosition, 0, double.MaxValue));
             AnalyzedPoint currentPoint;
-            if (mainTarget == robotPosition) return new Point[] { mainTarget };
+            if (Distance(mainTarget, robotPosition) < interactDistance) return new Point[] { mainTarget };
 
             do {
                 currentPoint = openedPoints.MinBy(p => p.Distance + p.Heuristic);
                 for (int i = 0; i < 9; i++) {
                     //выбор направления
                     Point pos = new Point(
-                            currentPoint.Position.X + (i / 3 - 1) * Scale,
-                            currentPoint.Position.Y + (i % 3 - 1) * Scale);
+                            currentPoint.Position.X + (i / 3 - 1) * Scale,// * (i % 2 - 1),
+                                                                          //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
+                            currentPoint.Position.Y + (i % 3 - 1) * Scale);// * (i % 2 - 1));
+                                                    //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
                     interimP = new AnalyzedPoint(currentPoint, pos,
                         currentPoint.Distance + Distance(currentPoint, pos),
                         Distance(pos, mainTarget));
@@ -111,8 +113,15 @@ namespace TacticalAgro {
                 if (token.IsCancellationRequested) {
                     return Array.Empty<Point>();
                 }
-                if (!openedPoints.Any()) return CreatePathFromLastPoint(currentPoint);
-            } while (currentPoint.Heuristic >= interactDistance/1.1);
+                if (!openedPoints.Any()) {
+                    //if (currentPoint.Heuristic < interactDistance * 2) 
+                        return CreatePathFromLastPoint(currentPoint);
+                    /*Random rnd = new Random((int)DateTime.Now.Ticks);
+                    return CalculateTrajectory(mainTarget, 
+                        new Point(robotPosition.X + (rnd.NextDouble() - 0.5)*8, robotPosition.Y + (rnd.NextDouble() - 0.5)*8), 
+                        obstacles, borders, Scale, interactDistance, token);*/
+                }
+            } while (currentPoint.Heuristic >= interactDistance);
             return CreatePathFromLastPoint(currentPoint);
         }
         private static Point[] CreatePathFromLastPoint(AnalyzedPoint p) {

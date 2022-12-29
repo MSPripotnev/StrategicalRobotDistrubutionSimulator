@@ -85,7 +85,7 @@ namespace TacticalAgro {
                 return Trajectory.Count > 0 ? Trajectory[^1] : Position; //последняя точка пути
             }
             set {
-                Trajectory.Clear();
+                //Trajectory.Clear();
                 Trajectory.Add(value);
             }
         }
@@ -94,18 +94,18 @@ namespace TacticalAgro {
         [XmlIgnore]
         public Color Color { get; set; } = Colors.Red;
         [XmlIgnore]
-        public float Speed { get; set; } = 10.0F;
+        public float Speed { get; set; }
         #endregion
         [XmlIgnore]
         public double DistanceToTarget { 
             get {
                 if (Trajectory.Count < 1 || AttachedObj == null) return -1;
-                if (Trajectory.Count == 1) return Analyzer.Distance(Position, Trajectory[0]);
+                if (Trajectory.Count == 1) return PathFinder.Distance(Position, Trajectory[0]);
 
-                double s = Analyzer.Distance(Position, Trajectory[0]);
+                double s = PathFinder.Distance(Position, Trajectory[0]);
                 for (int i = 0; i < Trajectory.Count - 1; i++)
-                    s += Analyzer.Distance(Trajectory[i], Trajectory[i + 1]);
-                s += Analyzer.Distance(trajectory[^1], AttachedObj.Position);
+                    s += PathFinder.Distance(Trajectory[i], Trajectory[i + 1]);
+                s += PathFinder.Distance(trajectory[^1], AttachedObj.Position);
                 return s;
             }
         }
@@ -121,7 +121,7 @@ namespace TacticalAgro {
             Color = Colors.Red;
             CurrentState = RobotState.Ready;
             AttachedObj = null;
-            Speed = 0.01F;
+            Speed = 0.0001F;
             InteractDistance = 30;
             BlockedTargets = new List<Target>();
         }
@@ -138,7 +138,7 @@ namespace TacticalAgro {
                 case RobotState.Going:
                     if (Trajectory.Count > 0) {
                         Move();
-                        if (Analyzer.Distance(Position, AttachedObj != null ? 
+                        if (PathFinder.Distance(Position, AttachedObj != null ? 
                             AttachedObj.Position : TargetPosition) <= InteractDistance) {
                             if (AttachedObj != null) {
                                 CurrentState = RobotState.Carrying;
@@ -150,9 +150,10 @@ namespace TacticalAgro {
                 case RobotState.Carrying:
                     if (Trajectory.Count > 0)
                         Move();
-                    AttachedObj.Position = new Point(Position.X, Position.Y);
                     if (!Trajectory.Any())
                         CurrentState = RobotState.Ready;
+                    if (AttachedObj != null)
+                        AttachedObj.Position = new Point(Position.X, Position.Y);
                     break;
                 default:
                     break;
@@ -162,10 +163,10 @@ namespace TacticalAgro {
             IPlaceable obj = this;
             Point p2 = Trajectory[0];
 
-            if (Analyzer.Distance(obj.Position, p2) < 1) {
+            if (PathFinder.Distance(obj.Position, p2) < 1) {
                 List<Point> pc = new (Trajectory.Skip(1));
                 if (pc.Any()) {
-                    TraversedWay += Analyzer.Distance(p2, pc[0]);
+                    TraversedWay += PathFinder.Distance(p2, pc[0]);
                     p2 = pc[0];
                 }
                 Trajectory = pc;
@@ -173,7 +174,7 @@ namespace TacticalAgro {
 
             Point V = new Point(p2.X - obj.Position.X, //вектор движения
                                 p2.Y - obj.Position.Y);
-            float d = (float)Analyzer.Distance(obj.Position, p2); //длина вектора
+            float d = (float)PathFinder.Distance(obj.Position, p2); //длина вектора
             //нормировка
             if (d > 0) {
                 V.X /= d;

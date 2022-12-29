@@ -61,7 +61,7 @@ namespace TacticalAgro.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\testInsideHalf.xml.
+        ///   Ищет локализованную строку, похожую на G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\testInside.xml.
         /// </summary>
         internal static string defaultFile {
             get {
