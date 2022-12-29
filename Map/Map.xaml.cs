@@ -21,28 +21,48 @@ namespace TacticalAgro.Map {
         int iterations = 0;
         Task[] directorTasks = new Task[2];
         DispatcherTimer refreshTimer;
+        List<Reading> readings = new List<Reading>();
+        [XmlArray(ElementName = "Readings")]
+        [XmlArrayItem(ElementName = "Reading")]
+        public Reading[] Readings {
+            get {
+                return readings.ToArray();
+            }
+            set {
+                readings = new List<Reading>(value);
+            }
+        }
+        const int attemptsMax = 50;
+        float scaleMax = 40F;
+        int attemptsN = attemptsMax;
+        int transportersCountT = 5 - 1;
+
         public MapWPF() {
             InitializeComponent();
             refreshTimer = new DispatcherTimer();
-            refreshTimer.Interval = new TimeSpan(0,0,0,0,10);
+            refreshTimer.Interval = new TimeSpan(0,0,0,0,50);
             refreshTimer.Tick += RefreshTimer_Tick;
-            currentFilePath = Properties.Resources.defaultFile;
-            if (File.Exists(currentFilePath))
+            currentFilePath = modelsFiles[0];
+            if (File.Exists(currentFilePath)) {
                 OpenSaveFile(currentFilePath, true);
+                transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
+                director.Scale = scaleMax;
+                trajectoryScaleTB.Text = scaleMax.ToString();
         }
-
-        private void RefreshTimer_Tick(object? sender, EventArgs e) {
-            if (director.checkMission()) {
-                director.Work();
-                refreshTimer.Stop();
-                startB.Content = "Запуск";
-                for (int i = 0; i < menu.Items.Count; i++)
-                    (menu.Items[i] as UIElement).IsEnabled = true;
+            for (int i = 0; i < modelsFiles.Length; i++) {
+                string resFileName = $"Results{modelsFiles[i].Substring(modelsFiles[i].Length-4-4)}.xml";
+                if (!File.Exists(resFileName)) {
+                    using (FileStream fs = new FileStream(resFileName, FileMode.Create)) {
+                        XmlWriterSettings settings = new XmlWriterSettings() {
+                            Indent = true,
+                            ConformanceLevel = ConformanceLevel.Auto,
+                            WriteEndDocumentOnClose = false
+                        };
+                        var writer = XmlWriter.Create(fs, settings);
+                        writer.WriteStartDocument();
+                        writer.WriteStartElement("Readings");
+                        writer.Close();
             }
-            Refresh();
-#if PARALLEL
-            director.Work();
-#endif
         }
         private void DrawPlaceableObjects() {
             for (int i = 0; i < director.AllObjectsOnMap.Count; i++) {
@@ -101,6 +121,81 @@ namespace TacticalAgro.Map {
                         obj = director.Obstacles[i];
             }
             return obj;
+        }
+        private void CheckBox_Checked(object sender, RoutedEventArgs e) {
+            if (director == null) return;
+            if (drawCB.IsChecked ?? false) {
+                DrawPlaceableObjects();
+            } else {
+                mapCanvas.Children.Clear();
+            }
+        }
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
+            if (director != null)
+                director.Borders = mapCanvas.RenderSize;
+        }
+        #endregion
+
+        #region Work
+        Task mainTask;
+        CancellationTokenSource tokenSource = new CancellationTokenSource();
+        string[] modelsFiles = new string[] {
+            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-10.xml",
+            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-20.xml",
+            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-10.xml",
+            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-20.xml"
+        };
+        private void RefreshTimer_Tick(object? sender, EventArgs e) {
+            if (director.CheckMission()) {
+                director.Work();
+                if (testingCB.IsChecked == true) {
+                    SaveResults();
+                    Stop();
+                    if (--attemptsN < 1) {
+                        SaveResults(Readings);
+                        readings.Clear();
+                        if (director.Scale > 1.0F) {
+                            trajectoryScaleTB.Text = Math.Round((director.Scale-1F), 3).ToString();
+                            attemptsN = attemptsMax;
+                            director = null;
+                            OpenSaveFile(currentFilePath, true);
+                            Thread.Sleep(200);
+                            startButton_Click(sender, null);
+                        } else if (modelsFiles.Any()) {
+                            currentFilePath = modelsFiles[0];
+                            modelsFiles = modelsFiles.Skip(1).ToArray();
+                            attemptsN = attemptsMax;
+                            director = null;
+                            OpenSaveFile(currentFilePath, true);
+                            trajectoryScaleTB.Text = scaleMax.ToString();
+                            Thread.Sleep(200);
+                            startButton_Click(sender, null);
+                        }
+                    } else {
+                        director = null;
+                        OpenSaveFile(currentFilePath, true);
+                        Thread.Sleep(100);
+                        startButton_Click(sender, null);
+                    }
+                    attemptsCountL.Content = $"Измерений осталось: {attemptsN}";
+                } else {
+                    Pause();
+                }
+            } else if ((DateTime.Now - startTime + tempTime).TotalSeconds > 60) {
+                attemptsN = attemptsMax;
+                Stop();
+                director = null;
+                OpenSaveFile(currentFilePath, true);
+                trajectoryScaleTB.Text = Math.Round((director.Scale - 0.2F), 3).ToString();
+                startButton_Click(sender, null);
+            }
+            Refresh();
+#if PARALLEL
+            director.Work();
+#endif
+        }
+            director.Work();
+#endif
         }
         private void OpenSaveFile(string path, bool open) {
             XmlSerializer serializer = new XmlSerializer(typeof(Director));
@@ -295,24 +390,52 @@ namespace TacticalAgro.Map {
         }
         #endregion
 
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
-            director.Borders = mapCanvas.RenderSize;
+        #region Analyzing
+        private void SaveResults() {
+            var analyzer = new Reading() {
+                Scale = director.Scale,
+                TransportersCount = director.Transporters.Length,
+                CalcTime = Math.Round(director.ThinkingTime.TotalMilliseconds),
+                WayTime = Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3),
+                FullTime = Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3),
+                TraversedWay = Math.Round(director.TraversedWaySum),
+                STransporterWay = new double[director.Transporters.Length],
+                TargetsCount = director.Targets.Length,
+            };
+            if (director.Transporters.Any()) {
+                analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8);
+                for (int i = 0; i < director.Transporters.Length; i++)
+                    analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
+            }
+            readings.Add(analyzer);
         }
+        private void SaveResults(Reading[] _readings) {
+            string resFileName = $"Results{currentFilePath.Substring(currentFilePath.Length -4 - 4)}.xml";
+            XmlSerializer serializer = new XmlSerializer(typeof(Reading));
+            using (FileStream fs = new FileStream(resFileName, FileMode.Append)) {
+                XmlWriterSettings settings = new XmlWriterSettings();
+                settings.OmitXmlDeclaration= true;
+                settings.Indent = true;
+                settings.IndentChars = "\t";
+                XmlWriter xmlWriter= XmlWriter.Create(fs, settings);
+                for (int i = 0; i < _readings.Length; i++)
+                    serializer.Serialize(xmlWriter, _readings[i], null);
+            }
+        }
+        #endregion
 
-        private void trajectoryScale_TextChanged(object sender, TextChangedEventArgs e) {
-            if (director != null && float.TryParse((sender as TextBox).Text.Replace('.', ','), out float scale))
-                director.Scale = scale;
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
+
         }
 
         public void Refresh() {
-            collectedObjsCountL.Content = $"Количество собранных целей: {director.CollectedTargets.Length}";
-            currentObjsCountL.Content = "Количество оставшихся целей: " + 
+            collectedObjsCountL.Content = $"Cобранных целей: {director.CollectedTargets.Length}";
+            currentObjsCountL.Content = "Осталось целей: " + 
                 (director.Targets.Length - director.CollectedTargets.Length).ToString();
-            thinkTimeCountL.Content = $"Время расчёта: {Math.Round(director.ThinkingTime.TotalMilliseconds, 4)} ms";
-            wayTimeCountL.Content = $"Время в пути: {Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 2)} s";
-            allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime + tempTime + director.ThinkingTime).TotalSeconds, 2)} s";
-            //iterationsCountL.Content = "Количество итераций: " + iterations.ToString();
-            iterationsCountL.Content = $"Пройденный путь: {Math.Round(director.TraversedWaySum, 1)}";
+            thinkTimeCountL.Content = $"Время расчёта: {Math.Round(director.ThinkingTime.TotalMilliseconds)} ms";
+            wayTimeCountL.Content = $"Время в пути: {Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3)} s";
+            allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3)} s";
+            traversedWayL.Content = $"Пройденный путь: {Math.Round(director.TraversedWaySum)}";
         }
     }
 }
