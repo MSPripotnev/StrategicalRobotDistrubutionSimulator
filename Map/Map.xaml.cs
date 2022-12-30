@@ -39,7 +39,7 @@ namespace TacticalAgro.Map {
         public MapWPF() {
             InitializeComponent();
             refreshTimer = new DispatcherTimer();
-            refreshTimer.Interval = new TimeSpan(0,0,0,0,50);
+            refreshTimer.Interval = new TimeSpan(0,0,0,0,10);
             refreshTimer.Tick += RefreshTimer_Tick;
             currentFilePath = modelsFiles[0];
             if (File.Exists(currentFilePath)) {
@@ -141,7 +141,10 @@ namespace TacticalAgro.Map {
             "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-10.xml",
             "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-20.xml"
         };
+        private double iterations = 0;
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
+            refreshTimer.Stop();
+            iterations++;
             if (director.CheckMission()) {
                 director.Work();
                 if (testingCB.IsChecked == true) {
@@ -174,8 +177,11 @@ namespace TacticalAgro.Map {
                         startButton_Click(sender, null);
                     }
                     attemptsCountL.Content = $"Измерений осталось: {attemptsN}";
-                } else {
+                } 
+                else {
                     Pause();
+                    Refresh();
+                    return;
                 }
             } else if ((DateTime.Now - startTime + tempTime).TotalSeconds > 60) {
                 attemptsN = attemptsMax;
@@ -186,9 +192,9 @@ namespace TacticalAgro.Map {
                 startButton_Click(sender, null);
             }
             Refresh();
-#if PARALLEL
+            director.DistributeTask();
             director.Work();
-#endif
+            refreshTimer.Start();
         }
         private void Start() {
             for (int i = 0; i < menu.Items.Count; i++)
@@ -217,7 +223,7 @@ namespace TacticalAgro.Map {
             refreshTimer.Start();
             
             startTime = pauseTime = DateTime.Now;
-            mainTask.Start();
+            //mainTask.Start();
         }
         private void Pause() {
             refreshTimer.Stop();
@@ -421,18 +427,21 @@ namespace TacticalAgro.Map {
                 Scale = director.Scale,
                 TransportersCount = director.Transporters.Length,
                 CalcTime = Math.Round(director.ThinkingTime.TotalMilliseconds),
-                WayTime = Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3),
+                WayTime = iterations*refreshTimer.Interval.TotalSeconds,//Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3),
                 FullTime = Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3),
                 TraversedWay = Math.Round(director.TraversedWaySum),
                 STransporterWay = new double[director.Transporters.Length],
                 TargetsCount = director.Targets.Length,
+                Iterations = Math.Round(iterations)
             };
+            analyzer.RandomTime = analyzer.FullTime - analyzer.WayTime;
             if (director.Transporters.Any()) {
                 analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8);
                 for (int i = 0; i < director.Transporters.Length; i++)
                     analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
             }
             readings.Add(analyzer);
+            iterations = 0;
         }
         private void SaveResults(Reading[] _readings) {
             string resFileName = $"Results{currentFilePath.Substring(currentFilePath.Length -4 - 4)}.xml";

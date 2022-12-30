@@ -14,6 +14,7 @@ namespace TacticalAgro {
         public double CalcTime { get; set; }
         public double WayTime { get; set; }
         public double FullTime { get; set; }
+        public double Iterations { get; set; }
         [XmlIgnore]
         public double[] STransporterWay { get; set; }
         public double TraversedWay { get; set; }

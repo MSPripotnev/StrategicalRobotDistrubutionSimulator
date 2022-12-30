@@ -193,7 +193,7 @@ namespace TacticalAgro {
             Color = Colors.Red;
             CurrentState = RobotState.Ready;
             AttachedObj = null;
-            Speed = 0.001F;
+            Speed = 1F;
             InteractDistance = 30;
             BlockedTargets = new List<Target>();
         }
