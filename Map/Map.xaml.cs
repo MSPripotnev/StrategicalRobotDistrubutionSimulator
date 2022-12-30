@@ -255,7 +255,6 @@ namespace TacticalAgro.Map {
             if (open)
                 using (FileStream fs = new FileStream(path, FileMode.Open)) {
                     director = serializer.Deserialize(fs) as Director;
-                    director.Borders = mapCanvas.RenderSize;
                     if (director == null) return;
                     var @base = director.Bases[0];
                     Transporter[] transporters = new Transporter[transportersCountT];
@@ -263,6 +262,7 @@ namespace TacticalAgro.Map {
                         transporters[i] = new Transporter(@base.Position);
                         director.Add(transporters[i]);
                     }
+                    director.Borders = mapCanvas.RenderSize;
                     mapCanvas.Children.Clear();
                     if (drawCB.IsChecked == true)
                         DrawPlaceableObjects();
@@ -450,7 +450,7 @@ namespace TacticalAgro.Map {
         #endregion
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-            
+            director.Dispose();
         }
 
         public void Refresh() {

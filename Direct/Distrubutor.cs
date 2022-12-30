@@ -36,7 +36,6 @@ namespace TacticalAgro {
         }
         private void CalculateTrajectoryForFreeTransporters(Transporter[] freeTransport) {
             //распределение ближайших целей по роботам
-            cancellationTokenSource = new CancellationTokenSource(DistanceCalculationTimeout);
             for (int i = 0; i < freeTransport.Length; i++) {
                 Transporter transporter = freeTransport[i];
                 Target? nearestTarget = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p)).MinBy(
@@ -83,11 +82,6 @@ namespace TacticalAgro {
                     var nearBase = Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
                     if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
                         transporter.TargetPosition = nearBase.Position;
-                        //trajectoryTasks[i] = Task.Run(() => {
-                        transporter.Trajectory = PathFinder.CalculateTrajectory(
-                        transporter.TargetPosition, transporter.Position, Obstacles, Borders,
-                             Scale, transporter.InteractDistance, cancellationTokenSource.Token).ToList();
-                        //}, cancellationTokenSource.Token);
                         if (PathFinder.Distance(transporter.Trajectory[^1], nearBase.Position) < transporter.InteractDistance)
                             transporter.Trajectory.Add(nearBase.Position);
                     } else {
@@ -104,9 +98,6 @@ namespace TacticalAgro {
                 return;
             transporter.AttachedObj = target;
             transporter.TargetPosition = target.Position;
-            transporter.Trajectory = PathFinder.CalculateTrajectory(
-            target.Position, transporter.Position, Obstacles, Borders,
-                Scale, transporter.InteractDistance, cancellationTokenSource.Token).ToList();
         }
         private void UnlinkTargetFromTransporter(Transporter transporter) {
             transporter.AttachedObj = null;

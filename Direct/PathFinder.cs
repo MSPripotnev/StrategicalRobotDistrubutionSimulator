@@ -56,24 +56,29 @@ namespace TacticalAgro {
                 Math.Sign(PathFinder.Distance(X.Position, BasePosition) - PathFinder.Distance(Y.Position, BasePosition)) : 0;
         }
     }
-    public static class PathFinder {
-        public static double Distance(Point p1, Point p2) {
-            double dx = p2.X - p1.X;
-            double dy = p2.Y - p1.Y;
-            return Math.Sqrt(dx * dx + dy * dy);
+    public class PathFinder {
+        Obstacle[] obstacles;
+        Size borders;
+        float scale = 1.0F;
+        public PathFinder() {
+            obstacles = new Obstacle[0];
+            borders = new Size(0,0);
+            scale = 1.0F;
         }
-        public static double Heuristic(Point currentPosition, Point targetPosition) {
-            return Distance(currentPosition, targetPosition);
+        public PathFinder(Obstacle[] _obstacles, Size _borders, float _scale) {
+            obstacles = _obstacles;
+            borders = _borders;
+            scale = _scale;
         }
-        public static double FullHeuristic(Point[] way, in Point currentPosition, in Point targetPosition) {
-            double d = 0;
-            for (int i = 0; i < way.Length - 1; i++) 
-                d += Distance(way[i], way[i + 1]);
-            return d + Heuristic(currentPosition, targetPosition);
+        public void Refresh(Obstacle[] _obstacles, Size _borders) {
+            obstacles= _obstacles;
+            borders= _borders;
+        }
+        public void Refresh(float _scale) {
+            scale = _scale;
         }
         
-        public static Point[] CalculateTrajectory(in Point mainTarget, in Point robotPosition, Obstacle[] obstacles,
-                                                  Size borders, float Scale, float interactDistance, CancellationToken token) {
+        public Point[] CalculateTrajectory(in Point mainTarget, in Point robotPosition, float interactDistance, CancellationToken token) {
             Point[] result;
             List<AnalyzedPoint> openedPoints = new List<AnalyzedPoint>(); //открытый список
             List<AnalyzedPoint> closedPoints = new List<AnalyzedPoint>(); //закрытый список
@@ -87,9 +92,9 @@ namespace TacticalAgro {
                 for (int i = 0; i < 9; i++) {
                     //выбор направления
                     Point pos = new Point(
-                            currentPoint.Position.X + (i / 3 - 1) * Scale,// * (i % 2 - 1),
+                            currentPoint.Position.X + (i / 3 - 1) * scale,// * (i % 2 - 1),
                                                                           //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
-                            currentPoint.Position.Y + (i % 3 - 1) * Scale);// * (i % 2 - 1));
+                            currentPoint.Position.Y + (i % 3 - 1) * scale);// * (i % 2 - 1));
                                                     //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
                     interimP = new AnalyzedPoint(currentPoint, pos,
                         currentPoint.Distance + Distance(currentPoint, pos),
@@ -123,6 +128,16 @@ namespace TacticalAgro {
                 }
             } while (currentPoint.Heuristic >= interactDistance);
             return CreatePathFromLastPoint(currentPoint);
+        }
+
+        #region StaticFunc
+        public static double Distance(Point p1, Point p2) {
+            double dx = p2.X - p1.X;
+            double dy = p2.Y - p1.Y;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+        public static double Heuristic(Point currentPosition, Point targetPosition) {
+            return Distance(currentPosition, targetPosition);
         }
         private static Point[] CreatePathFromLastPoint(AnalyzedPoint p) {
             List<Point> path = new List<Point>();
@@ -171,5 +186,6 @@ namespace TacticalAgro {
                     return true;
             return false;
         }
+        #endregion
     }
 }

@@ -11,24 +11,46 @@ using System.ComponentModel;
 
 namespace TacticalAgro {
     public partial class Director : System.ComponentModel.INotifyPropertyChanged, IDisposable {
-        public const int DistanceCalculationTimeout = 20000;
 
         #region Properties
         [XmlIgnore]
         public TimeSpan ThinkingTime { get; set; } = TimeSpan.Zero;
+
+        #region Actors
         [XmlIgnore]
         public Scout[] Scouts { get; set; }
         [XmlIgnore]
         public Scout[] FreeScouts { get; set; }
+        private Transporter[] transporters;
         [XmlArray("Transporters")]
         [XmlArrayItem("Transporter")]
-        public Transporter[] Transporters { get; set; }
+        public Transporter[] Transporters { get => transporters; 
+            set {
+                transporters = value;
+                //установка модуля построения пути
+                var vs = Transporters.Where(p => p.Pathfinder == null).ToArray();
+                for (int i = 0; i < vs.Length; i++) {
+                    vs[i].Pathfinder = new PathFinder(Obstacles, Borders, Scale);
+                    MapChanged += vs[i].Pathfinder.Refresh;
+                    SettingsChanged += vs[i].Pathfinder.Refresh;
+                }
+            }
+        }
         [XmlIgnore]
         public Transporter[] FreeTransporters {
             get {
                 return Transporters.Where(x => x.CurrentState == RobotState.Ready).ToArray();
             }
         }
+        [XmlIgnore]
+        public double TraversedWaySum {
+            get {
+                return Transporters.Sum(p => p.TraversedWay);
+            }
+        }
+        #endregion
+
+        #region Map
         [XmlArray("Targets")]
         [XmlArrayItem("Target")]
         public Target[] Targets { get; set; }
@@ -49,29 +71,55 @@ namespace TacticalAgro {
         [XmlArray("Obstacles")]
         [XmlArrayItem("Obstacle")]
         public Obstacle[] Obstacles { get; set; }
-        private CancellationTokenSource cancellationTokenSource = 
-            new CancellationTokenSource(DistanceCalculationTimeout);
+        private Size borders;
+        [XmlIgnore]
+        public Size Borders {
+            get => borders;
+            set {
+                borders = value;
+                MapChanged?.Invoke(Obstacles, borders);
+            }
+        }
         [XmlIgnore]
         public List<IPlaceable> AllObjectsOnMap {
             get {
                 return new List<IPlaceable>(Transporters).Concat(Targets).Concat(Bases).Concat(Obstacles).ToList();
             }
         }
+        #endregion
+
+        #region Settings
+        private float scale;
         [XmlIgnore]
-        public float Scale { get; set; }
-        [XmlIgnore]
-        public Size Borders { get; set; }
-        public event PropertyChangedEventHandler? PropertyChanged;
-        public double TraversedWaySum {
-            get {
-                return Transporters.Sum(p => p.TraversedWay);
+        public float Scale {
+            get => scale;
+            set {
+                scale = value;
+                SettingsChanged?.Invoke(scale);
             }
         }
         #endregion
+        
+        #endregion
 
-        public Director() { 
+        public event Action<Obstacle[], Size> MapChanged;
+        public event Action<float> SettingsChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public Director() {
             Scale = 5.0F;
             ThinkingTime = TimeSpan.Zero;
+            if (Transporters != null && Transporters.Any()) {
+                for (int i = 0; i < Transporters.Length; i++) {
+                    MapChanged += Transporters[i].Pathfinder.Refresh;
+                    SettingsChanged += Transporters[i].Pathfinder.Refresh;
+                }
+                MapChanged?.Invoke(Obstacles, Borders);
+            }
+            Targets = new Target[0];
+            Obstacles = new Obstacle[0];
+            Transporters = new Transporter[0];
+            Bases = new Base[0];
         }
         public void Work() {
             for (int i = 0; i < Transporters.Length; i++)
@@ -133,11 +181,11 @@ namespace TacticalAgro {
         public void Serialize(string path) {
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
                 XmlSerializer xmlWriter = new XmlSerializer(typeof(Target[]));
-                xmlWriter.Serialize(fs, Targets);
+                xmlWriter.Serialize(fs, Targets.ToArray());
                 xmlWriter = new XmlSerializer(typeof(Transporter[]));
-                xmlWriter.Serialize(fs, Transporters);
+                xmlWriter.Serialize(fs, Transporters.ToArray());
                 xmlWriter = new XmlSerializer(typeof(Base[]));
-                xmlWriter.Serialize(fs, Bases);
+                xmlWriter.Serialize(fs, Bases.ToArray());
                 xmlWriter = new XmlSerializer(typeof(Obstacle[]));
                 xmlWriter.Serialize(fs, Obstacles.ToArray());
             }
