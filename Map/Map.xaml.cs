@@ -32,14 +32,15 @@ namespace TacticalAgro.Map {
             }
         }
         const int attemptsMax = 50;
-        float scaleMax = 40F;
+        float scaleMax = 5F;
         int attemptsN = attemptsMax;
-        int transportersCountT = 5 - 1;
+        int transportersCountT = 5;
 
         public MapWPF() {
             InitializeComponent();
-            refreshTimer = new DispatcherTimer();
-            refreshTimer.Interval = new TimeSpan(0,0,0,0,10);
+            refreshTimer = new DispatcherTimer {
+                Interval = new TimeSpan(0, 0, 0, 0, 10)
+            };
             refreshTimer.Tick += RefreshTimer_Tick;
             currentFilePath = modelsFiles[0];
             if (File.Exists(currentFilePath)) {
@@ -112,9 +113,9 @@ namespace TacticalAgro.Map {
                 .Where(p => PathFinder.Distance(p.Position, pos) < 20)
                 .MinBy(p => PathFinder.Distance(p.Position, pos));
             if (obj == null) {
-                for (int i = 0; i < director.Obstacles.Length; i++)
-                    if (director.Obstacles[i].PointOnObstacle(lastClickPos))
-                        obj = director.Obstacles[i];
+                for (int i = 0; i < director.Map.Obstacles.Length; i++)
+                    if (director.Map.Obstacles[i].PointOnObstacle(lastClickPos))
+                        obj = director.Map.Obstacles[i];
             }
             return obj;
         }
@@ -124,11 +125,14 @@ namespace TacticalAgro.Map {
                 DrawPlaceableObjects();
             } else {
                 mapCanvas.Children.Clear();
+                thinkTimeCountL.Content = "";
+                wayTimeCountL.Content = "";
+                allTimeCountL.Content = "";
             }
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
             if (director != null)
-                director.Borders = mapCanvas.RenderSize;
+                director.Map.Borders = mapCanvas.RenderSize;
         }
         #endregion
 
@@ -143,7 +147,7 @@ namespace TacticalAgro.Map {
         };
         private double iterations = 0;
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
-            refreshTimer.Stop();
+            //refreshTimer.Stop();
             iterations++;
             if (director.CheckMission()) {
                 director.Work();
@@ -194,7 +198,7 @@ namespace TacticalAgro.Map {
             Refresh();
             director.DistributeTask();
             director.Work();
-            refreshTimer.Start();
+            //refreshTimer.Start();
         }
         private void Start() {
             for (int i = 0; i < menu.Items.Count; i++)
@@ -262,13 +266,13 @@ namespace TacticalAgro.Map {
                 using (FileStream fs = new FileStream(path, FileMode.Open)) {
                     director = serializer.Deserialize(fs) as Director;
                     if (director == null) return;
-                    var @base = director.Bases[0];
+                    director.Map.Borders = mapCanvas.RenderSize;
+                    var @base = director.Map.Bases[0];
                     Transporter[] transporters = new Transporter[transportersCountT];
                     for (int i = 0; i < transporters.Length; i++) {
                         transporters[i] = new Transporter(@base.Position);
                         director.Add(transporters[i]);
                     }
-                    director.Borders = mapCanvas.RenderSize;
                     mapCanvas.Children.Clear();
                     if (drawCB.IsChecked == true)
                         DrawPlaceableObjects();
@@ -360,7 +364,9 @@ namespace TacticalAgro.Map {
             switch (button.Tag) {
                 case "0":
                     mapCanvas.Children.Clear();
-                    director = new Director() { Borders = mapCanvas.RenderSize };
+                    director = new Director() {
+                        Map = new TacticalMap()
+                    };
                     break;
                 case "1": //открыть
                     Microsoft.Win32.OpenFileDialog oFD = new Microsoft.Win32.OpenFileDialog();
@@ -427,14 +433,14 @@ namespace TacticalAgro.Map {
                 Scale = director.Scale,
                 TransportersCount = director.Transporters.Length,
                 CalcTime = Math.Round(director.ThinkingTime.TotalMilliseconds),
-                WayTime = iterations*refreshTimer.Interval.TotalSeconds,//Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3),
+                WayTime = (iterations * refreshTimer.Interval).TotalSeconds,//Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3),
                 FullTime = Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3),
                 TraversedWay = Math.Round(director.TraversedWaySum),
                 STransporterWay = new double[director.Transporters.Length],
                 TargetsCount = director.Targets.Length,
                 Iterations = Math.Round(iterations)
             };
-            analyzer.RandomTime = analyzer.FullTime - analyzer.WayTime;
+            analyzer.RandomTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime/1000;
             if (director.Transporters.Any()) {
                 analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8);
                 for (int i = 0; i < director.Transporters.Length; i++)
@@ -466,10 +472,12 @@ namespace TacticalAgro.Map {
             collectedObjsCountL.Content = $"Cобранных целей: {director.CollectedTargets.Length}";
             currentObjsCountL.Content = "Осталось целей: " + 
                 (director.Targets.Length - director.CollectedTargets.Length).ToString();
-            thinkTimeCountL.Content = $"Время расчёта: {Math.Round(director.ThinkingTime.TotalMilliseconds)} ms";
-            wayTimeCountL.Content = $"Время в пути: {Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3)} s";
-            allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3)} s";
             traversedWayL.Content = $"Пройденный путь: {Math.Round(director.TraversedWaySum)}";
+            if (drawCB.IsChecked == true) {
+                thinkTimeCountL.Content = $"Время расчёта: {Math.Round(director.ThinkingTime.TotalMilliseconds)} ms";
+                wayTimeCountL.Content = $"Время в пути: {(refreshTimer.Interval * iterations).TotalSeconds} s";
+                allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3)} s";
+            }
         }
     }
 }

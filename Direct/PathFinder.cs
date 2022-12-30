@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -65,14 +66,20 @@ namespace TacticalAgro {
             borders = new Size(0,0);
             scale = 1.0F;
         }
-        public PathFinder(Obstacle[] _obstacles, Size _borders, float _scale) {
-            obstacles = _obstacles;
-            borders = _borders;
+        public PathFinder(TacticalMap map, float _scale) {
+            obstacles = map.Obstacles;
+            borders = map.Borders;
             scale = _scale;
         }
-        public void Refresh(Obstacle[] _obstacles, Size _borders) {
-            obstacles= _obstacles;
-            borders= _borders;
+        public void Refresh(object o, PropertyChangedEventArgs e) {
+            if (o is Obstacle[] _obstacles)
+                obstacles = _obstacles;
+            else if (o is Size _borders)
+                borders= _borders;
+            else if (o is TacticalMap map) {
+                obstacles = map.Obstacles;
+                borders = map.Borders;
+            }
         }
         public void Refresh(float _scale) {
             scale = _scale;

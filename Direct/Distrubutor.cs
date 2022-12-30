@@ -72,14 +72,14 @@ namespace TacticalAgro {
         private void DistributeTaskForCarryingTransporters() {
             var CarryingTransporters = Transporters.Where(
                 p => p.CurrentState == RobotState.Carrying &&
-                Bases.All(b => PathFinder.Distance(b.Position, p.TargetPosition) > p.InteractDistance)
+                Map.Bases.All(b => PathFinder.Distance(b.Position, p.TargetPosition) > p.InteractDistance)
                 ).ToList();
             if (CarryingTransporters.Count > 0) {
                 Task<Point[]>[] trajectoryTasks = new Task<Point[]>[CarryingTransporters.Count];
                 DateTime startTime = DateTime.Now;
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
                     Transporter transporter = CarryingTransporters[i];
-                    var nearBase = Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
+                    var nearBase = Map.Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
                     if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
                         transporter.TargetPosition = nearBase.Position;
                         if (PathFinder.Distance(transporter.Trajectory[^1], nearBase.Position) < transporter.InteractDistance)

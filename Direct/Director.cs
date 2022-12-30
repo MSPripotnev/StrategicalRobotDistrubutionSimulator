@@ -28,11 +28,13 @@ namespace TacticalAgro {
             set {
                 transporters = value;
                 //установка модуля построения пути
-                var vs = Transporters.Where(p => p.Pathfinder == null).ToArray();
-                for (int i = 0; i < vs.Length; i++) {
-                    vs[i].Pathfinder = new PathFinder(Obstacles, Borders, Scale);
-                    MapChanged += vs[i].Pathfinder.Refresh;
-                    SettingsChanged += vs[i].Pathfinder.Refresh;
+                if (Transporters != null) {
+                    var vs = Transporters.Where(p => p.Pathfinder == null).ToArray();
+                    for (int i = 0; i < vs.Length; i++) {
+                        vs[i].Pathfinder = new PathFinder(Map, Scale);
+                        Map.PropertyChanged += vs[i].Pathfinder.Refresh;
+                        SettingsChanged += vs[i].Pathfinder.Refresh;
+                    }
                 }
             }
         }
@@ -65,25 +67,18 @@ namespace TacticalAgro {
                 return Targets.Where(x => x.Finished).ToArray();
             }
         }
-        [XmlArray("Bases")]
-        [XmlArrayItem("Base")]
-        public Base[] Bases { get; set; }
-        [XmlArray("Obstacles")]
-        [XmlArrayItem("Obstacle")]
-        public Obstacle[] Obstacles { get; set; }
-        private Size borders;
-        [XmlIgnore]
-        public Size Borders {
-            get => borders;
+        private TacticalMap map;
+        public TacticalMap Map {
+            get { return map; }
             set {
-                borders = value;
-                MapChanged?.Invoke(Obstacles, borders);
+                map = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
             }
         }
         [XmlIgnore]
         public List<IPlaceable> AllObjectsOnMap {
             get {
-                return new List<IPlaceable>(Transporters).Concat(Targets).Concat(Bases).Concat(Obstacles).ToList();
+                return new List<IPlaceable>(Transporters).Concat(Targets).Concat(Map.Bases).Concat(Map.Obstacles).ToList();
             }
         }
         #endregion
@@ -102,24 +97,15 @@ namespace TacticalAgro {
         
         #endregion
 
-        public event Action<Obstacle[], Size> MapChanged;
         public event Action<float> SettingsChanged;
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public Director() {
             Scale = 5.0F;
             ThinkingTime = TimeSpan.Zero;
-            if (Transporters != null && Transporters.Any()) {
-                for (int i = 0; i < Transporters.Length; i++) {
-                    MapChanged += Transporters[i].Pathfinder.Refresh;
-                    SettingsChanged += Transporters[i].Pathfinder.Refresh;
-                }
-                MapChanged?.Invoke(Obstacles, Borders);
-            }
+            Map = new TacticalMap();
             Targets = new Target[0];
-            Obstacles = new Obstacle[0];
             Transporters = new Transporter[0];
-            Bases = new Base[0];
         }
         public void Work() {
             for (int i = 0; i < Transporters.Length; i++)
@@ -144,13 +130,13 @@ namespace TacticalAgro {
                 ls.Add(o);
                 Targets = ls.ToArray();
             } else if (obj is Base b) {
-                var ls = Bases.ToList();
+                var ls = Map.Bases.ToList();
                 ls.Add(b);
-                Bases = ls.ToArray();
+                Map.Bases = ls.ToArray();
             } else if (obj is Obstacle ob) {
-                var ls = Obstacles.ToList();
+                var ls = Map.Obstacles.ToList();
                 ls.Add(ob);
-                Obstacles = ls.ToArray();
+                Map.Obstacles = ls.ToArray();
             }
         }
         public void Remove(IPlaceable obj) {
@@ -163,13 +149,13 @@ namespace TacticalAgro {
                 ls.Remove(o);
                 Targets = ls.ToArray();
             } else if (obj is Base b) {
-                var ls = Bases.ToList();
+                var ls = Map.Bases.ToList();
                 ls.Remove(b);
-                Bases = ls.ToArray();
+                Map.Bases = ls.ToArray();
             } else if (obj is Obstacle ob) {
-                var ls = Obstacles.ToList();
+                var ls = Map.Obstacles.ToList();
                 ls.Remove(ob);
-                Obstacles = ls.ToArray();
+                Map.Obstacles = ls.ToArray();
             }
         }
         #endregion
@@ -184,10 +170,8 @@ namespace TacticalAgro {
                 xmlWriter.Serialize(fs, Targets.ToArray());
                 xmlWriter = new XmlSerializer(typeof(Transporter[]));
                 xmlWriter.Serialize(fs, Transporters.ToArray());
-                xmlWriter = new XmlSerializer(typeof(Base[]));
-                xmlWriter.Serialize(fs, Bases.ToArray());
-                xmlWriter = new XmlSerializer(typeof(Obstacle[]));
-                xmlWriter.Serialize(fs, Obstacles.ToArray());
+                xmlWriter = new XmlSerializer(typeof(TacticalMap));
+                xmlWriter.Serialize(fs, Map);
             }
         }
         public void Deserialize(string path) {
@@ -202,8 +186,8 @@ namespace TacticalAgro {
                 Obstacle[]? obstacles = xmlReader.Deserialize(fs) as Obstacle[];
 
                 if (targets != null) Targets = targets;
-                if (bases != null) Bases = bases;
-                if (obstacles != null) Obstacles = obstacles;
+                if (bases != null) Map.Bases = bases;
+                if (obstacles != null) Map.Obstacles = obstacles;
                 if (transporters != null) Transporters = transporters;
             }
         }
