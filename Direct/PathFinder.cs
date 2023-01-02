@@ -126,12 +126,16 @@ namespace TacticalAgro {
                     return Array.Empty<Point>();
                 }
                 if (!openedPoints.Any()) {
-                    //if (currentPoint.Heuristic < interactDistance * 2) 
-                        return CreatePathFromLastPoint(currentPoint);
-                    /*Random rnd = new Random((int)DateTime.Now.Ticks);
-                    return CalculateTrajectory(mainTarget, 
-                        new Point(robotPosition.X + (rnd.NextDouble() - 0.5)*8, robotPosition.Y + (rnd.NextDouble() - 0.5)*8), 
-                        obstacles, borders, Scale, interactDistance, token);*/
+                    try {
+                        if (currentPoint.Heuristic < interactDistance)
+                            return CreatePathFromLastPoint(currentPoint);
+                        Random rnd = new Random((int)DateTime.Now.Ticks);
+                        return CalculateTrajectory(mainTarget,
+                            new Point(robotPosition.X + (rnd.NextDouble() - 0.5) * 4, robotPosition.Y + (rnd.NextDouble() - 0.5) * 4),
+                            interactDistance, token);
+                    } catch (StackOverflowException) {
+                        return Array.Empty<Point>();
+                    }
                 }
             } while (currentPoint.Heuristic >= interactDistance);
             return CreatePathFromLastPoint(currentPoint);
