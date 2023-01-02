@@ -10,7 +10,7 @@ using System.Xml.Serialization;
 
 namespace TacticalAgro {
     public class Tester {
-        public string[] ModelsFiles { get; set; }
+        public Model[] Models { get; set; }
         string currentFilePath = "";
         private Director director;
         List<Reading> readings = new List<Reading>();
@@ -28,36 +28,28 @@ namespace TacticalAgro {
         private float scaleMax = 5F;
         const int attemptsMax = 10;
         public int AttemptsN { get; private set; } = attemptsMax;
-        private List<int> TransportersT = new List<int>();
-        private List<float> ScalesT = new List<float>();
 
         public Tester() {
-            ModelsFiles = new string[] {
-                "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-10.xml",
-                "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-20.xml",
-                "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-10.xml",
-                "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-20.xml"
+            Models = new Model[] {
+                new Model("G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-10.xml",
+                    (1, 15, 1), (5.0F, 15, 0)),
+                new Model("G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-20.xml",
+                    (1, 25, 1), (5.0F, 15, 0)),
+                new Model("G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-10.xml",
+                    (1, 15, 1), (5.0F, 15, 0)),
+                new Model("G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-20.xml",
+                    (1, 25, 1), (5.0F, 15, 0)),
             };
-            currentFilePath = ModelsFiles[0];
-            LoadTest();
-        }
-
-        private void LoadTest() {
-            TransportersT = new List<int>(XRange);
-            ScalesT = new List<float>(XRange);
-            for (int i = 0; i < XRange; i++) {
-                TransportersT.Add(i + 1);
-                ScalesT.Add(scaleMax);
-            }
+            currentFilePath = Models[0].Path;
         }
 
         public bool NextAttempt() {
             if (--AttemptsN < 1) {
-                TransportersT = TransportersT.SkipLast(1).ToList();
-                ScalesT = ScalesT.SkipLast(1).ToList();
+                Models[0].TransportersT = Models[0].TransportersT.SkipLast(1).ToList();
+                Models[0].ScalesT = Models[0].ScalesT.SkipLast(1).ToList();
                 AttemptsN = attemptsMax;
 
-                if (TransportersT.Any())
+                if (Models[0].TransportersT.Any())
                     return true;
 
                 SaveResults(Readings);
@@ -67,12 +59,11 @@ namespace TacticalAgro {
             return true;
         }
         public bool NextModel() {
-            ModelsFiles = ModelsFiles.Skip(1).ToArray();
-            if (ModelsFiles.Any())
-                currentFilePath = ModelsFiles[0];
+            Models = Models.Skip(1).ToArray();
+            if (Models.Any())
+                currentFilePath = Models[0].Path;
             else return false;
 
-            LoadTest();
             return true;
         }
         public Director LoadModel(string path) {
@@ -82,12 +73,12 @@ namespace TacticalAgro {
                 if (director == null) return null;
 
                 var @base = director.Map.Bases[0];
-                Transporter[] transporters = new Transporter[TransportersT[^1]];
-                for (int i = 0; i < TransportersT[^1]; i++) {
+                Transporter[] transporters = new Transporter[Models[0].TransportersT[^1]];
+                for (int i = 0; i < Models[0].TransportersT[^1]; i++) {
                     transporters[i] = new Transporter(@base.Position);
                     director.Add(transporters[i]);
                 }
-                director.Scale = ScalesT[^1];
+                 director.Scale = Models[0].ScalesT[^1];
 
                 if (currentFilePath != path)
                     currentFilePath = path;

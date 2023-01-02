@@ -29,8 +29,8 @@ namespace TacticalAgro.Map {
             };
             tester = new Tester();
             refreshTimer.Tick += RefreshTimer_Tick;
-            if (File.Exists(tester.ModelsFiles[0])) {
-                OpenSaveFile(tester.ModelsFiles[0], true);
+            if (File.Exists(tester.Models[0].Path)) {
+                OpenSaveFile(tester.Models[0].Path, true);
                 transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
             }
         }
@@ -118,7 +118,7 @@ namespace TacticalAgro.Map {
                     tester.SaveResults(director, refreshTimer.Interval,
                     (DateTime.Now - startTime).TotalSeconds, ref iterations);
                     if (tester.NextAttempt()) {
-                        OpenSaveFile(tester.ModelsFiles[0], true);
+                        OpenSaveFile(tester.Models[0].Path, true);
 
                         attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}";
                         transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
@@ -190,7 +190,7 @@ namespace TacticalAgro.Map {
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
-            OpenSaveFile(tester.ModelsFiles[0], true);
+            OpenSaveFile(tester.Models[0].Path, true);
             startB.Content = "Запуск";
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = true;
