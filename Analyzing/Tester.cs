@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -102,19 +102,20 @@ namespace TacticalAgro {
             }
             return director;
         }
-        public void SaveResults(Director director, TimeSpan timerInterval, double fullTime, ref double iterations) {
+        public void SaveResults(Director director, TimeSpan wayTime, TimeSpan fullTime, ref double iterations) {
             var analyzer = new Reading() {
                 ModelName = Models[0].Name,
                 TransportersCount = director.Transporters.Length,
-                CalcTime = Math.Round(director.ThinkingTime.TotalMilliseconds),
-                WayTime = (iterations*timerInterval).TotalSeconds,//Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3),
-                FullTime = fullTime,
-                TraversedWay = Math.Round(director.TraversedWaySum),
+                Scale = Math.Round(director.Scale, 3),
+                CalcTime = director.ThinkingTime.TotalSeconds,
+                WayTime = wayTime.TotalSeconds,
+                FullTime = fullTime.TotalSeconds,
+                TraversedWay = director.TraversedWaySum,
                 STransporterWay = new double[director.Transporters.Length],
                 TargetsCount = director.Targets.Length,
                 Iterations = Math.Round(iterations)
             };
-            analyzer.RandomTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime / 1000;
+            analyzer.DistributeTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime;
             if (director.Transporters.Any()) {
                 analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8);
                 for (int i = 0; i < director.Transporters.Length; i++)

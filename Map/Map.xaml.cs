@@ -108,15 +108,40 @@ namespace TacticalAgro.Map {
         Task mainTask;
         CancellationTokenSource tokenSource = new CancellationTokenSource();
         private double iterations = 0;
+        TimeSpan realWorkTime = TimeSpan.Zero, realWayTime = TimeSpan.Zero;
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
             refreshTimer.Stop();
+            var dt = DateTime.Now;
             iterations++;
-            if (director.CheckMission()) {
-                director.Work();
-                if (testingCB.IsChecked == true) {
+            try {
+                if (director.CheckMission()) {
+                    director.Work();
+                    if (testingCB.IsChecked == true) {
+                        tester.SaveResults(director, realWayTime,
+                            realWorkTime, ref iterations);
+                        Stop();
+                        if (tester.NextAttempt()) {
+                            OpenSaveFile(tester.Models[0].Path, true);
+
+                            attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\nМоделей: {tester.Models.Length}";
+                            transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
+                            trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
+
+                            startButton_Click(sender, null);
+                        } else {
+                            Refresh();
+                            director = null;
+                            return;
+                        }
+                    } else {
+                        Pause();
+                        Refresh();
+                        return;
+                    }
+                } else if (realWayTime.TotalSeconds > 2) {
+                    tester.SaveResults(director, TimeSpan.MaxValue,
+                            realWorkTime, ref iterations);
                     Stop();
-                    tester.SaveResults(director, refreshTimer.Interval,
-                    (DateTime.Now - startTime).TotalSeconds, ref iterations);
                     if (tester.NextAttempt()) {
                         OpenSaveFile(tester.Models[0].Path, true);
 
@@ -126,33 +151,28 @@ namespace TacticalAgro.Map {
 
                         startButton_Click(sender, null);
                     } else {
-                        director = null;
                         Refresh();
+                        director = null;
                         return;
                     }
                 }
-                else {
-                    Pause();
-                    Refresh();
-                    return;
-                }
-            } /*else if ((DateTime.Now - startTime + tempTime).TotalSeconds > 180) {
-                attemptsN = attemptsMax;
-                Stop();
-                director = null;
-                OpenSaveFile(currentFilePath, true);
-                trajectoryScaleTB.Text = Math.Round((director.Scale - 0.2F), 3).ToString();
-                startButton_Click(sender, null);
-            }*/
+            } catch (Exception ex) {
+                MessageBox.Show(ex.ToString());
+                tester.Dispose();
+                director.Dispose();
+            }
             Refresh();
             director.DistributeTask();
+            var dt2 = DateTime.Now;
             director.Work();
+            realWayTime += DateTime.Now - dt2;
+            realWorkTime += DateTime.Now - dt;
             refreshTimer.Start();
         }
         private void Start() {
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = false;
-            tokenSource = new CancellationTokenSource();
+            /*tokenSource = new CancellationTokenSource();
             mainTask = new Task(() => {
                 //director.DistributeTask();
                 tokenSource.Token.Register(() => {
@@ -171,7 +191,7 @@ namespace TacticalAgro.Map {
                     }
 #endif
                 }
-            }, tokenSource.Token, TaskCreationOptions.LongRunning);
+            }, tokenSource.Token, TaskCreationOptions.LongRunning);*/
 
             refreshTimer.Start();
 
@@ -180,13 +200,13 @@ namespace TacticalAgro.Map {
         }
         private void Pause() {
             refreshTimer.Stop();
-            tokenSource.Cancel();
+            //tokenSource.Cancel();
             pauseTime = DateTime.Now;
             startB.Content = "Запуск";
             //pauseTime = startTime;
         }
         private void Stop() {
-            tokenSource.Cancel();
+            //tokenSource.Cancel();
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
@@ -200,6 +220,8 @@ namespace TacticalAgro.Map {
             if (director != null)
                 director.ThinkingTime = TimeSpan.Zero;
             tempTime = TimeSpan.Zero;
+            realWorkTime = TimeSpan.Zero;
+            realWayTime = TimeSpan.Zero;
             pauseTime = DateTime.MinValue;
             startTime = DateTime.Now;
         }
@@ -377,8 +399,8 @@ namespace TacticalAgro.Map {
             traversedWayL.Content = $"Пройденный путь: {Math.Round(director.TraversedWaySum)}";
             if (drawCB.IsChecked == true) {
                 thinkTimeCountL.Content = $"Время расчёта: {Math.Round(director.ThinkingTime.TotalMilliseconds)} ms";
-                wayTimeCountL.Content = $"Время в пути: {(refreshTimer.Interval * iterations).TotalSeconds} s";
-                allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3)} s";
+                wayTimeCountL.Content = $"Время в пути: {(realWayTime).TotalMilliseconds} ms";
+                allTimeCountL.Content = $"Время алгоритма: {Math.Round((realWorkTime).TotalSeconds, 3)} s";
             }
         }
     }

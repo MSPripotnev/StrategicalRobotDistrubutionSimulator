@@ -14,7 +14,7 @@ namespace TacticalAgro {
         public double Scale { get; set; }
         public double CalcTime { get; set; }
         public double WayTime { get; set; }
-        public double RandomTime { get; set; }
+        public double DistributeTime { get; set; }
         public double FullTime { get; set; }
         public double Iterations { get; set; }
         [XmlIgnore]
