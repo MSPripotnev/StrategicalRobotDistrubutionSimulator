@@ -1,4 +1,5 @@
 ﻿//#define PARALLEL
+using System.DirectoryServices.ActiveDirectory;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,54 +17,21 @@ namespace TacticalAgro.Map {
     /// </summary>
     public partial class MapWPF : Window {
         Director director;
-        static string currentFilePath = "";
         TimeSpan tempTime = TimeSpan.Zero;
         DateTime startTime = DateTime.MinValue, pauseTime;
         DispatcherTimer refreshTimer;
-        List<Reading> readings = new List<Reading>();
-        [XmlArray(ElementName = "Readings")]
-        [XmlArrayItem(ElementName = "Reading")]
-        public Reading[] Readings {
-            get {
-                return readings.ToArray();
-            }
-            set {
-                readings = new List<Reading>(value);
-            }
-        }
-        const int attemptsMax = 50;
-        float scaleMax = 5F;
-        int attemptsN = attemptsMax;
-        int transportersCountT = 5;
+        Tester tester= new Tester();
 
         public MapWPF() {
             InitializeComponent();
             refreshTimer = new DispatcherTimer {
-                Interval = new TimeSpan(0, 0, 0, 0, 10)
+                Interval = new TimeSpan(0, 0, 0, 0, 2)
             };
+            tester = new Tester();
             refreshTimer.Tick += RefreshTimer_Tick;
-            currentFilePath = modelsFiles[0];
-            if (File.Exists(currentFilePath)) {
-                OpenSaveFile(currentFilePath, true);
+            if (File.Exists(tester.ModelsFiles[0])) {
+                OpenSaveFile(tester.ModelsFiles[0], true);
                 transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
-                director.Scale = scaleMax;
-                trajectoryScaleTB.Text = scaleMax.ToString();
-            }
-            for (int i = 0; i < modelsFiles.Length; i++) {
-                string resFileName = $"Results{modelsFiles[i].Substring(modelsFiles[i].Length-4-4)}.xml";
-                if (!File.Exists(resFileName)) {
-                    using (FileStream fs = new FileStream(resFileName, FileMode.Create)) {
-                        XmlWriterSettings settings = new XmlWriterSettings() {
-                            Indent = true,
-                            ConformanceLevel = ConformanceLevel.Auto,
-                            WriteEndDocumentOnClose = false
-                        };
-                        var writer = XmlWriter.Create(fs, settings);
-                        writer.WriteStartDocument();
-                        writer.WriteStartElement("Readings");
-                        writer.Close();
-                    }
-                }
             }
         }
         #region Drawing
@@ -139,66 +107,47 @@ namespace TacticalAgro.Map {
         #region Work
         Task mainTask;
         CancellationTokenSource tokenSource = new CancellationTokenSource();
-        string[] modelsFiles = new string[] {
-            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-10.xml",
-            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside1-20.xml",
-            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-10.xml",
-            "G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\testInside2-20.xml"
-        };
         private double iterations = 0;
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
-            //refreshTimer.Stop();
+            refreshTimer.Stop();
             iterations++;
             if (director.CheckMission()) {
                 director.Work();
                 if (testingCB.IsChecked == true) {
-                    SaveResults();
                     Stop();
-                    if (--attemptsN < 1) {
-                        SaveResults(Readings);
-                        readings.Clear();
-                        if (director.Scale > 1.0F) {
-                            trajectoryScaleTB.Text = Math.Round((director.Scale-1F), 3).ToString();
-                            attemptsN = attemptsMax;
-                            director = null;
-                            OpenSaveFile(currentFilePath, true);
-                            Thread.Sleep(200);
-                            startButton_Click(sender, null);
-                        } else if (modelsFiles.Any()) {
-                            currentFilePath = modelsFiles[0];
-                            modelsFiles = modelsFiles.Skip(1).ToArray();
-                            attemptsN = attemptsMax;
-                            director = null;
-                            OpenSaveFile(currentFilePath, true);
-                            trajectoryScaleTB.Text = scaleMax.ToString();
-                            Thread.Sleep(200);
-                            startButton_Click(sender, null);
-                        }
+                    tester.SaveResults(director, refreshTimer.Interval,
+                    (DateTime.Now - startTime).TotalSeconds, ref iterations);
+                    if (tester.NextAttempt()) {
+                        OpenSaveFile(tester.ModelsFiles[0], true);
+
+                        attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}";
+                        transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
+                        trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
+
+                        startButton_Click(sender, null);
                     } else {
                         director = null;
-                        OpenSaveFile(currentFilePath, true);
-                        Thread.Sleep(100);
-                        startButton_Click(sender, null);
+                        Refresh();
+                        return;
                     }
-                    attemptsCountL.Content = $"Измерений осталось: {attemptsN}";
-                } 
+                }
                 else {
                     Pause();
                     Refresh();
                     return;
                 }
-            } else if ((DateTime.Now - startTime + tempTime).TotalSeconds > 60) {
+            } /*else if ((DateTime.Now - startTime + tempTime).TotalSeconds > 180) {
                 attemptsN = attemptsMax;
                 Stop();
                 director = null;
                 OpenSaveFile(currentFilePath, true);
                 trajectoryScaleTB.Text = Math.Round((director.Scale - 0.2F), 3).ToString();
                 startButton_Click(sender, null);
-            }
+            }*/
             Refresh();
             director.DistributeTask();
             director.Work();
-            //refreshTimer.Start();
+            refreshTimer.Start();
         }
         private void Start() {
             for (int i = 0; i < menu.Items.Count; i++)
@@ -225,7 +174,7 @@ namespace TacticalAgro.Map {
             }, tokenSource.Token, TaskCreationOptions.LongRunning);
 
             refreshTimer.Start();
-            
+
             startTime = pauseTime = DateTime.Now;
             //mainTask.Start();
         }
@@ -241,7 +190,7 @@ namespace TacticalAgro.Map {
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
-            OpenSaveFile(currentFilePath, true);
+            OpenSaveFile(tester.ModelsFiles[0], true);
             startB.Content = "Запуск";
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = true;
@@ -262,27 +211,16 @@ namespace TacticalAgro.Map {
 
         private void OpenSaveFile(string path, bool open) {
             XmlSerializer serializer = new XmlSerializer(typeof(Director));
-            if (open)
-                using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                    director = serializer.Deserialize(fs) as Director;
-                    if (director == null) return;
-                    director.Map.Borders = mapCanvas.RenderSize;
-                    var @base = director.Map.Bases[0];
-                    Transporter[] transporters = new Transporter[transportersCountT];
-                    for (int i = 0; i < transporters.Length; i++) {
-                        transporters[i] = new Transporter(@base.Position);
-                        director.Add(transporters[i]);
-                    }
-                    mapCanvas.Children.Clear();
-                    if (drawCB.IsChecked == true)
-                        DrawPlaceableObjects();
-                    trajectoryScale_TextChanged(trajectoryScaleTB, null);
-                    startB.IsEnabled = true;
-                    if (currentFilePath != path)
-                        currentFilePath = path;
-                    fs.Close();
-                } 
-            else
+            if (open) {
+                director = tester.LoadModel(path);
+                if (director == null) return;
+                director.Map.Borders = mapCanvas.RenderSize;
+                mapCanvas.Children.Clear();
+                if (drawCB.IsChecked == true)
+                    DrawPlaceableObjects();
+                trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
+                startB.IsEnabled = true;
+            } else
                 using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
                     XmlWriterSettings settings = new XmlWriterSettings();
                     settings.Indent = true;
@@ -343,7 +281,7 @@ namespace TacticalAgro.Map {
 
             lastClickPos = new Point(0, 0);
         }
-        private void startButton_Click(object sender, RoutedEventArgs e) {            
+        private void startButton_Click(object sender, RoutedEventArgs e) {
             if (startB.Content.ToString() == "Запуск") {
                 if (pauseTime > startTime)
                     tempTime += pauseTime - startTime;
@@ -388,13 +326,13 @@ namespace TacticalAgro.Map {
         private void deleteObjectB_Click(object sender, RoutedEventArgs e) {
             IPlaceable? obj = null;
             obj = FindObject(lastClickPos);
-            
+
             if (obj == null) return;
             if (propertyGrid.SelectedObject == obj)
                 propertyGrid.SelectedObject = null;
             director.Remove(obj);
             mapCanvas.Children.Clear();
-            
+
             DrawPlaceableObjects();
         }
         private void undoB_Click(object sender, RoutedEventArgs e) {
@@ -406,7 +344,7 @@ namespace TacticalAgro.Map {
                 }
             } else {
                 mapCanvas.Children.Remove(mapCanvas.Children[^1]);
-                
+
             }
         }
         private void finishObjectB_Click(object sender, RoutedEventArgs e) {
@@ -427,50 +365,13 @@ namespace TacticalAgro.Map {
         }
         #endregion
 
-        #region Analyzing
-        private void SaveResults() {
-            var analyzer = new Reading() {
-                Scale = director.Scale,
-                TransportersCount = director.Transporters.Length,
-                CalcTime = Math.Round(director.ThinkingTime.TotalMilliseconds),
-                WayTime = (iterations * refreshTimer.Interval).TotalSeconds,//Math.Round((DateTime.Now - startTime + tempTime - director.ThinkingTime).TotalSeconds, 3),
-                FullTime = Math.Round((DateTime.Now - startTime + tempTime).TotalSeconds, 3),
-                TraversedWay = Math.Round(director.TraversedWaySum),
-                STransporterWay = new double[director.Transporters.Length],
-                TargetsCount = director.Targets.Length,
-                Iterations = Math.Round(iterations)
-            };
-            analyzer.RandomTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime/1000;
-            if (director.Transporters.Any()) {
-                analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8);
-                for (int i = 0; i < director.Transporters.Length; i++)
-                    analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
-            }
-            readings.Add(analyzer);
-            iterations = 0;
-        }
-        private void SaveResults(Reading[] _readings) {
-            string resFileName = $"Results{currentFilePath.Substring(currentFilePath.Length -4 - 4)}.xml";
-            XmlSerializer serializer = new XmlSerializer(typeof(Reading));
-            using (FileStream fs = new FileStream(resFileName, FileMode.Append)) {
-                XmlWriterSettings settings = new XmlWriterSettings();
-                settings.OmitXmlDeclaration= true;
-                settings.Indent = true;
-                settings.IndentChars = "\t";
-                XmlWriter xmlWriter= XmlWriter.Create(fs, settings);
-                for (int i = 0; i < _readings.Length; i++)
-                    serializer.Serialize(xmlWriter, _readings[i], null);
-            }
-        }
-        #endregion
-
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             director.Dispose();
         }
 
         public void Refresh() {
             collectedObjsCountL.Content = $"Cобранных целей: {director.CollectedTargets.Length}";
-            currentObjsCountL.Content = "Осталось целей: " + 
+            currentObjsCountL.Content = "Осталось целей: " +
                 (director.Targets.Length - director.CollectedTargets.Length).ToString();
             traversedWayL.Content = $"Пройденный путь: {Math.Round(director.TraversedWaySum)}";
             if (drawCB.IsChecked == true) {
