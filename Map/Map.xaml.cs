@@ -367,6 +367,7 @@ namespace TacticalAgro.Map {
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             director.Dispose();
+            tester.Dispose();
         }
 
         public void Refresh() {

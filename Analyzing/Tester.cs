@@ -9,7 +9,7 @@ using System.Xml;
 using System.Xml.Serialization;
 
 namespace TacticalAgro {
-    public class Tester {
+    public class Tester : IDisposable {
         public Model[] Models { get; set; }
         string currentFilePath = "";
         private Director director;
@@ -150,7 +150,14 @@ namespace TacticalAgro {
                     XmlWriter xmlWriter = XmlWriter.Create(fs, settings);
                     serializer.Serialize(xmlWriter, _readings[i], null);
                 }
-            File.AppendAllLines(resFileName, new string[]{ "</" + nameof(Readings) + ">" });
+                File.AppendAllLines(resFileName, new string[]{ "</" + nameof(Readings) + ">" });
+        }
+
+        public void Dispose() {
+            if (Readings.Any()) {
+                Readings[0].ModelName += "-autosave-" + DateTime.Now.ToShortDateString();
+                SaveResults(Readings);
+            }
         }
     }
 }
