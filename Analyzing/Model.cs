@@ -10,7 +10,8 @@ namespace TacticalAgro {
         public string Path { get; set; }
         public List<int> TransportersT { get; set; } = new List<int>();
         public List<float> ScalesT { get; set; } = new List<float>();
-        public Model(string path, (int, int, int) transporterRange, (float, float, float) scaleRange) {
+        public Model(string name, string path, (int, int, int) transporterRange, (float, float, float) scaleRange) {
+            Name = name;
             Path = path;
             if (transporterRange.Item3 > 0) {
                 TransportersT = new List<int>(transporterRange.Item2 - transporterRange.Item1 + 1);
@@ -25,8 +26,11 @@ namespace TacticalAgro {
                 for (float i = scaleRange.Item1; i <= scaleRange.Item2; i += scaleRange.Item3)
                     ScalesT.Add(i);
             } else {
-                ScalesT = Enumerable.Repeat(scaleRange.Item1, (int)scaleRange.Item2).ToList();
+                ScalesT = Enumerable.Repeat(scaleRange.Item1, TransportersT.Count).ToList();
             }
+
+            if ((transporterRange.Item3 == 0))
+                TransportersT = Enumerable.Repeat(transporterRange.Item1, ScalesT.Count).ToList();
         }
     }
 }
