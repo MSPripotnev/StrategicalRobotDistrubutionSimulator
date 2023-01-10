@@ -1,10 +1,33 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace TacticalAgro {
+    public class ParametrRange {
+        public bool IsConst { get; init; }
+        private List<double> Values;
+
+        public ParametrRange((double start, double end, double step) range) {
+            if (IsConst = (range.step == 0)) {
+                Values = Enumerable.Repeat(Math.Round(range.start, 15), (int)range.end).ToList();
+            } else {
+                Values = new List<double>((int)(range.end - range.start + 1));
+                for (double i = Math.Round(range.start, 15); i <= range.end; i += range.step)
+                    Values.Add(Math.Round(i, 15));
+            }
+        }
+        public static implicit operator List<double>(ParametrRange range) {
+            return range.Values;
+        }
+        public static implicit operator List<float>(ParametrRange range) {
+            return range.Values.ConvertAll(p => (float)Math.Round(p, 15));
+        }
+        public static implicit operator List<int>(ParametrRange range) {
+            return range.Values.ConvertAll(p => (int)Math.Round(p));
+        }
+    }
     public class Model {
         public string Name { get; set; }
         public string Path { get; set; }
@@ -13,24 +36,16 @@ namespace TacticalAgro {
         public Model(string name, string path, (int, int, int) transporterRange, (float, float, float) scaleRange) {
             Name = name;
             Path = path;
-            if (transporterRange.Item3 > 0) {
-                TransportersT = new List<int>(transporterRange.Item2 - transporterRange.Item1 + 1);
-                for (int i = transporterRange.Item1; i <= transporterRange.Item2; i += transporterRange.Item3)
-                    TransportersT.Add(i);
-            } else {
-                TransportersT = Enumerable.Repeat(transporterRange.Item1, transporterRange.Item2).ToList();
+            TransportersT = new ParametrRange(transporterRange);
+            ScalesT = new ParametrRange(scaleRange);
+            if (!TransportersT.Any()) {
+                transporterRange.Item2 = ScalesT.Count;
+                TransportersT = new ParametrRange(transporterRange);
             }
-
-            if (scaleRange.Item3 > 0) {
-                ScalesT = new List<float>();
-                for (float i = scaleRange.Item1; i <= scaleRange.Item2; i += scaleRange.Item3)
-                    ScalesT.Add(i);
-            } else {
-                ScalesT = Enumerable.Repeat(scaleRange.Item1, TransportersT.Count).ToList();
+            if (!ScalesT.Any()) {
+                scaleRange.Item2 = TransportersT.Count;
+                ScalesT = new ParametrRange(scaleRange);
             }
-
-            if ((transporterRange.Item3 == 0))
-                TransportersT = Enumerable.Repeat(transporterRange.Item1, ScalesT.Count).ToList();
         }
     }
 }
