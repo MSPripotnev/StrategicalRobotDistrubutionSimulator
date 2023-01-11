@@ -127,6 +127,9 @@ namespace TacticalAgro {
                 var t = new Transporter(Map.Bases[0].Position);
                 Add(t);
             }
+            for (int i = 0; i < testModel.TargetsT.Count; i++) {
+                Add(new Target(testModel.TargetsT[i].Position));
+            }
         }
         public Director(string _mapPath) : this() {
             MapPath = _mapPath;

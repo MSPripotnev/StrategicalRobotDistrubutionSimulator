@@ -8,6 +8,7 @@ using System.Xml.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using System.CodeDom;
 
 namespace TacticalAgro {
     public class Obstacle : IPlaceable {
@@ -20,6 +21,14 @@ namespace TacticalAgro {
                 borders = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Borders)));
             }
+        }
+        [XmlIgnore]
+        public Polygon Polygon { 
+            get {
+                return new Polygon() {
+                    Points = new PointCollection(borders)
+                };
+            } 
         }
         [XmlIgnore]
         public Point Position { get; set; }
@@ -60,6 +69,14 @@ namespace TacticalAgro {
             }
             System.Windows.Controls.Canvas.SetZIndex(res, 0);
             res.Uid = $"obstacle_{Borders[0]}";
+            return res;
+        }
+
+        public double Perimetr() {
+            double res = 0;
+            for (int i = 0; i < Borders.Length - 1; i++) {
+                res += PathFinder.Distance(Borders[i], Borders[i + 1]);
+            }
             return res;
         }
     }
