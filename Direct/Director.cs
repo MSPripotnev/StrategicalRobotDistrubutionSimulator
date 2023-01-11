@@ -24,7 +24,7 @@ namespace TacticalAgro {
         private Transporter[] transporters;
         [XmlArray("Transporters")]
         [XmlArrayItem("Transporter")]
-        public Transporter[] Transporters { get => transporters; 
+        public Transporter[] Transporters { get => transporters;
             set {
                 transporters = value;
                 //установка модуля построения пути
@@ -69,7 +69,7 @@ namespace TacticalAgro {
         }
         private string mapPath;
         [XmlAttribute("map")]
-        public string MapPath { 
+        public string MapPath {
             get {
                 return mapPath;
             }
@@ -107,7 +107,7 @@ namespace TacticalAgro {
             }
         }
         #endregion
-        
+
         #endregion
 
         public event Action<float> SettingsChanged;
@@ -119,6 +119,14 @@ namespace TacticalAgro {
             Map = new TacticalMap();
             Targets = new Target[0];
             Transporters = new Transporter[0];
+        }
+        public Director(Model testModel) : this() {
+            MapPath = testModel.Map;
+            Scale = testModel.ScalesT[^1];
+            for (int i = 0; i < testModel.TransportersT[^1]; i++) {
+                var t = new Transporter(Map.Bases[0].Position);
+                Add(t);
+            }
         }
         public Director(string _mapPath) : this() {
             MapPath = _mapPath;

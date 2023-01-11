@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using System.Xml.Serialization;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace TacticalAgro {
     public class ParametrRange {
@@ -35,6 +36,7 @@ namespace TacticalAgro {
         public string Name { get; set; }
         [XmlIgnore]
         public string Path { get; set; }
+        public string Map { get; set; }
         [XmlArray("Transporters")]
         [XmlArrayItem("TransporterCount")]
         public List<int> TransportersT { get; set; } = new List<int>();
@@ -45,8 +47,9 @@ namespace TacticalAgro {
             TransportersT = new List<int>();
             ScalesT = new List<float>();
         }
-        public Model(string name, (int, int, int) transporterRange, (float, float, float) scaleRange) {
+        public Model(string name, string map, (int, int, int) transporterRange, (float, float, float) scaleRange) {
             Name = name;
+            Map = System.IO.Path.Combine(Paths.Default.Maps, map);
             TransportersT = new ParametrRange(transporterRange);
             ScalesT = new ParametrRange(scaleRange);
             if (!TransportersT.Any()) {
@@ -57,7 +60,8 @@ namespace TacticalAgro {
                 scaleRange.Item2 = TransportersT.Count;
                 ScalesT = new ParametrRange(scaleRange);
             }
-            using (FileStream fs = new FileStream($"{Name}.xml", FileMode.Create)) {
+            Path = System.IO.Path.Combine(Paths.Default.Tests, $"{Name}.xml");
+            using (FileStream fs = new FileStream(Path, FileMode.Create)) {
                 XmlSerializer xmlSerializer = new XmlSerializer(typeof(Model));
                 XmlWriterSettings settings = new XmlWriterSettings() {
                     Indent = true,
@@ -67,11 +71,19 @@ namespace TacticalAgro {
             }
         }
         public Model(string path) {
+            path = System.IO.Path.Combine(Paths.Default.Tests, path);
             if (System.IO.File.Exists(path))
                 using (FileStream fs = new FileStream(path, FileMode.Open)) {
                     XmlSerializer xmlSerializer = new XmlSerializer(typeof(Model));
-                    xmlSerializer.Deserialize(fs);
+                    Model m = (Model)xmlSerializer.Deserialize(fs);
+                    this.Map = m.Map;
+                    this.TransportersT = m.TransportersT;
+                    this.TargetsT = m.TargetsT;
+                    this.ScalesT = m.ScalesT;
+                    this.Name = m.Name;
+                    this.Path = path;
                 }
+            else MessageBox.Show("�� ������� ����� ����: " + path);
         }
     }
 }

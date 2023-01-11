@@ -183,7 +183,6 @@ namespace TacticalAgro {
         #endregion
 
         public event PropertyChangedEventHandler PropertyChanged;
-        
         #region Constructors
         public Transporter(Point pos) : this() {
             Position = pos;
@@ -208,7 +207,6 @@ namespace TacticalAgro {
                 case RobotState.Ready:
                     break;
                 case RobotState.Thinking:
-                    
                     break;
                 case RobotState.Going:
                     if (Trajectory.Count > 0) {
@@ -219,7 +217,6 @@ namespace TacticalAgro {
                             }
                         }
                     }
-                        
                     break;
                 case RobotState.Carrying:
                     if (Trajectory.Count > 0)
@@ -244,20 +241,14 @@ namespace TacticalAgro {
                 }
                 Trajectory = pc;
             }
-
-            Point V = new Point(nextPoint.X - Position.X, //вектор движения
-                                nextPoint.Y - Position.Y);
-            float d = (float)PathFinder.Distance(Position, nextPoint); //длина вектора
-            //нормировка
-            if (d > 0) {
-                V.X /= d;
-                V.Y /= d;
-            }
+            Vector V = nextPoint - Position;
+            if (V.Length > 0)
+                V.Normalize();
             //новое значение
             Position = new Point(Position.X + V.X * Speed, Position.Y + V.Y * Speed);
         }
         public override string ToString() {
-            return Enum.GetName(typeof(RobotState), state) + "_" +  
+            return Enum.GetName(typeof(RobotState), state) + "_" +
                 (new Point(Math.Round(position.X, 2), Math.Round(position.Y, 2)).ToString());
         }
         #endregion

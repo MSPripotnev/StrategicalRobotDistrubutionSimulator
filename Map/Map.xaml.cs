@@ -16,7 +16,20 @@ namespace TacticalAgro.Map {
     /// Логика взаимодействия для Map.xaml
     /// </summary>
     public partial class MapWPF : Window {
-        Director director;
+        private Director director;
+        public Director Director {
+            get => director;
+            set {
+                director = value;
+                if (director != null) {
+                    mapCanvas.Children.Clear();
+                    if (drawCB.IsChecked == true)
+                        DrawPlaceableObjects();
+                    trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
+                    startB.IsEnabled = true;
+                }
+            }
+        }
         TimeSpan tempTime = TimeSpan.Zero;
         DateTime startTime = DateTime.MinValue, pauseTime;
         DispatcherTimer refreshTimer;
@@ -25,19 +38,19 @@ namespace TacticalAgro.Map {
         public MapWPF() {
             InitializeComponent();
             refreshTimer = new DispatcherTimer {
-                Interval = new TimeSpan(0, 0, 0, 0, 2)
+                Interval = new TimeSpan(0, 0, 0, 0, 50)
             };
             tester = new Tester();
             refreshTimer.Tick += RefreshTimer_Tick;
             if (File.Exists(tester.Models[0].Path)) {
-                OpenSaveFile(tester.Models[0].Path, true);
-                transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
+                Director = tester.LoadModel(tester.Models[0].Path);
+                transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
             }
         }
         #region Drawing
         private void DrawPlaceableObjects() {
-            for (int i = 0; i < director.AllObjectsOnMap.Count; i++) {
-                IPlaceable obj = director.AllObjectsOnMap[i];
+            for (int i = 0; i < Director.AllObjectsOnMap.Count; i++) {
+                IPlaceable obj = Director.AllObjectsOnMap[i];
                 var UIObj = obj.Build();
                 mapCanvas.Children.Add(UIObj);
 
@@ -76,19 +89,19 @@ namespace TacticalAgro.Map {
             }
         }
         private IPlaceable? FindObject(Point pos) {
-            if (director == null) return null;
-            var obj = director.AllObjectsOnMap
+            if (Director == null) return null;
+            var obj = Director.AllObjectsOnMap
                 .Where(p => PathFinder.Distance(p.Position, pos) < 20)
                 .MinBy(p => PathFinder.Distance(p.Position, pos));
             if (obj == null) {
-                for (int i = 0; i < director.Map.Obstacles.Length; i++)
-                    if (director.Map.Obstacles[i].PointOnObstacle(lastClickPos))
-                        obj = director.Map.Obstacles[i];
+                for (int i = 0; i < Director.Map.Obstacles.Length; i++)
+                    if (Director.Map.Obstacles[i].PointOnObstacle(lastClickPos))
+                        obj = Director.Map.Obstacles[i];
             }
             return obj;
         }
         private void CheckBox_Checked(object sender, RoutedEventArgs e) {
-            if (director == null) return;
+            if (Director == null) return;
             if (drawCB.IsChecked ?? false) {
                 DrawPlaceableObjects();
             } else {
@@ -99,8 +112,8 @@ namespace TacticalAgro.Map {
             }
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
-            if (director != null)
-                director.Map.Borders = mapCanvas.RenderSize;
+            if (Director != null)
+                Director.Map.Borders = mapCanvas.RenderSize;
         }
         #endregion
 
@@ -114,23 +127,23 @@ namespace TacticalAgro.Map {
             var dt = DateTime.Now;
             iterations++;
             try {
-                if (director.CheckMission()) {
-                    director.Work();
+                if (Director.CheckMission()) {
+                    Director.Work();
                     if (testingCB.IsChecked == true) {
-                        tester.SaveResults(director, realWayTime,
+                        tester.SaveResults(Director, realWayTime,
                             realWorkTime, ref iterations);
                         Stop();
                         if (tester.NextAttempt()) {
-                            OpenSaveFile(tester.Models[0].Path, true);
+                            Director = tester.ReloadModel();
 
                             attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\nМоделей: {tester.Models.Length}";
-                            transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
-                            trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
+                            transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
+                            trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
 
                             startButton_Click(sender, null);
                         } else {
                             Refresh();
-                            director = null;
+                            Director = null;
                             return;
                         }
                     } else {
@@ -138,35 +151,35 @@ namespace TacticalAgro.Map {
                         Refresh();
                         return;
                     }
-                } else if (realWayTime.TotalSeconds > 2) {
-                    tester.SaveResults(director, TimeSpan.MaxValue,
+                } else if (realWayTime.TotalSeconds > 120) {
+                    tester.SaveResults(Director, TimeSpan.MaxValue,
                             realWorkTime, ref iterations);
                     Stop();
                     if (tester.NextAttempt()) {
-                        OpenSaveFile(tester.Models[0].Path, true);
+                        Director = tester.ReloadModel();
 
                         attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}";
-                        transportersCountL.Content = $"Транспортеров: {director.Transporters.Length}";
-                        trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
+                        transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
+                        trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
 
                         startButton_Click(sender, null);
                     } else {
                         Refresh();
-                        director = null;
+                        Director = null;
                         return;
                     }
                 }
             } catch (Exception ex) {
                 MessageBox.Show(ex.ToString());
                 tester.Dispose();
-                director.Dispose();
+                Director.Dispose();
             }
             Refresh();
-            director.DistributeTask();
+            Director.DistributeTask();
             var dt2 = DateTime.Now;
-            director.Work();
-            realWayTime += DateTime.Now - dt2;
-            realWorkTime += DateTime.Now - dt;
+            Director.Work();
+            realWayTime += DateTime.Now - dt2 + refreshTimer.Interval;
+            realWorkTime += DateTime.Now - dt + refreshTimer.Interval;
             refreshTimer.Start();
         }
         private void Start() {
@@ -210,15 +223,16 @@ namespace TacticalAgro.Map {
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
-            OpenSaveFile(tester.Models[0].Path, true);
+            if (testingCB.IsChecked != true)
+                Director = tester.ReloadModel();
             startB.Content = "Запуск";
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = true;
             stopB.IsEnabled = false;
         }
         private void RefreshTime() {
-            if (director != null)
-                director.ThinkingTime = TimeSpan.Zero;
+            if (Director != null)
+                Director.ThinkingTime = TimeSpan.Zero;
             tempTime = TimeSpan.Zero;
             realWorkTime = TimeSpan.Zero;
             realWayTime = TimeSpan.Zero;
@@ -226,28 +240,24 @@ namespace TacticalAgro.Map {
             startTime = DateTime.Now;
         }
         private void trajectoryScale_TextChanged(object sender, TextChangedEventArgs e) {
-            if (director != null && float.TryParse((sender as TextBox).Text.Replace('.', ','), out float scale))
-                director.Scale = scale;
+            if (Director != null && float.TryParse((sender as TextBox).Text.Replace('.', ','), out float scale))
+                Director.Scale = scale;
         }
         #endregion
 
         private void OpenSaveFile(string path, bool open) {
             XmlSerializer serializer = new XmlSerializer(typeof(Director));
             if (open) {
-                director = tester.LoadModel(path);
-                if (director == null) return;
-                director.Map.Borders = mapCanvas.RenderSize;
-                mapCanvas.Children.Clear();
-                if (drawCB.IsChecked == true)
-                    DrawPlaceableObjects();
-                trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
-                startB.IsEnabled = true;
+                using (FileStream fs = new FileStream(path, FileMode.Open)) {
+                    Director = serializer.Deserialize(fs) as Director;
+                    fs.Close();
+                }
             } else
                 using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
                     XmlWriterSettings settings = new XmlWriterSettings();
                     settings.Indent = true;
                     settings.IndentChars = "\t";
-                    serializer.Serialize(XmlWriter.Create(fs, settings), director);
+                    serializer.Serialize(XmlWriter.Create(fs, settings), Director);
                     fs.Close();
                 }
         }
@@ -295,7 +305,7 @@ namespace TacticalAgro.Map {
                     break;
             }
             if (obj == null) return;
-            director.Add(obj);
+            Director.Add(obj);
             mapCanvas.Children.Add(obj.Build());
             if (obj is Transporter t) {
                 mapCanvas.Children.Add(t.BuildTrajectory());
@@ -324,7 +334,7 @@ namespace TacticalAgro.Map {
             switch (button.Tag) {
                 case "0":
                     mapCanvas.Children.Clear();
-                    director = new Director();
+                    Director = new Director();
                     break;
                 case "1": //открыть
                     Microsoft.Win32.OpenFileDialog oFD = new Microsoft.Win32.OpenFileDialog();
@@ -350,7 +360,7 @@ namespace TacticalAgro.Map {
             if (obj == null) return;
             if (propertyGrid.SelectedObject == obj)
                 propertyGrid.SelectedObject = null;
-            director.Remove(obj);
+            Director.Remove(obj);
             mapCanvas.Children.Clear();
 
             DrawPlaceableObjects();
@@ -376,7 +386,7 @@ namespace TacticalAgro.Map {
                 new_obstacle = null;
             }
             if (obj != null) {
-                director.Add(obj);
+                Director.Add(obj);
                 mapCanvas.Children.Add(obj.Build());
             }
             (mapCanvas.ContextMenu.Items[0] as MenuItem).IsEnabled = true;
@@ -386,17 +396,17 @@ namespace TacticalAgro.Map {
         #endregion
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-            director.Dispose();
+            Director.Dispose();
             tester.Dispose();
         }
 
         public void Refresh() {
-            collectedObjsCountL.Content = $"Cобранных целей: {director.CollectedTargets.Length}";
+            collectedObjsCountL.Content = $"Cобранных целей: {Director.CollectedTargets.Length}";
             currentObjsCountL.Content = "Осталось целей: " +
-                (director.Targets.Length - director.CollectedTargets.Length).ToString();
-            traversedWayL.Content = $"Пройденный путь: {Math.Round(director.TraversedWaySum)}";
+                (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
+            traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)}";
             if (drawCB.IsChecked == true) {
-                thinkTimeCountL.Content = $"Время расчёта: {Math.Round(director.ThinkingTime.TotalMilliseconds)} ms";
+                thinkTimeCountL.Content = $"Время расчёта: {Math.Round(Director.ThinkingTime.TotalMilliseconds)} ms";
                 wayTimeCountL.Content = $"Время в пути: {(realWayTime).TotalMilliseconds} ms";
                 allTimeCountL.Content = $"Время алгоритма: {Math.Round((realWorkTime).TotalSeconds, 3)} s";
             }

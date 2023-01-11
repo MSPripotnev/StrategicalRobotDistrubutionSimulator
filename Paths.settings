@@ -1,0 +1,15 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TacticalAgro" GeneratedClassName="Paths">
+  <Profiles />
+  <Settings>
+    <Setting Name="Maps" Type="System.String" Scope="User">
+      <Value Profile="(Default)">G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\TacticalAgro\Analyzing\Maps</Value>
+    </Setting>
+    <Setting Name="Tests" Type="System.String" Scope="User">
+      <Value Profile="(Default)">G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\TacticalAgro\Analyzing\Tests</Value>
+    </Setting>
+    <Setting Name="Results" Type="System.String" Scope="User">
+      <Value Profile="(Default)">G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\TacticalAgro\Analyzing\Results</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

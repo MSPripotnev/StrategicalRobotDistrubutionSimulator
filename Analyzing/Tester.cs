@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Shapes;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -29,27 +28,19 @@ namespace TacticalAgro {
 
         public Tester() {
             Models = new Model[] {
-                new Model("T1-10-2", (1, 1, 1), (5F, 0, 0)),
-                new Model("T1-10", (1, 15, 1), (5F, 0, 0)),
-                new Model("T1-20", (1, 25, 1), (5F, 0, 0)),
-                new Model("T2-10", (1, 15, 1), (5F, 0, 0)),
-                new Model("T2-20",
-                    (1, 25, 1), (5F, 0, 0)),
-                new Model("T4-20",
-                    (1, 25, 1), (5F, 0, 0)),
-                new Model("T4-40",
-                    (1, 42, 1), (5F, 0, 0)),
-                new Model("S1-10", (5, 0, 0), (2F, 18F, 0.5F)),
-                new Model("S1-20",
-                    (5, 0, 0), (2F, 18F, 0.5F)),
-                new Model("S2-10",
-                    (5, 0, 0), (2F, 18F, 0.5F)),
-                new Model("S2-20",
-                    (5, 0, 0), (2F, 18F , 0.5F)),
-                new Model("S4-20",
-                    (5, 0, 0), (2F, 18F , 0.5F)),
-                new Model("S4-40",
-                    (5, 0, 0), (2F, 18F , 0.5F))
+                new Model("T1-10-2", "Inside1.xml", (1, 1, 1), (5F, 0, 0)),
+                new Model("T1-10", "Inside1.xml", (1, 15, 1), (5F, 0, 0)),
+                new Model("T1-20", "Inside1.xml", (1, 25, 1), (5F, 0, 0)),
+                new Model("T2-10", "Inside2.xml", (1, 15, 1), (5F, 0, 0)),
+                new Model("T2-20", "Inside2.xml", (1, 25, 1), (5F, 0, 0)),
+                new Model("T4-20", "Inside4.xml", (1, 25, 1), (5F, 0, 0)),
+                new Model("T4-40", "Inside4.xml", (1, 42, 1), (5F, 0, 0)),
+                new Model("S1-10", "Inside1.xml", (5, 0, 0), (2F, 18F, 0.5F)),
+                new Model("S1-20", "Inside1.xml", (5, 0, 0), (2F, 18F, 0.5F)),
+                new Model("S2-10", "Inside2.xml", (5, 0, 0), (2F, 18F, 0.5F)),
+                new Model("S2-20", "Inside2.xml", (5, 0, 0), (2F, 18F , 0.5F)),
+                new Model("S4-20", "Inside4.xml", (5, 0, 0), (2F, 18F , 0.5F)),
+                new Model("S4-40", "Inside4.xml", (5, 0, 0), (2F, 18F , 0.5F))
             };
             currentFilePath = Models[0].Path;
         }
@@ -77,19 +68,16 @@ namespace TacticalAgro {
 
             return true;
         }
+        public Director ReloadModel() {
+            director = new Director(Models[0]);
+            return director;
+        }
         public Director LoadModel(string path) {
-            XmlSerializer serializer = new XmlSerializer(typeof(Director));
+            XmlSerializer serializer = new XmlSerializer(typeof(Model));
             using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                director = serializer.Deserialize(fs) as Director;
-                if (director == null) return null;
-
-                var @base = director.Map.Bases[0];
-                Transporter[] transporters = new Transporter[Models[0].TransportersT[^1]];
-                for (int i = 0; i < Models[0].TransportersT[^1]; i++) {
-                    transporters[i] = new Transporter(@base.Position);
-                    director.Add(transporters[i]);
-                }
-                 director.Scale = Models[0].ScalesT[^1];
+                Model model = serializer.Deserialize(fs) as Model;
+                if (model == null) return null;
+                director = new Director(model);
 
                 if (currentFilePath != path)
                     currentFilePath = path;
@@ -120,7 +108,7 @@ namespace TacticalAgro {
             iterations = 0;
         }
         private void SaveResults(Reading[] _readings) {
-            string resFileName = $"Results_{_readings[0].ModelName}.xml";
+            string resFileName = Path.Combine(Paths.Default.Results, $"Results_{_readings[0].ModelName}.xml");
             XmlSerializer serializer = new XmlSerializer(typeof(Reading));
             if (!File.Exists(resFileName))
                 using (FileStream fs = new FileStream(resFileName, FileMode.Create)) {
