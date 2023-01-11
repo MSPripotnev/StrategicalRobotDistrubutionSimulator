@@ -67,10 +67,23 @@ namespace TacticalAgro {
                 return Targets.Where(x => x.Finished).ToArray();
             }
         }
+        private string mapPath;
+        [XmlAttribute("map")]
+        public string MapPath { 
+            get {
+                return mapPath;
+            }
+            set {
+                mapPath = value;
+                if (value != "")
+                    Map = new TacticalMap(mapPath);
+            }
+        }
         private TacticalMap map;
+        [XmlIgnore]
         public TacticalMap Map {
             get { return map; }
-            set {
+            private set {
                 map = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
             }
@@ -106,6 +119,9 @@ namespace TacticalAgro {
             Map = new TacticalMap();
             Targets = new Target[0];
             Transporters = new Transporter[0];
+        }
+        public Director(string _mapPath) : this() {
+            MapPath = _mapPath;
         }
         public void Work() {
             for (int i = 0; i < Transporters.Length; i++)

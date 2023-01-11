@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace TacticalAgro {
         private Obstacle[] obstacles;
         private Base[] bases;
         private Size borders;
+        private string path;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -43,6 +45,14 @@ namespace TacticalAgro {
                 PropertyChanged?.Invoke(Borders, new PropertyChangedEventArgs(nameof(Borders)));
             }
         }
+
+        public void Save() {
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(TacticalMap));
+            using (FileStream fs = new FileStream(path, FileMode.Create)) {
+                xmlSerializer.Serialize(fs, this);
+                fs.Close();
+            }
+        }
         
         public TacticalMap() {
             Obstacles = new Obstacle[0];
@@ -53,6 +63,23 @@ namespace TacticalAgro {
             Obstacles = _obstacles;
             Bases = _bases;
             Borders = _borders;
+        }
+
+        public TacticalMap(string path) {
+            if (File.Exists(path)) {
+                TacticalMap newMap;
+                using (FileStream fs = new FileStream(path, FileMode.Open)) {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(TacticalMap));
+                    newMap = (TacticalMap)xmlSerializer.Deserialize(fs);
+                    fs.Close();
+                }
+                this.Obstacles = newMap.Obstacles;
+                this.Bases = newMap.Bases;
+                this.Borders = newMap.Borders;
+                this.Name = newMap.Name;
+            } else 
+                throw new FileNotFoundException();
+            Path = path;
         }
     }
 }

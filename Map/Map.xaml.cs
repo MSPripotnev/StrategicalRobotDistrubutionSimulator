@@ -324,9 +324,7 @@ namespace TacticalAgro.Map {
             switch (button.Tag) {
                 case "0":
                     mapCanvas.Children.Clear();
-                    director = new Director() {
-                        Map = new TacticalMap()
-                    };
+                    director = new Director();
                     break;
                 case "1": //открыть
                     Microsoft.Win32.OpenFileDialog oFD = new Microsoft.Win32.OpenFileDialog();
