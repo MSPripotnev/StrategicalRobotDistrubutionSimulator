@@ -73,6 +73,9 @@ namespace TacticalAgro {
         #endregion
 
         #region Brain
+        private int thinkingIterations = 0;
+        [XmlIgnore]
+        public int ThinkingIterations { get; private set; } = 0;
         [XmlIgnore]
         private RobotState state;
         [XmlIgnore]
@@ -98,7 +101,7 @@ namespace TacticalAgro {
                     case RobotState.Thinking:
                         if (Trajectory.Count < 2) {
                             Trajectory = Pathfinder.CalculateTrajectory(TargetPosition, Position, InteractDistance,
-                                new CancellationTokenSource(DistanceCalculationTimeout).Token).ToList();
+                                ref thinkingIterations).ToList();
                             if (AttachedObj != null && AttachedObj.ReservedTransporter != this)
                                 state = RobotState.Ready;
                             else if (AttachedObj.ReservedTransporter == this)

@@ -13,6 +13,12 @@ namespace TacticalAgro {
     public partial class Director : System.ComponentModel.INotifyPropertyChanged, IDisposable {
 
         #region Properties
+        public int ThinkingIterations { 
+            get {
+                return Transporters.Sum(t => t.ThinkingIterations);
+            } 
+        }
+        public int WayIterations { get; private set; } = 0;
         [XmlIgnore]
         public TimeSpan ThinkingTime { get; set; } = TimeSpan.Zero;
 
@@ -116,6 +122,7 @@ namespace TacticalAgro {
         public Director() {
             Scale = 5.0F;
             ThinkingTime = TimeSpan.Zero;
+            WayIterations = 0;
             Map = new TacticalMap();
             Targets = new Target[0];
             Transporters = new Transporter[0];
@@ -135,7 +142,7 @@ namespace TacticalAgro {
             MapPath = _mapPath;
         }
         public void Work() {
-            for (int i = 0; i < Transporters.Length; i++)
+            for (int i = 0; i < Transporters.Length; i++, WayIterations++)
                 Transporters[i].Simulate();
         }
         public bool CheckMission() {

@@ -85,7 +85,7 @@ namespace TacticalAgro {
             scale = _scale;
         }
         
-        public Point[] CalculateTrajectory(in Point mainTarget, in Point robotPosition, float interactDistance, CancellationToken token) {
+        public Point[] CalculateTrajectory(in Point mainTarget, in Point robotPosition, float interactDistance, ref int iterations) {
             Point[] result;
             List<AnalyzedPoint> openedPoints = new List<AnalyzedPoint>(); //открытый список
             List<AnalyzedPoint> closedPoints = new List<AnalyzedPoint>(); //закрытый список
@@ -96,7 +96,7 @@ namespace TacticalAgro {
 
             do {
                 currentPoint = openedPoints.MinBy(p => p.Distance + p.Heuristic);
-                for (int i = 0; i < 9; i++) {
+                for (int i = 0; i < 9; i++, iterations++) {
                     //выбор направления
                     Point pos = new Point(
                             currentPoint.Position.X + (i / 3 - 1) * scale,// * (i % 2 - 1),
@@ -109,7 +109,7 @@ namespace TacticalAgro {
                     if (closedPoints.Contains(interimP) || interimP == currentPoint)
                         continue;
                     //проверка на препятствие или уход за границу карты
-                    if (IsPointOnAnyObstacle(interimP, obstacles) ||
+                    if (IsPointOnAnyObstacle(interimP, obstacles, ref iterations) ||
                         IsPointNearAnyObstacle(interimP, obstacles) ||
                         PointOutsideBorders(interimP, borders)) {
                         if (!closedPoints.Contains(interimP))
@@ -121,10 +121,6 @@ namespace TacticalAgro {
                 }
                 closedPoints.Add(currentPoint);
                 openedPoints.Remove(currentPoint);
-
-                if (token.IsCancellationRequested) {
-                    return Array.Empty<Point>();
-                }
                 if (!openedPoints.Any()) {
                     try {
                         if (currentPoint.Heuristic < interactDistance)
@@ -132,7 +128,7 @@ namespace TacticalAgro {
                         Random rnd = new Random((int)DateTime.Now.Ticks);
                         return CalculateTrajectory(mainTarget,
                             new Point(robotPosition.X + (rnd.NextDouble() - 0.5) * 4, robotPosition.Y + (rnd.NextDouble() - 0.5) * 4),
-                            interactDistance, token);
+                            interactDistance, ref iterations);
                     } catch (StackOverflowException) {
                         return Array.Empty<Point>();
                     }
@@ -173,9 +169,8 @@ namespace TacticalAgro {
                 return false;
             }
         }
-        public static bool IsPointOnAnyObstacle(Point point, Obstacle[] obstacles) {
-            
-            for (int j = 0; j < obstacles.Length; j++)
+        public static bool IsPointOnAnyObstacle(Point point, Obstacle[] obstacles, ref int iterations) {
+            for (int j = 0; j < obstacles.Length; j++, iterations++)
                 if (obstacles[j].PointOnObstacle(point))
                     return true;
             return false;

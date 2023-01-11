@@ -97,12 +97,14 @@ namespace TacticalAgro {
                 TransportersCount = director.Transporters.Length,
                 Scale = Math.Round(director.Scale, 3),
                 CalcTime = director.ThinkingTime.TotalSeconds,
+                ThinkingIterations = director.ThinkingIterations,
                 WayTime = wayTime.TotalSeconds,
+                WayIterations = director.WayIterations,
                 FullTime = fullTime.TotalSeconds,
+                DistributeIterations = Math.Round(iterations),
                 TraversedWay = director.TraversedWaySum,
                 STransporterWay = new double[director.Transporters.Length],
                 TargetsCount = director.Targets.Length,
-                Iterations = Math.Round(iterations)
             };
             analyzer.DistributeTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime;
             if (director.Transporters.Any()) {
