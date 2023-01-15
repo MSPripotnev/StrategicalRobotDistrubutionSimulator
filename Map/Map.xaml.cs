@@ -110,6 +110,7 @@ namespace TacticalAgro.Map {
                 wayTimeCountL.Content = "";
                 allTimeCountL.Content = "";
             }
+            nextModelB.IsEnabled = testingCB.IsChecked == true;
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
             if (Director != null)
@@ -394,6 +395,12 @@ namespace TacticalAgro.Map {
             (mapCanvas.ContextMenu.Items[3] as MenuItem).IsEnabled = false;
         }
         #endregion
+
+        private void nextModelB_Click(object sender, RoutedEventArgs e) {
+            if (tester.NextModel())
+                Director = tester.ReloadModel();
+            else Director = null;
+        }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             Director.Dispose();
