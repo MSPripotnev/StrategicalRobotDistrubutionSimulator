@@ -8,26 +8,18 @@ using System.Xml;
 using System.Xml.Serialization;
 
 namespace TacticalAgro {
-    public class Tester : IDisposable {
+    public class Tester {
         public Model[] Models { get; set; }
         string currentFilePath = "";
         private Director director;
-        List<Reading> readings = new List<Reading>();
-        [XmlArray(ElementName = "Readings")]
-        [XmlArrayItem(ElementName = "Reading")]
-        public Reading[] Readings {
-            get {
-                return readings.ToArray();
-            }
-            set {
-                readings = new List<Reading>(value);
-            }
-        }
         const int attemptsMax = 50;
         public int AttemptsN { get; private set; } = attemptsMax;
-
+        public event EventHandler AttemptStarted;
+        public event EventHandler AttemptCompleted;
+        public event EventHandler AttemptFailed;
+        public event EventHandler ModelSwitched;
         public Tester() {
-            Models = new Model[] {
+            List<Model> models = new List<Model> {
                 /*new Model("T1-10-2", "Inside1.xml", 10, (1, 1, 1), (5F, 0, 0)),
                 new Model("T1-10", "Inside1.xml", 10, (1, 15, 1), (5F, 0, 0)),
                 new Model("T1-20", "Inside1.xml", 20, (1, 25, 1), (5F, 0, 0)),
@@ -40,39 +32,45 @@ namespace TacticalAgro {
                 new Model("S2-10", "Inside2.xml", 10, (5, 0, 0), (2F, 18F, 0.5F)),
                 new Model("S2-20", "Inside2.xml", 20, (5, 0, 0), (2F, 18F , 0.5F)),
                 new Model("S4-20", "Inside4.xml", 20, (5, 0, 0), (2F, 18F , 0.5F)),
-                new Model("S4-40", "Inside4.xml", 40, (5, 0, 0), (2F, 18F , 0.5F))*/
-                new Model("Standart10", "Inside4.xml", 12, (1, 20, 1), (5F, 0, 0)),
-                new Model("Standart20", "Inside4.xml", 24, (1, 20, 1), (5F, 0, 0)),
-                new Model("Quad10", "Quad3.xml", 12, (1, 20, 1), (5F, 0, 0)),
-                new Model("Quad20", "Quad3.xml", 24, (1, 20, 1), (5F, 0, 0)),
-                new Model("Lines10", "Lines3.xml", 12, (1, 20, 1), (5F, 0, 0)),
-                new Model("Lines20", "Lines3.xml", 24, (1, 20, 1), (5F, 0, 0)),
+                new Model("S4-40", "Inside4.xml", 40, (5, 0, 0), (2F, 18F , 0.5F))
+                new Model("Standart10.xml"),
+                new Model("Standart20.xml"),
+                new Model("StandartCenter10.xml"),
+                new Model("StandartCenter20.xml"),
+                new Model("Quad10", "Quad3.xml", 12, (1, 25, 1), (5F, 0, 0)),
+                new Model("Quad20", "Quad3.xml", 24, (1, 25, 1), (5F, 0, 0)),
+                new Model("Lines10", "Lines3.xml", 12, (1, 25, 1), (5F, 0, 0)),
+                new Model("Lines20", "Lines3.xml", 24, (1, 25, 1), (5F, 0, 0)),*/
             };
+            foreach (string fileName in System.IO.Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Active")))
+                models.Add(new Model(fileName));
+            Models = models.ToArray();
             currentFilePath = Models[0].Path;
         }
 
-        public bool NextAttempt() {
+        public void NextAttempt() {
+            AttemptCompleted(this, new());
             if (--AttemptsN < 1) {
                 Models[0].TransportersT = Models[0].TransportersT.SkipLast(1).ToList();
                 Models[0].ScalesT = Models[0].ScalesT.SkipLast(1).ToList();
                 AttemptsN = attemptsMax;
 
-                if (Models[0].TransportersT.Any())
-                    return true;
-
-                SaveResults(Readings);
-                readings.Clear();
-                return NextModel();
+                if (!Models[0].TransportersT.Any()) {
+                    NextModel();
+                }
             }
-            return true;
+            if (Models.Any())
+                AttemptStarted(this, new());
         }
-        public bool NextModel() {
+        public void NextModel() {
             Models = Models.Skip(1).ToArray();
             if (Models.Any())
-                currentFilePath = Models[0].Path;
-            else return false;
-
-            return true;
+                ModelSwitched(Models[0], new());
+            else ModelSwitched(null, new());
+            return;
+        }
+        public void StopAttempt() {
+            AttemptFailed(this, new());
         }
         public Director ReloadModel() {
             director = new Director(Models[0]);
@@ -90,66 +88,6 @@ namespace TacticalAgro {
                 fs.Close();
             }
             return director;
-        }
-        public void SaveResults(Director director, TimeSpan wayTime, TimeSpan fullTime, ref double iterations) {
-            var analyzer = new Reading() {
-                ModelName = Models[0].Name,
-                TransportersCount = director.Transporters.Length,
-                Scale = Math.Round(director.Scale, 3),
-                CalcTime = director.ThinkingTime.TotalSeconds,
-                ThinkingIterations = director.ThinkingIterations,
-                WayTime = wayTime.TotalSeconds,
-                WayIterations = director.WayIterations,
-                FullTime = fullTime.TotalSeconds,
-                DistributeIterations = Math.Round(iterations),
-                TraversedWay = director.TraversedWaySum,
-                STransporterWay = new double[director.Transporters.Length],
-                TargetsCount = director.Targets.Length,
-            };
-            analyzer.DistributeTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime;
-            if (director.Transporters.Any()) {
-                analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8);
-                for (int i = 0; i < director.Transporters.Length; i++)
-                    analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
-            }
-            readings.Add(analyzer);
-            iterations = 0;
-        }
-        private void SaveResults(Reading[] _readings) {
-            string resFileName = Path.Combine(Paths.Default.Results, $"Results_{_readings[0].ModelName}.xml");
-            XmlSerializer serializer = new XmlSerializer(typeof(Reading));
-            if (!File.Exists(resFileName))
-                using (FileStream fs = new FileStream(resFileName, FileMode.Create)) {
-                    XmlWriterSettings settings = new XmlWriterSettings() {
-                        Indent = true,
-                        ConformanceLevel = ConformanceLevel.Auto,
-                        WriteEndDocumentOnClose = false
-                    };
-                    var writer = XmlWriter.Create(fs, settings);
-                    writer.WriteStartDocument();
-                    writer.WriteStartElement("Readings");
-                    writer.Close();
-                }
-            for (int i = 0; i < _readings.Length; i++)
-                using (FileStream fs = new FileStream(resFileName, FileMode.Append)) {
-                    XmlWriterSettings settings = new XmlWriterSettings {
-                        OmitXmlDeclaration = true,
-                        Indent = true,
-                        CloseOutput = true,
-                        IndentChars = "\t",
-                        ConformanceLevel = ConformanceLevel.Auto
-                    };
-                    XmlWriter xmlWriter = XmlWriter.Create(fs, settings);
-                    serializer.Serialize(xmlWriter, _readings[i], null);
-                }
-                File.AppendAllLines(resFileName, new string[]{ "</" + nameof(Readings) + ">" });
-        }
-
-        public void Dispose() {
-            if (Readings.Any()) {
-                Readings[0].ModelName += "-autosave-" + DateTime.Now.ToShortDateString();
-                SaveResults(Readings);
-            }
         }
     }
 }

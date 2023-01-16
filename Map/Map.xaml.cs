@@ -16,8 +16,8 @@ namespace TacticalAgro.Map {
     /// Логика взаимодействия для Map.xaml
     /// </summary>
     public partial class MapWPF : Window {
-        private Director director;
-        public Director Director {
+        private Director? director;
+        public Director? Director {
             get => director;
             set {
                 director = value;
@@ -34,6 +34,7 @@ namespace TacticalAgro.Map {
         DateTime startTime = DateTime.MinValue, pauseTime;
         DispatcherTimer refreshTimer;
         Tester tester= new Tester();
+        Recorder recorder = new Recorder();
 
         public MapWPF() {
             InitializeComponent();
@@ -41,7 +42,14 @@ namespace TacticalAgro.Map {
                 Interval = new TimeSpan(0, 0, 0, 0, 50)
             };
             tester = new Tester();
+            recorder = new Recorder();
+            tester.ModelSwitched += recorder.OnModelSwitched;
+            tester.ModelSwitched += OnModelSwitched;
+            tester.AttemptStarted += OnAttemptStarted;
+            tester.AttemptCompleted += OnAttemptCompleted;
+            tester.AttemptFailed += OnAttemptFailed;
             refreshTimer.Tick += RefreshTimer_Tick;
+
             if (File.Exists(tester.Models[0].Path)) {
                 Director = tester.LoadModel(tester.Models[0].Path);
                 transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
@@ -123,6 +131,31 @@ namespace TacticalAgro.Map {
         CancellationTokenSource tokenSource = new CancellationTokenSource();
         private double iterations = 0;
         TimeSpan realWorkTime = TimeSpan.Zero, realWayTime = TimeSpan.Zero;
+        private void OnAttemptStarted(object? sender, EventArgs e) {
+            Director = tester.ReloadModel();
+
+            attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\nМоделей: {tester.Models.Length}";
+            transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
+            trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
+
+            startButton_Click(sender, null);
+        }
+        private void OnAttemptCompleted(object? sender, EventArgs e) {
+            recorder.SaveResults(Director, tester.Models[0].Name, realWayTime, realWorkTime, ref iterations);
+            Stop();
+            Director = null;
+        }
+        private void OnAttemptFailed(object? sender, EventArgs e) {
+            OnAttemptCompleted(sender, e);
+        }
+        private void OnModelSwitched(object? sender, EventArgs e) {
+            if (sender == null) {
+                Director = null;
+            } else {
+                Director = tester.ReloadModel();
+                nextModelB.IsEnabled = tester.Models.Length > 1;
+            }
+        }
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
             refreshTimer.Stop();
             var dt = DateTime.Now;
@@ -131,48 +164,19 @@ namespace TacticalAgro.Map {
                 if (Director.CheckMission()) {
                     Director.Work();
                     if (testingCB.IsChecked == true) {
-                        tester.SaveResults(Director, realWayTime,
-                            realWorkTime, ref iterations);
-                        Stop();
-                        if (tester.NextAttempt()) {
-                            Director = tester.ReloadModel();
-
-                            attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\nМоделей: {tester.Models.Length}";
-                            transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
-                            trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
-
-                            startButton_Click(sender, null);
-                        } else {
-                            Refresh();
-                            Director = null;
-                            return;
-                        }
+                        tester.NextAttempt();
                     } else {
+                        stopB.IsEnabled = false;
                         Pause();
                         Refresh();
                         return;
                     }
                 } else if (realWayTime.TotalSeconds > 120) {
-                    tester.SaveResults(Director, TimeSpan.MaxValue,
-                            realWorkTime, ref iterations);
-                    Stop();
-                    if (tester.NextAttempt()) {
-                        Director = tester.ReloadModel();
-
-                        attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}";
-                        transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
-                        trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
-
-                        startButton_Click(sender, null);
-                    } else {
-                        Refresh();
-                        Director = null;
-                        return;
-                    }
+                    tester.StopAttempt();
                 }
             } catch (Exception ex) {
                 MessageBox.Show(ex.ToString());
-                tester.Dispose();
+                recorder.Dispose();
                 Director.Dispose();
             }
             Refresh();
@@ -206,7 +210,10 @@ namespace TacticalAgro.Map {
 #endif
                 }
             }, tokenSource.Token, TaskCreationOptions.LongRunning);*/
-
+            if (Director.CheckMission()) {
+                Stop();
+                Director = tester.ReloadModel();
+            }
             refreshTimer.Start();
 
             startTime = pauseTime = DateTime.Now;
@@ -221,11 +228,11 @@ namespace TacticalAgro.Map {
         }
         private void Stop() {
             //tokenSource.Cancel();
+            if (testingCB.IsChecked == false)
+                Director = tester.ReloadModel();
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
-            if (testingCB.IsChecked != true)
-                Director = tester.ReloadModel();
             startB.Content = "Запуск";
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = true;
@@ -397,14 +404,12 @@ namespace TacticalAgro.Map {
         #endregion
 
         private void nextModelB_Click(object sender, RoutedEventArgs e) {
-            if (tester.NextModel())
-                Director = tester.ReloadModel();
-            else Director = null;
+            tester.NextModel();
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             Director.Dispose();
-            tester.Dispose();
+            recorder.Dispose();
         }
 
         public void Refresh() {
