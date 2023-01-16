@@ -171,7 +171,7 @@ namespace TacticalAgro.Map {
                         Refresh();
                         return;
                     }
-                } else if (realWayTime.TotalSeconds > 120) {
+                } else if (realWayTime.TotalSeconds > 60) {
                     tester.StopAttempt();
                 }
             } catch (Exception ex) {
@@ -183,8 +183,8 @@ namespace TacticalAgro.Map {
             Director.DistributeTask();
             var dt2 = DateTime.Now;
             Director.Work();
-            realWayTime += DateTime.Now - dt2 + refreshTimer.Interval;
-            realWorkTime += DateTime.Now - dt + refreshTimer.Interval;
+            realWayTime += DateTime.Now - dt2;
+            realWorkTime += DateTime.Now - dt;
             refreshTimer.Start();
         }
         private void Start() {
@@ -419,7 +419,8 @@ namespace TacticalAgro.Map {
             traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)}";
             if (drawCB.IsChecked == true) {
                 thinkTimeCountL.Content = $"Время расчёта: {Math.Round(Director.ThinkingTime.TotalMilliseconds)} ms";
-                wayTimeCountL.Content = $"Время в пути: {(realWayTime).TotalMilliseconds} ms";
+                if (Director.Transporters.Any())
+                    wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
                 allTimeCountL.Content = $"Время алгоритма: {Math.Round((realWorkTime).TotalSeconds, 3)} s";
             }
         }

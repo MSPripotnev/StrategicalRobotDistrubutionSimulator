@@ -44,7 +44,7 @@ namespace TacticalAgro {
                 Scale = Math.Round(director.Scale, 3),
                 CalcTime = director.ThinkingTime.TotalSeconds,
                 ThinkingIterations = director.ThinkingIterations,
-                WayTime = wayTime.TotalSeconds,
+                WayTime = director.TraversedWaySum / (0.050 * director.Transporters[0].Speed),
                 WayIterations = director.WayIterations,
                 FullTime = fullTime.TotalSeconds,
                 DistributeIterations = Math.Round(iterations),

@@ -73,9 +73,6 @@ namespace TacticalAgro {
         #endregion
 
         #region Brain
-        private int thinkingIterations = 0;
-        [XmlIgnore]
-        public int ThinkingIterations { get; private set; } = 0;
         [XmlIgnore]
         private RobotState state;
         [XmlIgnore]
@@ -164,6 +161,11 @@ namespace TacticalAgro {
         #endregion
 
         #region Debug Info
+        public int thinkingIterations = 0;
+        [XmlIgnore]
+        public long ThinkingIterations { get; private set; } = 0;
+        [XmlIgnore]
+        public long WayIterations { get; private set; } = 0;
         [XmlIgnore]
         public double TraversedWay { get; set; } = 0;
         [XmlIgnore]
@@ -251,6 +253,7 @@ namespace TacticalAgro {
                 V.Normalize();
             //новое значение
             Position = new Point(Position.X + V.X * Speed, Position.Y + V.Y * Speed);
+            WayIterations++;
         }
         public override string ToString() {
             return Enum.GetName(typeof(RobotState), state) + "_" +
