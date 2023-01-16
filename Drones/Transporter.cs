@@ -195,9 +195,10 @@ namespace TacticalAgro {
             Color = Colors.Red;
             CurrentState = RobotState.Ready;
             AttachedObj = null;
-            Speed = 1F;
+            Speed = 5F;
             InteractDistance = 30;
             BlockedTargets = new List<Target>();
+            MaxStraightRange = 2 * Speed;
         }
         #endregion
 
@@ -233,10 +234,11 @@ namespace TacticalAgro {
                     break;
             }
         }
+        public double MaxStraightRange { get; init; }
         private void Move() {
             Point nextPoint = Trajectory[0];
 
-            if (PathFinder.Distance(Position, nextPoint) < 1) {
+            if (PathFinder.Distance(Position, nextPoint) < MaxStraightRange) {
                 List<Point> pc = new (Trajectory.Skip(1));
                 if (pc.Any()) {
                     TraversedWay += PathFinder.Distance(nextPoint, pc[0]);

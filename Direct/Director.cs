@@ -132,6 +132,7 @@ namespace TacticalAgro {
             Scale = testModel.ScalesT[^1];
             for (int i = 0; i < testModel.TransportersT[^1]; i++) {
                 var t = new Transporter(Map.Bases[0].Position);
+                t.Speed = Scale;
                 Add(t);
             }
             for (int i = 0; i < testModel.TargetsT.Count; i++) {
