@@ -52,7 +52,9 @@ namespace TacticalAgro.Map {
 
             if (File.Exists(tester.Models[0].Path)) {
                 Director = tester.LoadModel(tester.Models[0].Path);
-                transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
+                attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
+                    $"Транспортеров: {Director.Transporters.Length}\n" +
+                    $"Моделей: {tester.Models.Length}";
             }
         }
         #region Drawing
@@ -134,8 +136,9 @@ namespace TacticalAgro.Map {
         private void OnAttemptStarted(object? sender, EventArgs e) {
             Director = tester.ReloadModel();
 
-            attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\nМоделей: {tester.Models.Length}";
-            transportersCountL.Content = $"Транспортеров: {Director.Transporters.Length}";
+            attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
+                $"Транспортеров: {Director.Transporters.Length}\n" +
+                $"Моделей: {tester.Models.Length}";
             trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
 
             startButton_Click(sender, null);
@@ -153,6 +156,9 @@ namespace TacticalAgro.Map {
                 Director = null;
             } else {
                 Director = tester.ReloadModel();
+                attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
+                    $"Транспортеров: {Director.Transporters.Length}\n" +
+                    $"Моделей: {tester.Models.Length}";
                 nextModelB.IsEnabled = tester.Models.Length > 1;
             }
         }
