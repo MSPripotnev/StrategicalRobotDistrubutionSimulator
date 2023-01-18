@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
+using TacticalAgro.Analyzing;
+
 namespace TacticalAgro {
     public class Tester {
         public Model[] Models { get; set; }
         string currentFilePath = "";
         private Director director;
-        const int attemptsMax = 50;
-        public int AttemptsN { get; private set; } = attemptsMax;
+        public int AttemptsN { get; private set; } = Testing.Default.AttemptsMax;
         public event EventHandler AttemptStarted;
         public event EventHandler AttemptCompleted;
         public event EventHandler AttemptFailed;
@@ -53,7 +54,7 @@ namespace TacticalAgro {
             if (--AttemptsN < 1) {
                 Models[0].TransportersT = Models[0].TransportersT.SkipLast(1).ToList();
                 Models[0].ScalesT = Models[0].ScalesT.SkipLast(1).ToList();
-                AttemptsN = attemptsMax;
+                AttemptsN = Testing.Default.AttemptsMax;
 
                 if (!Models[0].TransportersT.Any()) {
                     NextModel();

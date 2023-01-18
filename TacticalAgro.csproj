@@ -14,6 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Analyzing\Testing.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Testing.settings</DependentUpon>
+    </Compile>
     <Compile Update="Paths.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
@@ -34,6 +39,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Analyzing\Testing.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Testing.Designer.cs</LastGenOutput>
+    </None>
     <None Update="Paths.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Paths.Designer.cs</LastGenOutput>
