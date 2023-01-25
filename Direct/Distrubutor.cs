@@ -82,8 +82,7 @@ namespace TacticalAgro {
                     var nearBase = Map.Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
                     if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
                         transporter.TargetPosition = nearBase.Position;
-                        if (PathFinder.Distance(transporter.Trajectory[^1], nearBase.Position) < transporter.InteractDistance)
-                            transporter.Trajectory.Add(nearBase.Position);
+                        transporter.AttachedObj.ReservedTransporter = transporter;
                     } else {
                         transporter.CurrentState = RobotState.Ready;
                     }

@@ -62,13 +62,54 @@ namespace TacticalAgro {
             polyline.StrokeThickness = 2;
             polyline.StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 });
             polyline.StrokeDashCap = PenLineCap.Round;
-            polyline.Margin = new Thickness(-5, -5, 0, 0);
+            polyline.Margin = new Thickness(0, 0, 0, 0);
 
             Binding b = new Binding(nameof(Trajectory));
             b.Source = this;
             b.Converter = new TrajectoryConverter();
             polyline.SetBinding(Polyline.PointsProperty, b);
             return polyline;
+        }
+        public UIElement PointsAnalyzed(bool opened) {
+            Polyline polyline = new Polyline();
+            polyline.Stroke = new SolidColorBrush(opened ? Colors.LightGreen : Colors.DarkRed);
+            polyline.StrokeThickness = 5.0;
+            /*polyline.StrokeDashArray = new DoubleCollection(new double[] { MaxStraightRange });
+            polyline.StrokeStartLineCap = PenLineCap.Round;
+            polyline.StrokeDashCap = PenLineCap.Round;
+            polyline.StrokeEndLineCap = PenLineCap.Round;*/
+            polyline.Margin = new Thickness(-5, -5, 0, 0);
+
+            Binding b = new Binding(opened ? nameof(OpenedPoints) : nameof(ClosedPoints));
+            b.Source = this;
+            b.Converter = new TrajectoryConverter();
+            polyline.SetBinding(Polyline.PointsProperty, b);
+            return polyline;
+        }
+
+        public List<Point> OpenedPoints {
+            get {
+                var vs = new List<Point>();
+                if (Pathfinder.ActiveExplorer == null) return vs;
+                for (int i = 0; i < Pathfinder.ActiveExplorer.OpenedPoints.Count; i++)
+                    vs.Add(Pathfinder.ActiveExplorer.OpenedPoints[i].Position);
+                return vs;
+            }
+            set {
+                PropertyChanged(this, new PropertyChangedEventArgs(nameof(OpenedPoints)));
+            }
+        }
+        public List<Point> ClosedPoints {
+            get {
+                var vs = new List<Point>();
+                if (Pathfinder.ActiveExplorer == null) return vs;
+                for (int i = 0; i < Pathfinder.ActiveExplorer.ClosedPoints.Count; i++)
+                    vs.Add(Pathfinder.ActiveExplorer.ClosedPoints[i].Position);
+                return vs;
+            }
+            set {
+                PropertyChanged(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
+            }
         }
         #endregion
 
@@ -87,31 +128,26 @@ namespace TacticalAgro {
                     case RobotState.Broken:
                         break;
                     case RobotState.Ready:
+                        //объект взят
                         if (CurrentState == RobotState.Carrying) {
                             AttachedObj.Finished = true;
                             AttachedObj.ReservedTransporter = null;
                             AttachedObj = null;
+                        //робот сломался/выключился
                         } else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
                             BlockedTargets.Clear();
                         }
                         break;
+                        //нужно рассчитать траекторию
                     case RobotState.Thinking:
-                        if (Trajectory.Count < 2) {
-                            Trajectory = Pathfinder.CalculateTrajectory(TargetPosition, Position, InteractDistance,
-                                ref thinkingIterations).ToList();
-                            if (AttachedObj != null && AttachedObj.ReservedTransporter != this)
-                                state = RobotState.Ready;
-                            else if (AttachedObj.ReservedTransporter == this)
-                                state = RobotState.Carrying;
-                            else {
-                                state = RobotState.Going;
-                            }
-                            return;
-                        }
+                        //инициализация модуля прокладывания пути
+                        Pathfinder.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : 5);
                         break;
                     case RobotState.Going:
                         break;
                     case RobotState.Carrying:
+                        if (CurrentState == RobotState.Thinking)
+                            Trajectory.Add(Trajectory[^1]);
                         break;
                     default:
                         break;
@@ -161,7 +197,6 @@ namespace TacticalAgro {
         #endregion
 
         #region Debug Info
-        public int thinkingIterations = 0;
         [XmlIgnore]
         public long ThinkingIterations { get; private set; } = 0;
         [XmlIgnore]
@@ -213,24 +248,48 @@ namespace TacticalAgro {
                 case RobotState.Ready:
                     break;
                 case RobotState.Thinking:
+                    Trajectory = Pathfinder.Result;
+                    OpenedPoints = ClosedPoints = null;
+                    //ошибка при расчётах
+                    if (Pathfinder.Result == null) {
+                        CurrentState = RobotState.Broken;
+                        //путь найден
+                    } else if (Pathfinder.IsCompleted) {
+                        Pathfinder.IsCompleted = false;
+                        //робот едет к объекту
+                        if (AttachedObj != null && AttachedObj.ReservedTransporter != this)
+                            CurrentState = RobotState.Going;
+                        //робот доставляет объект
+                        else if (AttachedObj.ReservedTransporter == this) {
+                            CurrentState = RobotState.Carrying;
+                        }
+                        //переключение на другую задачу
+                        else
+                            CurrentState = RobotState.Ready;
+                        ThinkingIterations += Pathfinder.Iterations;
+                    } else
+                        Pathfinder.NextStep(); //продолжение расчёта
                     break;
                 case RobotState.Going:
+                    //есть куда двигаться
                     if (Trajectory.Count > 0) {
+                        //двигаемся
                         Move();
-                        if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance) {
-                            if (AttachedObj != null) {
+                        //дошли до нужной точки
+                        if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance)
+                            //цель = объект
+                            if (AttachedObj != null)
+                                //захватываем объект
                                 CurrentState = RobotState.Carrying;
-                            }
-                        }
                     }
                     break;
                 case RobotState.Carrying:
-                    if (Trajectory.Count > 0)
-                        Move();
-                    if (!Trajectory.Any())
-                        CurrentState = RobotState.Ready;
-                    if (AttachedObj != null)
-                        AttachedObj.Position = new Point(Position.X, Position.Y);
+                    if (Trajectory.Count > 0) //есть куда ехать
+                        Move(); //ехать
+                    if (AttachedObj != null) //если объект захвачен
+                        AttachedObj.Position = new Point(Position.X, Position.Y); //переместить захваченный объект)
+                    if (!Trajectory.Any()) //доехал
+                        CurrentState = RobotState.Ready; //сброс состояния на стандартное
                     break;
                 default:
                     break;

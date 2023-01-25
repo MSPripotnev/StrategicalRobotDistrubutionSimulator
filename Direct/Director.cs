@@ -42,7 +42,8 @@ namespace TacticalAgro {
                     var vs = Transporters.Where(p => p.Pathfinder == null).ToArray();
                     for (int i = 0; i < vs.Length; i++) {
                         vs[i].Pathfinder = new PathFinder(Map, Scale);
-                        Map.PropertyChanged += vs[i].Pathfinder.Refresh;
+                        //Map.PropertyChanged += vs[i].Pathfinder.Refresh;
+                        PropertyChanged += vs[i].Pathfinder.Refresh;
                         SettingsChanged += vs[i].Pathfinder.Refresh;
                     }
                 }

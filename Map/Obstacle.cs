@@ -23,12 +23,12 @@ namespace TacticalAgro {
             }
         }
         [XmlIgnore]
-        public Polygon Polygon { 
+        public Polygon Polygon {
             get {
                 return new Polygon() {
                     Points = new PointCollection(borders)
                 };
-            } 
+            }
         }
         [XmlIgnore]
         public Point Position { get; set; }
@@ -54,6 +54,30 @@ namespace TacticalAgro {
             return pointInside;
         }
 
+        public static bool IsPointOnAnyObstacle(Point point, Obstacle[] obstacles, ref long iterations) {
+            for (int j = 0; j < obstacles.Length; j++, iterations++)
+                if (obstacles[j].PointOnObstacle(point))
+                    return true;
+            return false;
+        }
+        public static bool PointOutsideBorders(Point point, Size borders) {
+            return (point.X > borders.Width || point.Y > borders.Height
+                    || point.X < 0 || point.Y < 0);
+        }
+        public static bool IsPointNearAnyObstacle(Point point, Obstacle[] obstacles) {
+            float obstacleScale = 1.0F;
+            var nearPoints = new Point[9];
+            for (int i = 0; i < 9; i++) {
+                nearPoints[i] = new Point(
+                        point.X + (i / 3 - 1) * obstacleScale,
+                        point.Y + (i % 3 - 1) * obstacleScale);
+            }
+            for (int j = 0; j < obstacles.Length; j++)
+                if (nearPoints.Where(p => obstacles[j].PointOnObstacle(p)).Any())
+                    return true;
+            return false;
+        }
+
         public UIElement Build() {
             UIElement res = null;
             if (Borders.Length > 0) {
@@ -75,7 +99,7 @@ namespace TacticalAgro {
         public double Perimetr() {
             double res = 0;
             for (int i = 0; i < Borders.Length - 1; i++) {
-                res += PathFinder.Distance(Borders[i], Borders[i + 1]);
+                res += (Borders[i+1]-Borders[i]).Length;
             }
             return res;
         }

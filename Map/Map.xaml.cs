@@ -39,7 +39,7 @@ namespace TacticalAgro.Map {
         public MapWPF() {
             InitializeComponent();
             refreshTimer = new DispatcherTimer {
-                Interval = new TimeSpan(0, 0, 0, 0, 50)
+                Interval = new TimeSpan(0,0,0,0,10)
             };
             tester = new Tester();
             recorder = new Recorder();
@@ -66,6 +66,8 @@ namespace TacticalAgro.Map {
 
                 if (obj is Transporter t) {
                     mapCanvas.Children.Add(t.BuildTrajectory());
+                    //mapCanvas.Children.Add(t.PointsAnalyzed(true));
+                    //mapCanvas.Children.Add(t.PointsAnalyzed(false));
                 }
             }
         }
@@ -164,8 +166,10 @@ namespace TacticalAgro.Map {
         }
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
             refreshTimer.Stop();
-            var dt = DateTime.Now;
-            iterations++;
+            Work();
+            refreshTimer.Start();
+        }
+        private void Work() {
             try {
                 if (Director.CheckMission()) {
                     Director.Work();
@@ -187,17 +191,13 @@ namespace TacticalAgro.Map {
             }
             Refresh();
             Director.DistributeTask();
-            var dt2 = DateTime.Now;
             Director.Work();
-            realWayTime += DateTime.Now - dt2;
-            realWorkTime += DateTime.Now - dt;
-            refreshTimer.Start();
         }
         private void Start() {
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = false;
-            /*tokenSource = new CancellationTokenSource();
-            mainTask = new Task(() => {
+            tokenSource = new CancellationTokenSource();
+            /*mainTask = new Task(() => {
                 //director.DistributeTask();
                 tokenSource.Token.Register(() => {
                     if (pauseTime == DateTime.MinValue) {
@@ -210,8 +210,9 @@ namespace TacticalAgro.Map {
                     director.DistributeTask();
 #else
                     if (director != null) {
-                        director.DistributeTask();
-                        director.Work();
+                        Dispatcher.Invoke(() => {
+                            Work();
+                        });
                     }
 #endif
                 }
@@ -424,7 +425,7 @@ namespace TacticalAgro.Map {
                 (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
             traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)}";
             if (drawCB.IsChecked == true) {
-                thinkTimeCountL.Content = $"Время расчёта: {Math.Round(Director.ThinkingTime.TotalMilliseconds)} ms";
+                thinkTimeCountL.Content = $"Сложность расчёта: {Director.ThinkingIterations} it";
                 if (Director.Transporters.Any())
                     wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
                 allTimeCountL.Content = $"Время алгоритма: {Math.Round((realWorkTime).TotalSeconds, 3)} s";
