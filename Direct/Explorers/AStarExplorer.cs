@@ -42,8 +42,8 @@ namespace TacticalAgro {
                 PathFailed(this, EventArgs.Empty);
             }
         }
-        private void SelectNextPoint() {
-            Result = OpenedPoints.MinBy(p => p.Heuristic);
+        protected virtual void SelectNextPoint() {
+            Result = OpenedPoints.MinBy(p => p.Heuristic + p.Distance);
             ClosedPoints.Add(Result);
             OpenedPoints.Remove(Result);
         }
