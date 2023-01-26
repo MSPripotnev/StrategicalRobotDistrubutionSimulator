@@ -145,6 +145,8 @@ namespace TacticalAgro.Drones {
                         Pathfinder.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : 5);
                         break;
                     case RobotState.Going:
+                        var vs = new List<Point>(Trajectory); vs.Reverse();
+                        BackTrajectory = vs.ToArray();
                         break;
                     case RobotState.Carrying:
                         if (CurrentState == RobotState.Thinking)
@@ -164,6 +166,9 @@ namespace TacticalAgro.Drones {
         private List<Point> trajectory = new List<Point>();
         [XmlIgnore]
         public PathFinder Pathfinder { get; set; }
+        [PropertyTools.DataAnnotations.Browsable(false)]
+        [XmlIgnore]
+        public Point[] BackTrajectory { get; set; }
         [XmlIgnore]
         public List<Point> Trajectory {
             get { return trajectory; }
@@ -285,12 +290,15 @@ namespace TacticalAgro.Drones {
                     }
                     break;
                 case RobotState.Carrying:
-                    if (Trajectory.Count > 0) //есть куда ехать
+                    if (Trajectory.Any()) { //есть куда ехать
+                        if (Trajectory.Count == 1)
+                            AttachedObj.Position = Trajectory[^1];
                         Move(); //ехать
-                    if (AttachedObj != null) //если объект захвачен
-                        AttachedObj.Position = new Point(Position.X, Position.Y); //переместить захваченный объект)
+                    }
                     if (!Trajectory.Any()) //доехал
                         CurrentState = RobotState.Ready; //сброс состояния на стандартное
+                    else
+                        AttachedObj.Position = new Point(Position.X, Position.Y); //переместить захваченный объект)
                     break;
                 default:
                     break;

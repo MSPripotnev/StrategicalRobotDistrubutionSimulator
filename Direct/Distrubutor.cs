@@ -81,7 +81,14 @@ namespace TacticalAgro {
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
                     Transporter transporter = CarryingTransporters[i];
                     var nearBase = Map.Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
-                    if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
+                    if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance/2) {
+                        transporter.Trajectory = transporter.BackTrajectory.ToList();
+                        if (transporter.Trajectory[^1] != nearBase.Position)
+                            transporter.Trajectory[^1] = (nearBase.Position);
+                        transporter.BackTrajectory = null;
+                        transporter.AttachedObj.ReservedTransporter = transporter;
+                    }
+                    else if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
                         transporter.TargetPosition = nearBase.Position;
                         transporter.AttachedObj.ReservedTransporter = transporter;
                     } else {
