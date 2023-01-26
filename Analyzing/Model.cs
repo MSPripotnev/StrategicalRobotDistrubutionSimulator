@@ -9,14 +9,15 @@ using System.Xml;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using TacticalAgro.Map;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Analyzing {
     public class ParametrRange {
         public bool IsConst { get; init; }
         private List<double> Values;
 
         public ParametrRange((double start, double end, double step) range) {
-            if (IsConst = (range.step == 0)) {
+            if (IsConst = range.step == 0) {
                 Values = Enumerable.Repeat(Math.Round(range.start, 15), (int)range.end).ToList();
             } else {
                 Values = new List<double>((int)(range.end - range.start + 1));
@@ -83,16 +84,16 @@ namespace TacticalAgro {
         }
         public Model(string path) {
             path = System.IO.Path.Combine(Paths.Default.Tests, path);
-            if (System.IO.File.Exists(path))
+            if (File.Exists(path))
                 using (FileStream fs = new FileStream(path, FileMode.Open)) {
                     XmlSerializer xmlSerializer = new XmlSerializer(typeof(Model));
                     Model m = (Model)xmlSerializer.Deserialize(fs);
-                    this.Map = m.Map;
-                    this.TransportersT = m.TransportersT;
-                    this.TargetsT = m.TargetsT;
-                    this.ScalesT = m.ScalesT;
-                    this.Name = m.Name;
-                    this.Path = path;
+                    Map = m.Map;
+                    TransportersT = m.TransportersT;
+                    TargetsT = m.TargetsT;
+                    ScalesT = m.ScalesT;
+                    Name = m.Name;
+                    Path = path;
                 }
             else MessageBox.Show("�� ������� ����� ����: " + path);
         }
@@ -106,9 +107,9 @@ namespace TacticalAgro {
                 Polygon polygon = obstacles[fi].Polygon;
                 Point centerP = new Point((polygon.Points.MaxBy(p => p.X).X + polygon.Points.MinBy(p => p.X).X) / 2,
                     (polygon.Points.MaxBy(p => p.Y).Y + polygon.Points.MinBy(p => p.Y).Y) / 2);
-                Size polygonSize = new Size((polygon.Points.MaxBy(p => p.X).X - polygon.Points.MinBy(p => p.X).X),
-                    (polygon.Points.MaxBy(p => p.Y).Y - polygon.Points.MinBy(p => p.Y).Y));
-                
+                Size polygonSize = new Size(polygon.Points.MaxBy(p => p.X).X - polygon.Points.MinBy(p => p.X).X,
+                    polygon.Points.MaxBy(p => p.Y).Y - polygon.Points.MinBy(p => p.Y).Y);
+
                 double marginPerTarget;
                 if (polygonSize.Width / polygonSize.Height < 2.5 && 1 / polygonSize.Width * polygonSize.Height < 2.5) {
                     polygon.RenderTransform = new ScaleTransform(1 - 1.0 / 4 * (polygonSize.Height / polygonSize.Width), 1 - 1.0 / 4,
@@ -119,7 +120,7 @@ namespace TacticalAgro {
                     transformedPoints[^1] = transformedPoints[0];
                     Obstacle field = new Obstacle(transformedPoints);
                     double temp;
-                    marginPerTarget = field.Perimetr() / targetsPerField; 
+                    marginPerTarget = field.Perimetr() / targetsPerField;
                     temp = marginPerTarget;
                     Vector V;
                     for (int bi = 0; bi < field.Borders.Length - 1; bi++) {
@@ -133,8 +134,8 @@ namespace TacticalAgro {
                         targets.Add(new Target(pos));
                         temp = 0;
                         for (int i = 1; ; i++) {
-                            if (obstacles[fi].PointOnObstacle((pos + V * marginPerTarget * i)))
-                                targets.Add(new Target((pos + V * marginPerTarget * i)));
+                            if (obstacles[fi].PointOnObstacle(pos + V * marginPerTarget * i))
+                                targets.Add(new Target(pos + V * marginPerTarget * i));
                             if ((field.Borders[bi + 1] - pos - V * marginPerTarget * i).Length <= marginPerTarget) {
                                 temp += (field.Borders[bi + 1] - pos - V * marginPerTarget * i).Length;
                                 break;
@@ -149,15 +150,15 @@ namespace TacticalAgro {
                         lineD = obstacles[fi].Borders.MaxBy(p => p.X).X - obstacles[fi].Borders.MinBy(p => p.X).X;
                         marginPerTarget = lineD * 0.9 / targetsPerField;
                         for (int i = 0; i < targetsPerField / 2; i++) {
-                            targets.Add(new Target(new Point(centerP.X + marginPerTarget * (i+1) - marginPerTarget/2*(1 - targetsPerField % 2), centerP.Y)));
-                            targets.Add(new Target(new Point(centerP.X - marginPerTarget * (i+1) + marginPerTarget / 2 * (1 - targetsPerField % 2), centerP.Y)));
+                            targets.Add(new Target(new Point(centerP.X + marginPerTarget * (i + 1) - marginPerTarget / 2 * (1 - targetsPerField % 2), centerP.Y)));
+                            targets.Add(new Target(new Point(centerP.X - marginPerTarget * (i + 1) + marginPerTarget / 2 * (1 - targetsPerField % 2), centerP.Y)));
                         }
                     } else {
-                        lineD = (obstacles[fi].Borders.MaxBy(p => p.Y).Y - obstacles[fi].Borders.MinBy(p => p.Y).Y);
+                        lineD = obstacles[fi].Borders.MaxBy(p => p.Y).Y - obstacles[fi].Borders.MinBy(p => p.Y).Y;
                         marginPerTarget = lineD * 0.9 / targetsPerField;
                         for (int i = 0; i < targetsPerField / 2; i++) {
                             targets.Add(new Target(new Point(centerP.X, centerP.Y + marginPerTarget * (i + 1) - marginPerTarget / 2 * (1 - targetsPerField % 2))));
-                            targets.Add(new Target(new Point(centerP.X, centerP.Y - marginPerTarget * (i + 1)  + marginPerTarget / 2 * (1 - targetsPerField % 2))));
+                            targets.Add(new Target(new Point(centerP.X, centerP.Y - marginPerTarget * (i + 1) + marginPerTarget / 2 * (1 - targetsPerField % 2))));
                         }
                     }
                 }

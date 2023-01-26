@@ -6,8 +6,9 @@ using System.Windows;
 using System.Windows.Media;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using TacticalAgro.Map;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Drones {
     public class Scout : IPlaceable, IDrone {
         public int InteractDistance { get; init; }
         public int ViewingDistance { get; init; }
@@ -24,14 +25,14 @@ namespace TacticalAgro {
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public Scout() { }
-        public Scout(Point point) { 
+        public Scout(Point point) {
             Position = point;
             Color = Colors.Orange;
         }
         public Scout(int x, int y) { }
 
         public void Simulate() {
-            
+
         }
 
         public int Compare(IPlaceable? x, IPlaceable? y) {

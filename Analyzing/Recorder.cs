@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 using System.Xml;
 using System.Runtime.CompilerServices;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Analyzing {
     internal class Recorder : IDisposable {
 
         List<Reading> readings = new List<Reading>();
@@ -33,7 +33,7 @@ namespace TacticalAgro {
         }
         public void Backup() {
             if (Readings.Any()) {
-                string resFileName = Path.Combine(Paths.Default.Results, $"Results_{Readings[0].ModelName}-backup-" + DateTime.Now.ToShortDateString() + "-" + DateTime.Now.ToLongTimeString().Replace(':','-') + ".xml");
+                string resFileName = Path.Combine(Paths.Default.Results, $"Results_{Readings[0].ModelName}-backup-" + DateTime.Now.ToShortDateString() + "-" + DateTime.Now.ToLongTimeString().Replace(':', '-') + ".xml");
                 SaveInXMLFile(resFileName);
             }
         }

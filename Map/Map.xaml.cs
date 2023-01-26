@@ -11,7 +11,11 @@ using System.Windows.Threading;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace TacticalAgro.Map {
+using TacticalAgro.Analyzing;
+using TacticalAgro.Drones;
+
+namespace TacticalAgro.Map
+{
     /// <summary>
     /// Логика взаимодействия для Map.xaml
     /// </summary>

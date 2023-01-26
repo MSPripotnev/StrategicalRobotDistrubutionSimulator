@@ -10,8 +10,9 @@ using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
+using TacticalAgro.Map;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Drones {
     public enum RobotState {
         Disable,
         Ready,
@@ -45,7 +46,7 @@ namespace TacticalAgro {
             el.Stroke = Brushes.Black;
             el.StrokeThickness = 2;
             el.Margin = new Thickness(-10, -10, 0, 0);
-            System.Windows.Controls.Canvas.SetZIndex(el, 3);
+            System.Windows.Controls.Panel.SetZIndex(el, 3);
 
             Binding binding = new Binding(nameof(Position) + ".X");
             binding.Source = this;
@@ -133,12 +134,12 @@ namespace TacticalAgro {
                             AttachedObj.Finished = true;
                             AttachedObj.ReservedTransporter = null;
                             AttachedObj = null;
-                        //робот сломался/выключился
+                            //робот сломался/выключился
                         } else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
                             BlockedTargets.Clear();
                         }
                         break;
-                        //нужно рассчитать траекторию
+                    //нужно рассчитать траекторию
                     case RobotState.Thinking:
                         //инициализация модуля прокладывания пути
                         Pathfinder.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : 5);
@@ -300,7 +301,7 @@ namespace TacticalAgro {
             Point nextPoint = Trajectory[0];
 
             if (PathFinder.Distance(Position, nextPoint) < MaxStraightRange) {
-                List<Point> pc = new (Trajectory.Skip(1));
+                List<Point> pc = new(Trajectory.Skip(1));
                 if (pc.Any()) {
                     TraversedWay += PathFinder.Distance(nextPoint, pc[0]);
                     nextPoint = pc[0];
@@ -316,7 +317,7 @@ namespace TacticalAgro {
         }
         public override string ToString() {
             return Enum.GetName(typeof(RobotState), state) + "_" +
-                (new Point(Math.Round(position.X, 2), Math.Round(position.Y, 2)).ToString());
+                new Point(Math.Round(position.X, 2), Math.Round(position.Y, 2)).ToString();
         }
         #endregion
 

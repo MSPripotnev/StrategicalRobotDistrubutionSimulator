@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.CodeDom;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Map {
     public class Obstacle : IPlaceable {
         private Point[] borders;
         [XmlArray("Points")]
@@ -61,8 +61,8 @@ namespace TacticalAgro {
             return false;
         }
         public static bool PointOutsideBorders(Point point, Size borders) {
-            return (point.X > borders.Width || point.Y > borders.Height
-                    || point.X < 0 || point.Y < 0);
+            return point.X > borders.Width || point.Y > borders.Height
+                    || point.X < 0 || point.Y < 0;
         }
         public static bool IsPointNearAnyObstacle(Point point, Obstacle[] obstacles) {
             float obstacleScale = 1.0F;
@@ -88,10 +88,10 @@ namespace TacticalAgro {
             } else {
                 var ellipse = new Ellipse();
                 ellipse.Width = ellipse.Height = 5;
-                ellipse.Margin = new Thickness(Position.X, Position.Y, 0,0);
+                ellipse.Margin = new Thickness(Position.X, Position.Y, 0, 0);
                 res = ellipse;
             }
-            System.Windows.Controls.Canvas.SetZIndex(res, 0);
+            System.Windows.Controls.Panel.SetZIndex(res, 0);
             res.Uid = $"obstacle_{Borders[0]}";
             return res;
         }
@@ -99,7 +99,7 @@ namespace TacticalAgro {
         public double Perimetr() {
             double res = 0;
             for (int i = 0; i < Borders.Length - 1; i++) {
-                res += (Borders[i+1]-Borders[i]).Length;
+                res += (Borders[i + 1] - Borders[i]).Length;
             }
             return res;
         }

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Analyzing {
     public class Reading {
         public string ModelName { get; set; }
         public int TransportersCount { get; set; }

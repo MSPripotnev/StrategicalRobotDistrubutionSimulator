@@ -9,6 +9,7 @@ using System.Media;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Controls;
+using TacticalAgro.Drones;
 
 namespace TacticalAgro {
     public partial class Director {

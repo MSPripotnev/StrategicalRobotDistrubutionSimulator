@@ -9,6 +9,8 @@ using System.Windows.Data;
 using System.Xml.Serialization;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using TacticalAgro.Drones;
+using TacticalAgro.Map;
 
 namespace TacticalAgro {
     public class Target : IPlaceable {

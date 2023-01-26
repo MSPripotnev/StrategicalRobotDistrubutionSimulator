@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
-using TacticalAgro.Analyzing;
-
-namespace TacticalAgro {
+namespace TacticalAgro.Analyzing {
     public class Tester {
         public Model[] Models { get; set; }
         string currentFilePath = "";
@@ -43,7 +41,7 @@ namespace TacticalAgro {
                 new Model("Lines10", "Lines3.xml", 12, (1, 25, 1), (5F, 0, 0)),
                 new Model("Lines20", "Lines3.xml", 24, (1, 25, 1), (5F, 0, 0)),*/
             };
-            foreach (string fileName in System.IO.Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Active")))
+            foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Active")))
                 models.Add(new Model(fileName));
             Models = models.ToArray();
             currentFilePath = Models[0].Path;

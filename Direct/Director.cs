@@ -8,6 +8,9 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using System.ComponentModel;
+using TacticalAgro.Analyzing;
+using TacticalAgro.Drones;
+using TacticalAgro.Map;
 
 namespace TacticalAgro {
     public partial class Director : System.ComponentModel.INotifyPropertyChanged, IDisposable {

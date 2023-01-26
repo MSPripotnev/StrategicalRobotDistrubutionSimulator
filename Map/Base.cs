@@ -12,7 +12,7 @@ using System.Xml.Serialization;
 using System.Windows;
 using System.Windows.Media;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Map {
     public class Base : IPlaceable {
         public Base() { }
         private Point position;
@@ -39,8 +39,8 @@ namespace TacticalAgro {
             el.Fill = new SolidColorBrush(Color);
             el.Stroke = Brushes.Black;
             el.StrokeThickness = 1;
-            el.Margin = new Thickness(-el.Width/2, -el.Height/2, 0, 0);
-            System.Windows.Controls.Canvas.SetZIndex(el, 1);
+            el.Margin = new Thickness(-el.Width / 2, -el.Height / 2, 0, 0);
+            System.Windows.Controls.Panel.SetZIndex(el, 1);
 
             Binding binding = new Binding(nameof(Position) + ".X");
             binding.Source = this;

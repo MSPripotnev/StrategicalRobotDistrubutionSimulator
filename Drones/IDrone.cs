@@ -5,7 +5,7 @@ using System.Windows;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Drones {
     public interface IDrone : IMoveable {
         public int InteractDistance { get; init; }
         public int ViewingDistance { get; init; }

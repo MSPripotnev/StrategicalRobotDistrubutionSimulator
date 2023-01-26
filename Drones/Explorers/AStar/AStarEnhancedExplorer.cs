@@ -5,9 +5,12 @@ using System.Windows;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
+using TacticalAgro.Map;
 
-namespace TacticalAgro {
-    internal class AStarEnhancedExplorer : AStarExplorer {
+namespace TacticalAgro.Drones.Explorers.AStar
+{
+    internal class AStarEnhancedExplorer : AStarExplorer
+    {
         public AStarEnhancedExplorer(Point _start, Point _end, double scale, TacticalMap map, double interactDistance)
             : base(_start, _end, scale, map, interactDistance) { }
         protected override void SelectNextPoint()

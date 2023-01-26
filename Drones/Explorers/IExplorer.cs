@@ -1,7 +1,9 @@
 ﻿using System.Drawing;
 
-namespace TacticalAgro {
-    public interface IExplorer {
+namespace TacticalAgro.Drones.Explorers
+{
+    public interface IExplorer
+    {
         public AnalyzedPoint Result { get; set; }
         public long Iterations { get; set; }
         public List<AnalyzedPoint> OpenedPoints { get; set; }

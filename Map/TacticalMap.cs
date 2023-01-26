@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Serialization;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Map {
     public class TacticalMap : INotifyPropertyChanged {
         private Obstacle[] obstacles;
         private Base[] bases;
@@ -23,7 +23,8 @@ namespace TacticalAgro {
         public string Path { get; set; }
         [XmlArray("Obstacles")]
         [XmlArrayItem("Obstacle")]
-        public Obstacle[] Obstacles { get => obstacles;
+        public Obstacle[] Obstacles {
+            get => obstacles;
             set {
                 obstacles = value;
                 PropertyChanged?.Invoke(Obstacles, new PropertyChangedEventArgs(nameof(Obstacles)));
@@ -31,14 +32,14 @@ namespace TacticalAgro {
         }
         [XmlArray("Bases")]
         [XmlArrayItem("Base")]
-        public Base[] Bases { 
+        public Base[] Bases {
             get => bases;
-            set { 
+            set {
                 bases = value;
                 PropertyChanged?.Invoke(Bases, new PropertyChangedEventArgs(nameof(Bases)));
-            } 
+            }
         }
-        public System.Windows.Size Borders { 
+        public Size Borders {
             get => borders;
             set {
                 borders = value;
@@ -53,7 +54,7 @@ namespace TacticalAgro {
                 fs.Close();
             }
         }
-        
+
         public TacticalMap() {
             Obstacles = new Obstacle[0];
             Bases = new Base[0];
@@ -73,11 +74,11 @@ namespace TacticalAgro {
                     newMap = (TacticalMap)xmlSerializer.Deserialize(fs);
                     fs.Close();
                 }
-                this.Obstacles = newMap.Obstacles;
-                this.Bases = newMap.Bases;
-                this.Borders = newMap.Borders;
-                this.Name = newMap.Name;
-            } else 
+                Obstacles = newMap.Obstacles;
+                Bases = newMap.Bases;
+                Borders = newMap.Borders;
+                Name = newMap.Name;
+            } else
                 throw new FileNotFoundException();
             Path = path;
         }

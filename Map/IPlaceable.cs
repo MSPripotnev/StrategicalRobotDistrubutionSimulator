@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Media;
 
-namespace TacticalAgro {
+namespace TacticalAgro.Map {
     public interface IPlaceable : System.ComponentModel.INotifyPropertyChanged {
         public UIElement Build();
         public Point Position { get; set; }
