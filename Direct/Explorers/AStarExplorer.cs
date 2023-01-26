@@ -8,8 +8,8 @@ using System.Windows.Controls;
 
 namespace TacticalAgro {
     internal class AStarExplorer : IExplorer {
-        private Point start;
-        private Point end;
+        protected Point start;
+        protected Point end;
         private TacticalMap Map { get; init; }
         public double InteractDistance { private get; init; }
         public double Scale { get; set; }
@@ -51,7 +51,7 @@ namespace TacticalAgro {
             long iterations = 0;
             List<Point> result = new List<Point>();
             for (int i = 1; i < 9; i+=2, iterations++) {
-                //выбор направления 
+                //выбор направления
                 Point pos = new Point(
                         currentPoint.Position.X + (i / 3 - 1) * Scale,// * (i % 2 - 1),
                                                                       //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
