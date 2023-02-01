@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Serialization;
+﻿using System.ComponentModel;
 using System.Windows;
-using System.Windows.Shapes;
-using System.Windows.Media;
-using System.Threading.Tasks;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Windows.Data;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Xml.Serialization;
+
 using TacticalAgro.Map;
 
 namespace TacticalAgro.Drones {
@@ -35,9 +30,10 @@ namespace TacticalAgro.Drones {
             }
         }
         [XmlIgnore]
+        [PropertyTools.DataAnnotations.Browsable(false)]
         public Color Color { get; set; } = Colors.Red;
         [XmlIgnore]
-        public float Speed { get; set; }
+        public double Speed { get; set; }
         public UIElement Build() {
             Ellipse el = new Ellipse();
             el.Width = 20;
@@ -87,7 +83,7 @@ namespace TacticalAgro.Drones {
             polyline.SetBinding(Polyline.PointsProperty, b);
             return polyline;
         }
-
+        [PropertyTools.DataAnnotations.Browsable(false)]
         public List<Point> OpenedPoints {
             get {
                 var vs = new List<Point>();
@@ -97,9 +93,10 @@ namespace TacticalAgro.Drones {
                 return vs;
             }
             set {
-                PropertyChanged(this, new PropertyChangedEventArgs(nameof(OpenedPoints)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OpenedPoints)));
             }
         }
+        [PropertyTools.DataAnnotations.Browsable(false)]
         public List<Point> ClosedPoints {
             get {
                 var vs = new List<Point>();
@@ -109,7 +106,7 @@ namespace TacticalAgro.Drones {
                 return vs;
             }
             set {
-                PropertyChanged(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
             }
         }
         #endregion
@@ -134,17 +131,22 @@ namespace TacticalAgro.Drones {
                             AttachedObj.Finished = true;
                             AttachedObj.ReservedTransporter = null;
                             AttachedObj = null;
-                            //робот сломался/выключился
+                        } else if (CurrentState == RobotState.Thinking) {
+                            ResetTarget();
                         } else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
+                            //робот сломался/выключился
                             BlockedTargets.Clear();
                         }
                         break;
                     //нужно рассчитать траекторию
                     case RobotState.Thinking:
                         //инициализация модуля прокладывания пути
-                        Pathfinder.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : 5);
+                        Pathfinder.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : Speed);
                         break;
                     case RobotState.Going:
+                        if (CurrentState == RobotState.Thinking && AttachedObj != null) {
+                            AttachedObj.ReservedTransporter = this;
+                        }
                         var vs = new List<Point>(Trajectory); vs.Reverse();
                         BackTrajectory = vs.ToArray();
                         break;
@@ -165,6 +167,7 @@ namespace TacticalAgro.Drones {
         [XmlIgnore]
         private List<Point> trajectory = new List<Point>();
         [XmlIgnore]
+        [PropertyTools.DataAnnotations.Browsable(false)]
         public PathFinder Pathfinder { get; set; }
         [PropertyTools.DataAnnotations.Browsable(false)]
         [XmlIgnore]
@@ -197,6 +200,7 @@ namespace TacticalAgro.Drones {
         [XmlIgnore]
         public int ViewingDistance { get; init; } = 2;
         [XmlIgnore]
+        [PropertyTools.DataAnnotations.Browsable(false)]
         public Target? AttachedObj { get; set; } = null;
         [XmlIgnore]
         public List<Target> BlockedTargets { get; set; } = new List<Target>();
@@ -246,6 +250,14 @@ namespace TacticalAgro.Drones {
         #endregion
 
         #region Func
+        private void ResetTarget() {
+            AttachedObj = null;
+            Trajectory.Clear();
+            Trajectory = Trajectory;
+            BackTrajectory = Array.Empty<Point>();
+            Pathfinder.IsCompleted = false;
+            Pathfinder.Result = new List<Point>();
+        }
         public void Simulate() {
             switch (CurrentState) {
                 case RobotState.Disable:
@@ -257,10 +269,11 @@ namespace TacticalAgro.Drones {
                     Trajectory = Pathfinder.Result;
                     OpenedPoints = ClosedPoints = null;
                     //ошибка при расчётах
-                    if (Pathfinder.Result == null) {
-                        CurrentState = RobotState.Broken;
-                        //путь найден
+                    if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
+                        BlockedTargets.Add(AttachedObj);
+                        AttachedObj = null;
                     } else if (Pathfinder.IsCompleted) {
+                        //путь найден
                         Pathfinder.IsCompleted = false;
                         //робот едет к объекту
                         if (AttachedObj != null && AttachedObj.ReservedTransporter != this)

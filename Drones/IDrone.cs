@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Windows;
 
 namespace TacticalAgro.Drones {
     public interface IDrone : IMoveable {
@@ -13,7 +8,7 @@ namespace TacticalAgro.Drones {
     }
 
     public interface IMoveable {
-        public float Speed { get; set; }
+        public double Speed { get; set; }
         public List<Point> Trajectory { get; set; }
         public Point TargetPosition { get; set; }
         public double DistanceToTarget { get; }

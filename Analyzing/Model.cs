@@ -1,14 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
-using System.Xml.Serialization;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Xml;
+using System.Xml.Serialization;
+
 using TacticalAgro.Map;
 
 namespace TacticalAgro.Analyzing {

@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
-using System.Threading.Tasks;
-using System.ComponentModel;
+
 using TacticalAgro.Map;
 
 namespace TacticalAgro.Drones {
     public class Scout : IPlaceable, IDrone {
         public int InteractDistance { get; init; }
         public int ViewingDistance { get; init; }
-        public float Speed { get; set; } = 0;
+        public double Speed { get; set; }
         public Point Position { get; set; }
         public Point TargetPosition { get; set; }
         public double DistanceToTarget { get; }

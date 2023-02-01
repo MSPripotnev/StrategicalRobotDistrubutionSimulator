@@ -1,37 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Media;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Controls;
+﻿using System.ComponentModel;
+
 using TacticalAgro.Drones;
+using TacticalAgro.Map;
 
 namespace TacticalAgro {
     public partial class Director {
 
         #region Distribute
         public void DistributeTask() {
-            lock (Transporters) {
-                var FreeTransporters = Transporters.Where(p => p.CurrentState == RobotState.Ready);
-                DistributeTaskForFreeTransporters();
-                DistributeTaskForCarryingTransporters();
-            }
+            DistributeTaskForFreeTransporters();
+            DistributeTaskForCarryingTransporters();
         }
 
         //readonly Dictionary<Transporter, Task<Point[]>> trajectoryTasks = new Dictionary<Transporter, Task<Point[]>>();
         private void DistributeTaskForFreeTransporters() {
             var freeTransport = new List<Transporter>(FreeTransporters).ToArray();
-            lock (freeTransport)
-                if (freeTransport.Length > 0 && FreeTargets.Length > 0) {
-                    CalculateTrajectoryForFreeTransporters(freeTransport);
-                    lock (Targets)
-                        SelectNearestTransporterWithTrajectoryForTarget();
-                }
+            if (freeTransport.Length > 0 && FreeTargets.Length > 0) {
+                CalculateTrajectoryForFreeTransporters(freeTransport);
+                SelectNearestTransporterWithTrajectoryForTarget();
+            }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FreeTargets)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CollectedTargets)));
         }
@@ -39,18 +26,17 @@ namespace TacticalAgro {
             //распределение ближайших целей по роботам
             for (int i = 0; i < freeTransport.Length; i++) {
                 Transporter transporter = freeTransport[i];
-                Target? nearestTarget = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p)).MinBy(
+                IPlaceable targetPos;
+                targetPos = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p)).MinBy(
                     t => PathFinder.Distance(t.Position, transporter.Position));
-                if (nearestTarget == null)
+                if (targetPos == null)
                     continue;
 
-                DateTime startTime = DateTime.Now;
-                LinkTargetToTransporter(transporter, nearestTarget);
-                ThinkingTime += (DateTime.Now - startTime);
+                LinkTargetToTransporter(transporter, targetPos as Target);
 
                 if (!transporter.Trajectory.Any()) {
                     transporter.AttachedObj = null;
-                    transporter.BlockedTargets.Add(nearestTarget);
+                    transporter.BlockedTargets.Add(targetPos as Target);
                 }
             }
         }
@@ -76,11 +62,9 @@ namespace TacticalAgro {
                 Map.Bases.All(b => PathFinder.Distance(b.Position, p.TargetPosition) > p.InteractDistance)
                 ).ToList();
             if (CarryingTransporters.Count > 0) {
-                Task<Point[]>[] trajectoryTasks = new Task<Point[]>[CarryingTransporters.Count];
-                DateTime startTime = DateTime.Now;
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
                     Transporter transporter = CarryingTransporters[i];
-                    var nearBase = Map.Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
+                    Base? nearBase = Map.Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
                     if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance/2) {
                         transporter.Trajectory = transporter.BackTrajectory.ToList();
                         if (transporter.Trajectory[^1] != nearBase.Position)
@@ -95,7 +79,6 @@ namespace TacticalAgro {
                         transporter.CurrentState = RobotState.Ready;
                     }
                 }
-                ThinkingTime += (DateTime.Now - startTime);
             }
         }
 

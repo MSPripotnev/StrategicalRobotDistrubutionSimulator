@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.ComponentModel;
 using System.Windows;
-using System.Windows.Shapes;
-using System.Windows.Media;
 using System.Windows.Data;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using System.Xml.Serialization;
-using System.Threading.Tasks;
-using System.ComponentModel;
+
 using TacticalAgro.Drones;
 using TacticalAgro.Map;
 

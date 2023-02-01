@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 
 namespace TacticalAgro.Analyzing {
     public class Reading {
@@ -21,6 +16,7 @@ namespace TacticalAgro.Analyzing {
         public double DistributeIterations { get; set; }
         [XmlIgnore]
         public double[] STransporterWay { get; set; }
+        public double TraversedWayPx { get; set; }
         public double TraversedWay { get; set; }
         public Reading() {
 

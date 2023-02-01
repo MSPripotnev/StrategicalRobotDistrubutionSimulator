@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
+﻿using System.IO;
 using System.Xml;
-using System.Runtime.CompilerServices;
+using System.Xml.Serialization;
 
 namespace TacticalAgro.Analyzing {
     internal class Recorder : IDisposable {
@@ -40,23 +34,24 @@ namespace TacticalAgro.Analyzing {
         public void SaveResults(Director director, string modelName, TimeSpan wayTime, TimeSpan fullTime, ref double iterations) {
             var analyzer = new Reading() {
                 ModelName = modelName,
-                TransportersCount = director.Transporters.Length,
+                TransportersCount = director.Transporters.Count,
                 Scale = Math.Round(director.Scale, 3),
                 CalcTime = director.ThinkingTime.TotalSeconds,
                 ThinkingIterations = director.ThinkingIterations,
-                WayTime = director.TraversedWaySum / (0.050 * director.Transporters[0].Speed),
                 WayIterations = director.WayIterations,
                 FullTime = fullTime.TotalSeconds,
                 DistributeIterations = Math.Round(iterations),
-                TraversedWay = director.TraversedWaySum,
-                STransporterWay = new double[director.Transporters.Length],
+                TraversedWayPx = director.TraversedWaySum,
+                TraversedWay = Math.Round(director.TraversedWaySum * Testing.Default.K_s, 14),
+                STransporterWay = new double[director.Transporters.Count],
                 TargetsCount = director.Targets.Length,
             };
             analyzer.DistributeTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime;
             if (director.Transporters.Any()) {
-                analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8);
-                for (int i = 0; i < director.Transporters.Length; i++)
+                analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8) * Testing.Default.K_v;
+                for (int i = 0; i < director.Transporters.Count; i++)
                     analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
+                analyzer.WayTime = Math.Round(Testing.Default.K_s * analyzer.TransportersSpeed / Testing.Default.K_v * analyzer.WayIterations, 14);
             }
             readings.Add(analyzer);
             iterations = 0;

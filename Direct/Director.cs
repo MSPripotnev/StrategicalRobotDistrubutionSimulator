@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows;
-using System.Xml.Serialization;
-using System.Windows.Media;
-using System.Text;
+﻿using System.ComponentModel;
 using System.IO;
-using System.Threading.Tasks;
-using System.ComponentModel;
+using System.Xml.Serialization;
+
 using TacticalAgro.Analyzing;
 using TacticalAgro.Drones;
 using TacticalAgro.Map;
@@ -37,17 +31,18 @@ namespace TacticalAgro {
         private Transporter[] transporters;
         [XmlArray("Transporters")]
         [XmlArrayItem("Transporter")]
-        public Transporter[] Transporters { get => transporters;
+        public List<Transporter> Transporters { 
+            get => transporters.ToList();
             set {
-                transporters = value;
+                transporters = value.ToArray();
                 //установка модуля построения пути
                 if (Transporters != null) {
-                    var vs = Transporters.Where(p => p.Pathfinder == null).ToArray();
-                    for (int i = 0; i < vs.Length; i++) {
-                        vs[i].Pathfinder = new PathFinder(Map, Scale);
-                        //Map.PropertyChanged += vs[i].Pathfinder.Refresh;
-                        PropertyChanged += vs[i].Pathfinder.Refresh;
-                        SettingsChanged += vs[i].Pathfinder.Refresh;
+                    for (int i = 0; i < Transporters.Count; i++) {
+                        if (Transporters[i].Pathfinder == null) {
+                            Transporters[i].Pathfinder = new PathFinder(Map, Scale);
+                            PropertyChanged += Transporters[i].Pathfinder.Refresh;
+                            SettingsChanged += Transporters[i].Pathfinder.Refresh;
+                        }
                     }
                 }
             }
@@ -131,8 +126,8 @@ namespace TacticalAgro {
             Scale = 5.0F;
             ThinkingTime = TimeSpan.Zero;
             Map = new TacticalMap();
-            Targets = new Target[0];
-            Transporters = new Transporter[0];
+            Targets = Array.Empty<Target>();
+            Transporters = Array.Empty<Transporter>().ToList();
         }
         public Director(Model testModel) : this() {
             MapPath = testModel.Map;
@@ -150,7 +145,7 @@ namespace TacticalAgro {
             MapPath = _mapPath;
         }
         public void Work() {
-            for (int i = 0; i < Transporters.Length; i++)
+            for (int i = 0; i < Transporters.Count; i++)
                 Transporters[i].Simulate();
         }
         public bool CheckMission() {
@@ -166,7 +161,7 @@ namespace TacticalAgro {
             if (obj is Transporter r) {
                 var ls = Transporters.ToList();
                 ls.Add(r);
-                Transporters = ls.ToArray();
+                Transporters = ls;
             } else if (obj is Target o) {
                 var ls = Targets.ToList();
                 ls.Add(o);
@@ -185,7 +180,7 @@ namespace TacticalAgro {
             if (obj is Transporter r) {
                 var ls = Transporters.ToList();
                 ls.Remove(r);
-                Transporters = ls.ToArray();
+                Transporters = ls;
             } else if (obj is Target o) {
                 var ls = Targets.ToList();
                 ls.Remove(o);
@@ -230,7 +225,7 @@ namespace TacticalAgro {
                 if (targets != null) Targets = targets;
                 if (bases != null) Map.Bases = bases;
                 if (obstacles != null) Map.Obstacles = obstacles;
-                if (transporters != null) Transporters = transporters;
+                if (transporters != null) Transporters = transporters.ToList();
             }
         }
         #endregion

@@ -1,7 +1,4 @@
-﻿using System.Drawing;
-
-namespace TacticalAgro.Drones.Explorers
-{
+﻿namespace TacticalAgro.Drones.Explorers {
     public interface IExplorer
     {
         public AnalyzedPoint Result { get; set; }

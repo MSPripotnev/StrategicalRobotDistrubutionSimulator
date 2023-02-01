@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Windows;
+
 using TacticalAgro.Map;
 
-namespace TacticalAgro.Drones.Explorers.AStar
-{
+namespace TacticalAgro.Drones.Explorers.AStar {
     internal class AStarGreedyExplorer : AStarExplorer
     {
         public AStarGreedyExplorer(Point _start, Point _end, double scale, TacticalMap map, double interactDistance)

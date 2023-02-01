@@ -1,6 +1,4 @@
-﻿//#define PARALLEL
-using System.DirectoryServices.ActiveDirectory;
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -14,8 +12,7 @@ using System.Xml.Serialization;
 using TacticalAgro.Analyzing;
 using TacticalAgro.Drones;
 
-namespace TacticalAgro.Map
-{
+namespace TacticalAgro.Map {
     /// <summary>
     /// Логика взаимодействия для Map.xaml
     /// </summary>
@@ -57,7 +54,7 @@ namespace TacticalAgro.Map
             if (File.Exists(tester.Models[0].Path)) {
                 Director = tester.LoadModel(tester.Models[0].Path);
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                    $"Транспортеров: {Director.Transporters.Length}\n" +
+                    $"Транспортеров: {Director.Transporters.Count}\n" +
                     $"Моделей: {tester.Models.Length}";
             }
         }
@@ -143,7 +140,7 @@ namespace TacticalAgro.Map
             Director = tester.ReloadModel();
 
             attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                $"Транспортеров: {Director.Transporters.Length}\n" +
+                $"Транспортеров: {Director.Transporters.Count}\n" +
                 $"Моделей: {tester.Models.Length}";
             trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
 
@@ -163,7 +160,7 @@ namespace TacticalAgro.Map
             } else {
                 Director = tester.ReloadModel();
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                    $"Транспортеров: {Director.Transporters.Length}\n" +
+                    $"Транспортеров: {Director.Transporters.Count}\n" +
                     $"Моделей: {tester.Models.Length}";
                 nextModelB.IsEnabled = tester.Models.Length > 1;
             }
@@ -171,7 +168,8 @@ namespace TacticalAgro.Map
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
             refreshTimer.Stop();
             Work();
-            refreshTimer.Start();
+            if (Director != null && !Director.CheckMission())
+                refreshTimer.Start();
         }
         private void Work() {
             try {
@@ -250,8 +248,6 @@ namespace TacticalAgro.Map
             stopB.IsEnabled = false;
         }
         private void RefreshTime() {
-            if (Director != null)
-                Director.ThinkingTime = TimeSpan.Zero;
             tempTime = TimeSpan.Zero;
             realWorkTime = TimeSpan.Zero;
             realWayTime = TimeSpan.Zero;
@@ -424,15 +420,17 @@ namespace TacticalAgro.Map
         }
 
         public void Refresh() {
+            if (Director != null) {
             collectedObjsCountL.Content = $"Cобранных целей: {Director.CollectedTargets.Length}";
             currentObjsCountL.Content = "Осталось целей: " +
                 (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
-            traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)}";
+                traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)} px";
             if (drawCB.IsChecked == true) {
                 thinkTimeCountL.Content = $"Сложность расчёта: {Director.ThinkingIterations} it";
                 if (Director.Transporters.Any())
                     wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
-                allTimeCountL.Content = $"Время алгоритма: {Math.Round((realWorkTime).TotalSeconds, 3)} s";
+                    allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime).TotalSeconds, 3)} s";
+                }
             }
         }
     }

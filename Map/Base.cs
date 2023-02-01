@@ -1,16 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
+﻿using System.ComponentModel;
 using System.Windows;
-using System.Windows.Shapes;
 using System.Windows.Data;
 using System.Windows.Media;
-using System.Threading.Tasks;
+using System.Windows.Shapes;
 using System.Xml.Serialization;
-using System.Windows;
-using System.Windows.Media;
 
 namespace TacticalAgro.Map {
     public class Base : IPlaceable {
