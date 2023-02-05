@@ -144,7 +144,9 @@ namespace TacticalAgro {
         }
         public void Work() {
             for (int i = 0; i < Transporters.Count; i++)
-                Transporters[i].Simulate();
+                do
+                    Transporters[i].Simulate();
+                while (Transporters[i].CurrentState == RobotState.Thinking);
         }
         public bool CheckMission() {
             for (int i = 0; i < Targets.Length; i++)

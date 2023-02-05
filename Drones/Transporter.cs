@@ -163,8 +163,6 @@ namespace TacticalAgro.Drones {
 
         #region Trajectory
         [XmlIgnore]
-        public const int DistanceCalculationTimeout = 20000;
-        [XmlIgnore]
         private List<Point> trajectory = new List<Point>();
         [XmlIgnore]
         [PropertyTools.DataAnnotations.Browsable(false)]
@@ -272,7 +270,6 @@ namespace TacticalAgro.Drones {
                         break;
                     }
                     Trajectory = Pathfinder.Result;
-                    OpenedPoints = ClosedPoints = null;
                     //ошибка при расчётах
                     if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
                         BlockedTargets.Add(AttachedObj);
