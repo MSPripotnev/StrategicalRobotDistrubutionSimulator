@@ -40,7 +40,7 @@ namespace TacticalAgro.Map {
         public MapWPF() {
             InitializeComponent();
             refreshTimer = new DispatcherTimer {
-                Interval = new TimeSpan(0,0,0,0,10)
+                Interval = new TimeSpan(0,0,0,0,1)
             };
             tester = new Tester();
             recorder = new Recorder();
@@ -147,7 +147,8 @@ namespace TacticalAgro.Map {
             startButton_Click(sender, null);
         }
         private void OnAttemptCompleted(object? sender, EventArgs e) {
-            recorder.SaveResults(Director, tester.Models[0].Name, realWayTime, realWorkTime, ref iterations);
+            realWorkTime += (DateTime.Now - startTime);
+            recorder.SaveResults(Director, tester.Models[0].Name, realWorkTime, ref iterations);
             Stop();
             Director = null;
         }
@@ -167,7 +168,9 @@ namespace TacticalAgro.Map {
         }
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
             refreshTimer.Stop();
+            var dt = DateTime.Now;
             Work();
+            realWayTime += (DateTime.Now - dt);
             if (Director != null && !Director.CheckMission())
                 refreshTimer.Start();
         }
@@ -421,14 +424,14 @@ namespace TacticalAgro.Map {
 
         public void Refresh() {
             if (Director != null) {
-            collectedObjsCountL.Content = $"Cобранных целей: {Director.CollectedTargets.Length}";
-            currentObjsCountL.Content = "Осталось целей: " +
-                (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
+                collectedObjsCountL.Content = $"Cобранных целей: {Director.CollectedTargets.Length}";
+                currentObjsCountL.Content = "Осталось целей: " +
+                    (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
                 traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)} px";
-            if (drawCB.IsChecked == true) {
-                thinkTimeCountL.Content = $"Сложность расчёта: {Director.ThinkingIterations} it";
-                if (Director.Transporters.Any())
-                    wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
+                if (drawCB.IsChecked == true) {
+                    thinkTimeCountL.Content = $"Сложность расчёта: {Director.ThinkingIterations} it";
+                    if (Director.Transporters.Any())
+                        wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
                     allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime).TotalSeconds, 3)} s";
                 }
             }

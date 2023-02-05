@@ -7,9 +7,7 @@ namespace TacticalAgro.Analyzing {
         public double TransportersSpeed { get; set; }
         public int TargetsCount { get; set; }
         public double Scale { get; set; }
-        public double CalcTime { get; set; }
         public double WayTime { get; set; }
-        public double DistributeTime { get; set; }
         public double FullTime { get; set; }
         public double WayIterations { get; set; }
         public double ThinkingIterations { get; set; }

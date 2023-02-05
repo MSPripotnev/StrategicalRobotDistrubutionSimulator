@@ -31,12 +31,11 @@ namespace TacticalAgro.Analyzing {
                 SaveInXMLFile(resFileName);
             }
         }
-        public void SaveResults(Director director, string modelName, TimeSpan wayTime, TimeSpan fullTime, ref double iterations) {
+        public void SaveResults(Director director, string modelName, TimeSpan fullTime, ref double iterations) {
             var analyzer = new Reading() {
                 ModelName = modelName,
                 TransportersCount = director.Transporters.Count,
                 Scale = Math.Round(director.Scale, 3),
-                CalcTime = director.ThinkingTime.TotalSeconds,
                 ThinkingIterations = director.ThinkingIterations,
                 WayIterations = director.WayIterations,
                 FullTime = fullTime.TotalSeconds,
@@ -46,12 +45,11 @@ namespace TacticalAgro.Analyzing {
                 STransporterWay = new double[director.Transporters.Count],
                 TargetsCount = director.Targets.Length,
             };
-            analyzer.DistributeTime = analyzer.FullTime - analyzer.WayTime - analyzer.CalcTime;
             if (director.Transporters.Any()) {
                 analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8) * Testing.Default.K_v;
                 for (int i = 0; i < director.Transporters.Count; i++)
                     analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
-                analyzer.WayTime = Math.Round(Testing.Default.K_s * analyzer.TransportersSpeed / Testing.Default.K_v * analyzer.WayIterations, 14);
+                analyzer.WayTime = Math.Round(Testing.Default.K_v / Testing.Default.K_s * analyzer.WayIterations, 14);
             }
             readings.Add(analyzer);
             iterations = 0;

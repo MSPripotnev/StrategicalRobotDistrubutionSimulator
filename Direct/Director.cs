@@ -20,8 +20,6 @@ namespace TacticalAgro {
                 return Transporters.Sum(t => t.WayIterations);
             }
         }
-        [XmlIgnore]
-        public TimeSpan ThinkingTime { get; set; } = TimeSpan.Zero;
 
         #region Actors
         [XmlIgnore]
@@ -124,7 +122,6 @@ namespace TacticalAgro {
 
         public Director() {
             Scale = 5.0F;
-            ThinkingTime = TimeSpan.Zero;
             Map = new TacticalMap();
             Targets = Array.Empty<Target>();
             Transporters = Array.Empty<Transporter>().ToList();
