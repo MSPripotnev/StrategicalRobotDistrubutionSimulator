@@ -27,8 +27,8 @@ namespace TacticalAgro {
             for (int i = 0; i < freeTransport.Length; i++) {
                 Transporter transporter = freeTransport[i];
                 IPlaceable targetPos;
-                targetPos = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p)).MinBy(
-                    t => PathFinder.Distance(t.Position, transporter.Position));
+                targetPos = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p) && !Transporters.Any(t => t.AttachedObj == p))
+                    .MinBy(t => PathFinder.Distance(t.Position, transporter.Position));
                 if (targetPos == null)
                     continue;
 

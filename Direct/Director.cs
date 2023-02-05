@@ -41,6 +41,7 @@ namespace TacticalAgro {
                             PropertyChanged += Transporters[i].Pathfinder.Refresh;
                             SettingsChanged += Transporters[i].Pathfinder.Refresh;
                         }
+                        Transporters[i].OtherTransporters = Transporters.Except(new Transporter[] { Transporters[i] }).ToList();
                     }
                 }
             }

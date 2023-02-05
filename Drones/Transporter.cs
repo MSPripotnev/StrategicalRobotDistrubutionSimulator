@@ -204,6 +204,7 @@ namespace TacticalAgro.Drones {
         public Target? AttachedObj { get; set; } = null;
         [XmlIgnore]
         public List<Target> BlockedTargets { get; set; } = new List<Target>();
+        public List<Transporter> OtherTransporters { get; set; } = new List<Transporter>();
         #endregion
 
         #region Debug Info
@@ -266,6 +267,10 @@ namespace TacticalAgro.Drones {
                 case RobotState.Ready:
                     break;
                 case RobotState.Thinking:
+                    if (AttachedObj.ReservedTransporter != null && OtherTransporters.Contains(AttachedObj.ReservedTransporter)) {
+                        CurrentState = RobotState.Ready;
+                        break;
+                    }
                     Trajectory = Pathfinder.Result;
                     OpenedPoints = ClosedPoints = null;
                     //ошибка при расчётах
