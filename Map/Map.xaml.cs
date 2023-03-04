@@ -51,7 +51,7 @@ namespace TacticalAgro.Map {
             tester.AttemptFailed += OnAttemptFailed;
             refreshTimer.Tick += RefreshTimer_Tick;
 
-            if (File.Exists(tester.Models[0].Path)) {
+            if ((tester?.Models?.Any() == true) && File.Exists(tester.Models[0].Path)) {
                 Director = tester.LoadModel(tester.Models[0].Path);
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
                     $"Транспортеров: {Director.Transporters.Count}\n" +
@@ -416,6 +416,14 @@ namespace TacticalAgro.Map {
         private void nextModelB_Click(object sender, RoutedEventArgs e) {
             tester.NextModel();
         }
+
+        private void testsB_Click(object sender, RoutedEventArgs e) {
+            Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
+            window.ShowDialog();
+            tester.LoadModels();
+            if (File.Exists(tester.Models[0].Path))
+                Director = tester.LoadModel(tester.Models[0].Path);
+            }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             Director.Dispose();

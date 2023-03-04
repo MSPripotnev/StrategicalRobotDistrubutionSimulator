@@ -68,7 +68,7 @@ namespace TacticalAgro.Analyzing {
                 scaleRange.Item2 = TransportersT.Count;
                 ScalesT = new ParametrRange(scaleRange);
             }
-            Path = System.IO.Path.Combine(Paths.Default.Tests, $"{Name}.xml");
+            Path = System.IO.Path.Combine(Paths.Default.Tests, "Complete", $"{Name}.xml");
             using (FileStream fs = new FileStream(Path, FileMode.Create)) {
                 XmlSerializer xmlSerializer = new XmlSerializer(typeof(Model));
                 XmlWriterSettings settings = new XmlWriterSettings() {
@@ -120,7 +120,7 @@ namespace TacticalAgro.Analyzing {
                     temp = marginPerTarget;
                     Vector V;
                     for (int bi = 0; bi < field.Borders.Length - 1; bi++) {
-                        V = field.Borders[bi + 1] - field.Borders[bi]; //вектор направления
+                        V = field.Borders[bi + 1] - field.Borders[bi]; //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                         if (V.Length + temp < marginPerTarget) {
                             temp += V.Length;
                             continue;
