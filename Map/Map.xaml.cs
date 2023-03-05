@@ -235,7 +235,7 @@ namespace TacticalAgro.Map {
             refreshTimer.Stop();
             //tokenSource.Cancel();
             pauseTime = DateTime.Now;
-            startB.Content = "Запуск";
+            startB.Content = "▶️";
             //pauseTime = startTime;
         }
         private void Stop() {
@@ -245,10 +245,11 @@ namespace TacticalAgro.Map {
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
-            startB.Content = "Запуск";
+            startB.Content = "▶️";
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = true;
             stopB.IsEnabled = false;
+            stepB.IsEnabled = false;
         }
         private void RefreshTime() {
             tempTime = TimeSpan.Zero;
@@ -332,15 +333,15 @@ namespace TacticalAgro.Map {
             lastClickPos = new Point(0, 0);
         }
         private void startButton_Click(object sender, RoutedEventArgs e) {
-            if (startB.Content.ToString() == "Запуск") {
+            if (startB.Content.ToString() == "▶️") {
                 if (pauseTime > startTime)
                     tempTime += pauseTime - startTime;
                 Start();
                 pauseTime = startTime;
                 stopB.IsEnabled = true;
-                startB.Content = "Пауза";
+                startB.Content = "||";
             } else {
-                startB.Content = "Запуск";
+                startB.Content = "▶️";
                 Pause();
             }
         }
@@ -415,6 +416,16 @@ namespace TacticalAgro.Map {
 
         private void nextModelB_Click(object sender, RoutedEventArgs e) {
             tester.NextModel();
+        }
+
+        private void stepB_Click(object sender, RoutedEventArgs e) {
+            refreshTimer.Stop();
+            var dt = DateTime.Now;
+            Work();
+            var ts = DateTime.Now - dt;
+            tempTime -= DateTime.Now - pauseTime; Refresh();
+            tempTime += DateTime.Now - pauseTime;
+            realWayTime += ts;
         }
 
         private void testsB_Click(object sender, RoutedEventArgs e) {

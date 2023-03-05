@@ -41,10 +41,12 @@
         <Label Grid.Row="2" Grid.Column="1" MaxHeight="50" Content="Отрисовка: " VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,0,20,0"/>
         <CheckBox x:Name="drawCB" Grid.Column="2" Grid.Row="2" MaxHeight="50" Margin="0,5,5,0" VerticalAlignment="Top" HorizontalAlignment="Right" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" IsChecked="True"/>
         <TextBox x:Name="trajectoryScaleTB" Text="5.0" Grid.Column="1" Grid.Row="2" MaxHeight="30" VerticalAlignment="Top" TextAlignment="Center" Margin="110,5,219,0" TextChanged="trajectoryScale_TextChanged"/>
-        <Button x:Name="startB" Grid.Column="1" Content="Запуск" HorizontalAlignment="Center" IsEnabled="False"
-                Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="startButton_Click" Margin="-100,0,0,10"/>
-        <Button x:Name="stopB" Grid.Column="1" Content="Стоп" HorizontalAlignment="Center" IsEnabled="False"
-            Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="stopB_Click" Margin="100, 0, 0, 10"/>
+        <Button x:Name="startB" Grid.Column="1" Content="▶️" HorizontalAlignment="Center" IsEnabled="False"
+                Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="startButton_Click" Margin="0,35,65,0"/>
+        <Button x:Name="stopB" Grid.Column="1" Content="■" HorizontalAlignment="Center" IsEnabled="False"
+            Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="stopB_Click" Margin="0,35,0,0"/>
+        <Button x:Name="stepB" Grid.Column="1" Content="▶️|" HorizontalAlignment="Center" IsEnabled="False"
+            Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="stepB_Click" Margin="65,35,0,0"/>
         <Button x:Name="nextModelB" Grid.Column="1" Content="След. модель" HorizontalAlignment="Center" IsEnabled="True"
             Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="nextModelB_Click" Margin="0, 0, 0, -60"/>
         <Label x:Name="collectedObjsCountL" Grid.Column="1" Grid.Row="0" MaxHeight="50" Margin="0,20,200,0" VerticalAlignment="Top"/>
