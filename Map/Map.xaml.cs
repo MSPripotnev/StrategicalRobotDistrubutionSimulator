@@ -36,6 +36,26 @@ namespace TacticalAgro.Map {
         DispatcherTimer refreshTimer;
         Tester tester= new Tester();
         Recorder recorder = new Recorder();
+        bool pause = true;
+        private bool Pause {
+            get => pause;
+            set {
+                if (pause == value) return;
+                if (value) {
+                    refreshTimer.Stop();
+                    startB.Content = "▶️";
+                    pauseTime = DateTime.Now;
+                } else {
+                    startB.Content = "||";
+                    stopB.IsEnabled = true;
+                    if (pauseTime != DateTime.MinValue)
+                        tempTime += (pauseTime - startTime);
+                    stepB.IsEnabled = true;
+                    Start();
+                }
+                pause = value;
+            }
+        }
 
         public MapWPF() {
             InitializeComponent();
@@ -176,13 +196,17 @@ namespace TacticalAgro.Map {
         }
         private void Work() {
             try {
+                if (Director == null) return;
+                Director.DistributeTask();
+                Director.Work();
                 if (Director.CheckMission()) {
                     Director.Work();
                     if (testingCB.IsChecked == true) {
                         tester.NextAttempt();
+                        return;
                     } else {
                         stopB.IsEnabled = false;
-                        Pause();
+                        Pause = true;
                         Refresh();
                         return;
                     }
@@ -195,8 +219,6 @@ namespace TacticalAgro.Map {
                 Director.Dispose();
             }
             Refresh();
-            Director.DistributeTask();
-            Director.Work();
         }
         private void Start() {
             for (int i = 0; i < menu.Items.Count; i++)
@@ -228,15 +250,8 @@ namespace TacticalAgro.Map {
             }
             refreshTimer.Start();
 
-            startTime = pauseTime = DateTime.Now;
+            startTime = DateTime.Now;
             //mainTask.Start();
-        }
-        private void Pause() {
-            refreshTimer.Stop();
-            //tokenSource.Cancel();
-            pauseTime = DateTime.Now;
-            startB.Content = "▶️";
-            //pauseTime = startTime;
         }
         private void Stop() {
             //tokenSource.Cancel();
@@ -340,9 +355,10 @@ namespace TacticalAgro.Map {
                 pauseTime = startTime;
                 stopB.IsEnabled = true;
                 startB.Content = "||";
+                Pause = false;
             } else {
                 startB.Content = "▶️";
-                Pause();
+                Pause = true;
             }
         }
         private void stopB_Click(object sender, RoutedEventArgs e) {
