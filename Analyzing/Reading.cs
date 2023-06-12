@@ -14,6 +14,7 @@ namespace TacticalAgro.Analyzing {
         public double DistributeIterations { get; set; }
         [XmlIgnore]
         public double[] STransporterWay { get; set; }
+        public uint WorkTimeIt { get; set; }
         public double TraversedWayPx { get; set; }
         public double TraversedWay { get; set; }
         public Reading() {

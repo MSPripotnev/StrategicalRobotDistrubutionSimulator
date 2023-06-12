@@ -43,12 +43,14 @@ namespace TacticalAgro.Analyzing {
                 TraversedWayPx = director.TraversedWaySum,
                 TraversedWay = Math.Round(director.TraversedWaySum * Testing.Default.K_s, 14),
                 STransporterWay = new double[director.Transporters.Count],
-                TargetsCount = director.Targets.Length,
+                TargetsCount = director.Targets.Length
             };
             if (director.Transporters.Any()) {
                 analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8) * Testing.Default.K_v;
-                for (int i = 0; i < director.Transporters.Count; i++)
+                for (int i = 0; i < director.Transporters.Count; i++) {
                     analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
+                    analyzer.WorkTimeIt = (uint)Math.Round(Math.Max(analyzer.WorkTimeIt, analyzer.STransporterWay[i]));
+                }
                 analyzer.WayTime = Math.Round(Testing.Default.K_v / Testing.Default.K_s * analyzer.WayIterations, 14);
             }
             readings.Add(analyzer);
