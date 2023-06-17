@@ -84,7 +84,9 @@ namespace TacticalAgro.Drones {
             path.Add(p);
             while (p.Previous != null)
             {
-                //if (ZipPath()) continue;
+#if ZIP_PATH
+                if (ZipPath()) continue;
+#endif
 
                 path.Add(p);
                 p = p.Previous;

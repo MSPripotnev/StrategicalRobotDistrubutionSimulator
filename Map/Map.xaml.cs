@@ -87,8 +87,10 @@ namespace TacticalAgro.Map {
 
                 if (obj is Transporter t) {
                     mapCanvas.Children.Add(t.BuildTrajectory());
-                    //mapCanvas.Children.Add(t.PointsAnalyzed(true));
-                    //mapCanvas.Children.Add(t.PointsAnalyzed(false));
+#if DRAW_SEARCH_AREA
+                    mapCanvas.Children.Add(t.PointsAnalyzed(true));
+                    mapCanvas.Children.Add(t.PointsAnalyzed(false));
+#endif
                 }
             }
         }
@@ -224,7 +226,8 @@ namespace TacticalAgro.Map {
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = false;
             tokenSource = new CancellationTokenSource();
-            /*mainTask = new Task(() => {
+#if PARALLEL
+            mainTask = new Task(() => {
                 //director.DistributeTask();
                 tokenSource.Token.Register(() => {
                     if (pauseTime == DateTime.MinValue) {
@@ -233,17 +236,15 @@ namespace TacticalAgro.Map {
                     }
                 });
                 while (!tokenSource.Token.IsCancellationRequested) {
-#if PARALLEL
                     director.DistributeTask();
-#else
                     if (director != null) {
                         Dispatcher.Invoke(() => {
                             Work();
                         });
                     }
-#endif
                 }
-            }, tokenSource.Token, TaskCreationOptions.LongRunning);*/
+            }, tokenSource.Token, TaskCreationOptions.LongRunning);
+#endif
             if (Director.CheckMission()) {
                 Stop();
                 Director = tester.ReloadModel();

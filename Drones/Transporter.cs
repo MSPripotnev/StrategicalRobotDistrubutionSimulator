@@ -292,6 +292,13 @@ namespace TacticalAgro.Drones {
                         Pathfinder.NextStep(); //продолжение расчёта
                     break;
                 case RobotState.Going:
+#if !DEBUG
+                    TraversedWay += DistanceToTarget;
+                    Position = Trajectory[^1];
+                    Trajectory.Clear();
+                    CurrentState = RobotState.Carrying;
+                    break;
+#else
                     //есть куда двигаться
                     if (Trajectory.Count > 0) {
                         //двигаемся
@@ -303,8 +310,15 @@ namespace TacticalAgro.Drones {
                                 //захватываем объект
                                 CurrentState = RobotState.Carrying;
                     }
+#endif
                     break;
                 case RobotState.Carrying:
+#if !DEBUG
+                    TraversedWay += DistanceToTarget;
+                    Position = Trajectory[^1];
+                    AttachedObj.Position = Position;
+                    Trajectory.Clear();
+#endif
                     if (Trajectory.Any()) { //есть куда ехать
                         if (Trajectory.Count == 1)
                             AttachedObj.Position = Trajectory[^1];
