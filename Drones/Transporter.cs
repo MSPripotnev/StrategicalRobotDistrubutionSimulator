@@ -84,6 +84,7 @@ namespace TacticalAgro.Drones {
             return polyline;
         }
         [PropertyTools.DataAnnotations.Browsable(false)]
+        [XmlIgnore]
         public List<Point> OpenedPoints {
             get {
                 var vs = new List<Point>();
@@ -97,7 +98,8 @@ namespace TacticalAgro.Drones {
             }
         }
         [PropertyTools.DataAnnotations.Browsable(false)]
-        public List<Point> ClosedPoints {
+		[XmlIgnore]
+		public List<Point> ClosedPoints {
             get {
                 var vs = new List<Point>();
                 if (Pathfinder.ActiveExplorer == null) return vs;
@@ -202,7 +204,8 @@ namespace TacticalAgro.Drones {
         public Target? AttachedObj { get; set; } = null;
         [XmlIgnore]
         public List<Target> BlockedTargets { get; set; } = new List<Target>();
-        public List<Transporter> OtherTransporters { get; set; } = new List<Transporter>();
+		[XmlIgnore]
+		public List<Transporter> OtherTransporters { get; set; } = new List<Transporter>();
         #endregion
 
         #region Debug Info

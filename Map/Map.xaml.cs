@@ -72,11 +72,16 @@ namespace TacticalAgro.Map {
             refreshTimer.Tick += RefreshTimer_Tick;
 
             if ((tester?.Models?.Any() == true) && File.Exists(tester.Models[0].Path)) {
+                try {
                 Director = tester.LoadModel(tester.Models[0].Path);
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                    $"Транспортеров: {Director.Transporters.Count}\n" +
+						$"Транспортеров: {Director.Transporters.Length}\n" +
                     $"Моделей: {tester.Models.Length}";
+				} catch (FileNotFoundException ex) {
+					mapCanvas.Children.Clear();
+					Director = new Director();
             }
+        }
         }
         #region Drawing
         private void DrawPlaceableObjects() {
@@ -162,7 +167,7 @@ namespace TacticalAgro.Map {
             Director = tester.ReloadModel();
 
             attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                $"Транспортеров: {Director.Transporters.Count}\n" +
+                $"Транспортеров: {Director.Transporters.Length}\n" +
                 $"Моделей: {tester.Models.Length}";
             trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
 
@@ -183,7 +188,7 @@ namespace TacticalAgro.Map {
             } else {
                 Director = tester.ReloadModel();
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                    $"Транспортеров: {Director.Transporters.Count}\n" +
+                    $"Транспортеров: {Director.Transporters.Length}\n" +
                     $"Моделей: {tester.Models.Length}";
                 nextModelB.IsEnabled = tester.Models.Length > 1;
             }
@@ -280,23 +285,6 @@ namespace TacticalAgro.Map {
         }
         #endregion
 
-        private void OpenSaveFile(string path, bool open) {
-            XmlSerializer serializer = new XmlSerializer(typeof(Director));
-            if (open) {
-                using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                    Director = serializer.Deserialize(fs) as Director;
-                    fs.Close();
-                }
-            } else
-                using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
-                    XmlWriterSettings settings = new XmlWriterSettings();
-                    settings.Indent = true;
-                    settings.IndentChars = "\t";
-                    serializer.Serialize(XmlWriter.Create(fs, settings), Director);
-                    fs.Close();
-                }
-        }
-
         #region Buttons
         private void MenuItem_Click(object sender, RoutedEventArgs e) {
             var button = sender as MenuItem;
@@ -367,27 +355,38 @@ namespace TacticalAgro.Map {
         }
         private void FileMenuItem_Click(object sender, RoutedEventArgs e) {
             var button = sender as MenuItem;
-            switch (button.Tag) {
-                case "0":
-                    mapCanvas.Children.Clear();
+            Microsoft.Win32.FileDialog fd = null;
+			object serialized_object;
+            bool? action_is_open = button.Tag.ToString().Contains("open") ? true
+				: button.Tag.ToString().Contains("save") ? false
+				: null;
+            if (!action_is_open.HasValue) {
                     Director = new Director();
-                    break;
-                case "1": //открыть
-                    Microsoft.Win32.OpenFileDialog oFD = new Microsoft.Win32.OpenFileDialog();
-                    oFD.Filter = "Файлы разметки поля|*.xml|Все файлы|*.*";
-                    if (oFD.ShowDialog() == true && oFD.FileName != "")
-                        OpenSaveFile(oFD.FileName, true);
-                    break;
-                case "2": //сохранить
-                    Microsoft.Win32.SaveFileDialog sFD = new Microsoft.Win32.SaveFileDialog();
-                    sFD.Filter = "Файлы разметки поля|*.xml|Все файлы|*.*";
-                    if (sFD.ShowDialog() == true) {
-                        OpenSaveFile(sFD.FileName, false);
+				return;
                     }
-                    break;
-                default:
-                    break;
+            fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
+            if (button.Tag.ToString().Contains("model")) {
+                fd.Filter = "Файлы модели|*.xml|Все файлы|*.*";
+                serialized_object = Director;
+            } else if (button.Tag.ToString().Contains("map")) {
+                fd.Filter = "Файлы разметки|*.xml|Все файлы|*.*";
+                serialized_object = Director.Map;
+            } else return;
+			if (fd.ShowDialog() != true || fd.FileName == "")
+				return;
+            if (serialized_object == Director) {
+				if (action_is_open == true) {
+					Director = TacticalAgro.Director.Deserialize(fd.FileName);
+					DrawPlaceableObjects();
+				} else
+					Director?.Serialize(fd.FileName);
+				return;
             }
+            if (action_is_open == true && serialized_object == Director.Map)
+                Director.MapPath = fd.FileName;
+            else if (action_is_open == false)
+                Director.Map.Save(fd.FileName);
+			DrawPlaceableObjects();
         }
         private void deleteObjectB_Click(object sender, RoutedEventArgs e) {
             IPlaceable? obj = null;

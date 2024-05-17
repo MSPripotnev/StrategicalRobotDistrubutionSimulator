@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using System.Xml;
 using System.Xml.Serialization;
 
 namespace TacticalAgro.Map {
@@ -41,18 +42,24 @@ namespace TacticalAgro.Map {
                 PropertyChanged?.Invoke(Borders, new PropertyChangedEventArgs(nameof(Borders)));
             }
         }
-
-        public void Save() {
+        public void Save() => Save(path);
+        public void Save(string path) {
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(TacticalMap));
-            using (FileStream fs = new FileStream(path, FileMode.Create)) {
+			XmlWriterSettings settings = new XmlWriterSettings() {
+				Indent = true,
+				IndentChars = "\t",
+			};
+			using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
                 xmlSerializer.Serialize(fs, this);
                 fs.Close();
             }
+            Path = path;
+            Name = path[path.LastIndexOf('\\')..^4];
         }
 
         public TacticalMap() {
-            Obstacles = new Obstacle[0];
-            Bases = new Base[0];
+            Obstacles = Array.Empty<Obstacle>();
+            Bases = Array.Empty<Base>();
             Borders = new Size(0, 0);
         }
         public TacticalMap(Obstacle[] _obstacles, Base[] _bases, Size _borders) {

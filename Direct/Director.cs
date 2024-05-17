@@ -29,13 +29,13 @@ namespace TacticalAgro {
         private Transporter[] transporters;
         [XmlArray("Transporters")]
         [XmlArrayItem("Transporter")]
-        public List<Transporter> Transporters { 
-            get => transporters.ToList();
+        public Transporter[] Transporters {
+            get => transporters;
             set {
                 transporters = value.ToArray();
                 //установка модуля построения пути
                 if (Transporters != null) {
-                    for (int i = 0; i < Transporters.Count; i++) {
+                    for (int i = 0; i < Transporters.Length; i++) {
                         if (Transporters[i].Pathfinder == null) {
                             Transporters[i].Pathfinder = new PathFinder(Map, Scale);
                             PropertyChanged += Transporters[i].Pathfinder.Refresh;
@@ -125,7 +125,7 @@ namespace TacticalAgro {
             Scale = 5.0F;
             Map = new TacticalMap();
             Targets = Array.Empty<Target>();
-            Transporters = Array.Empty<Transporter>().ToList();
+            Transporters = Array.Empty<Transporter>();
         }
         public Director(Model testModel) : this() {
             MapPath = testModel.Map;
@@ -143,7 +143,7 @@ namespace TacticalAgro {
             MapPath = _mapPath;
         }
         public void Work() {
-            for (int i = 0; i < Transporters.Count; i++)
+            for (int i = 0; i < Transporters.Length; i++)
                 do
                     Transporters[i].Simulate();
                 while (Transporters[i].CurrentState == RobotState.Thinking);
@@ -158,10 +158,10 @@ namespace TacticalAgro {
         #region Edit
         public void Add(IPlaceable obj) {
             if (obj == null) return;
-            if (obj is Transporter r) {
+            if (obj is Transporter t) {
                 var ls = Transporters.ToList();
-                ls.Add(r);
-                Transporters = ls;
+                ls.Add(t);
+                Transporters = ls.ToArray();
             } else if (obj is Target o) {
                 var ls = Targets.ToList();
                 ls.Add(o);
@@ -180,7 +180,7 @@ namespace TacticalAgro {
             if (obj is Transporter r) {
                 var ls = Transporters.ToList();
                 ls.Remove(r);
-                Transporters = ls;
+                Transporters = ls.ToArray();
             } else if (obj is Target o) {
                 var ls = Targets.ToList();
                 ls.Remove(o);
@@ -203,30 +203,18 @@ namespace TacticalAgro {
         }
         public void Serialize(string path) {
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
-                XmlSerializer xmlWriter = new XmlSerializer(typeof(Target[]));
-                xmlWriter.Serialize(fs, Targets.ToArray());
-                xmlWriter = new XmlSerializer(typeof(Transporter[]));
-                xmlWriter.Serialize(fs, Transporters.ToArray());
-                xmlWriter = new XmlSerializer(typeof(TacticalMap));
-                xmlWriter.Serialize(fs, Map);
+                XmlSerializer xmlWriter = new XmlSerializer(typeof(Director));
+                xmlWriter.Serialize(fs, this);
             }
         }
-        public void Deserialize(string path) {
+        public static Director Deserialize(string path) {
+            Director director;
             using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                XmlSerializer xmlReader = new XmlSerializer(typeof(Target[]));
-                Target[]? targets = xmlReader.Deserialize(fs) as Target[];
-                xmlReader = new XmlSerializer(typeof(Transporter[]));
-                Transporter[]? transporters = xmlReader.Deserialize(fs) as Transporter[];
-                xmlReader = new XmlSerializer(typeof(Target[]));
-                Base[]? bases = xmlReader.Deserialize(fs) as Base[];
-                xmlReader = new XmlSerializer(typeof(Target[]));
-                Obstacle[]? obstacles = xmlReader.Deserialize(fs) as Obstacle[];
-
-                if (targets != null) Targets = targets;
-                if (bases != null) Map.Bases = bases;
-                if (obstacles != null) Map.Obstacles = obstacles;
-                if (transporters != null) Transporters = transporters.ToList();
+                XmlSerializer xmlReader = new XmlSerializer(typeof(Director));
+                director = (Director)xmlReader.Deserialize(fs);
+                fs.Close();
             }
+            return director;
         }
         #endregion
     }

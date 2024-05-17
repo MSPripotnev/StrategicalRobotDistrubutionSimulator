@@ -28,6 +28,7 @@
                         <MenuItem Header="Разведчик" Click="MenuItem_Click" Tag="2"/>
                         <MenuItem Header="База" Click="MenuItem_Click" Tag="3"/>
                         <MenuItem Header="Препятствие" Click="MenuItem_Click" Tag="4"/>
+                        <MenuItem Header="Дорога" Click="MenuItem_Click" Tag="5"/>
                     </MenuItem>
                     <MenuItem Header="Удалить" x:Name="deleteObjectB" Click="deleteObjectB_Click"/>
                     <MenuItem Header="Отмена" x:Name="undoB" Click="undoB_Click"/>
@@ -57,11 +58,17 @@
         <Label x:Name="allTimeCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,140,0,0" VerticalAlignment="Top"/>
         <Label x:Name="traversedWayL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,170,0,0" VerticalAlignment="Top"/>
         <Menu x:Name="menu" BorderThickness="2" BorderBrush="Gray" Height="20" Grid.ColumnSpan="2" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" VerticalAlignment="Top" >
-            <RibbonMenuButton Label="Файл" FlowDirection="LeftToRight" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-5,0,0,0">
+            <MenuItem Header="Файл" FlowDirection="LeftToRight" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-5,0,0,0">
                 <MenuItem Header="Создать" Tag="0" Click="FileMenuItem_Click"/>
-                <MenuItem Header="Открыть" Tag="1" Click="FileMenuItem_Click"/>
-                <MenuItem Header="Сохранить" Tag="2" Click="FileMenuItem_Click"/>
-            </RibbonMenuButton>
+                <MenuItem Header="Открыть" Tag="1">
+                    <MenuItem Header="Модель" Tag="open model" Click="FileMenuItem_Click"/>
+                    <MenuItem Header="Карта" Tag="open map" Click="FileMenuItem_Click"/>
+                </MenuItem>
+                <MenuItem Header="Сохранить как..." Tag="2">
+                    <MenuItem Header="Модель" Tag="save model" Click="FileMenuItem_Click"/>
+                    <MenuItem Header="Карта" Tag="save map" Click="FileMenuItem_Click"/>
+                </MenuItem>
+            </MenuItem>
         </Menu>
         <pt:PropertyGrid Grid.Column="1" Grid.Row="1"
                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
