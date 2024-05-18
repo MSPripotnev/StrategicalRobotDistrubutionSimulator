@@ -83,8 +83,11 @@ namespace TacticalAgro {
             }
             set {
                 mapPath = value;
-                if (value != "")
+                if (value != "") {
                     Map = new TacticalMap(mapPath);
+                    for (int i = 0; i < Map.Roads.Length; i++)
+                        Map.Roads[i].Connect(Map.Roads.Where(p => p != Map.Roads[i]).ToArray());
+                }
             }
         }
         private TacticalMap map;
@@ -99,7 +102,8 @@ namespace TacticalAgro {
         [XmlIgnore]
         public List<IPlaceable> AllObjectsOnMap {
             get {
-                return new List<IPlaceable>(Transporters).Concat(Targets).Concat(Map.Bases).Concat(Map.Obstacles).ToList();
+                return new List<IPlaceable>(Transporters).Concat(Targets)
+                    .Concat(Map.Bases).Concat(Map.Obstacles).ToList();
             }
         }
         #endregion
@@ -171,12 +175,16 @@ namespace TacticalAgro {
                 var ls = Map.Obstacles.ToList();
                 ls.Add(ob);
                 Map.Obstacles = ls.ToArray();
+            } else if (obj is Road r) {
+                var ls = Map.Roads.ToList();
+                ls.Add(r);
+                Map.Roads = ls.ToArray();
             }
         }
         public void Remove(IPlaceable obj) {
-            if (obj is Transporter r) {
+            if (obj is Transporter t) {
                 var ls = Transporters.ToList();
-                ls.Remove(r);
+                ls.Remove(t);
                 Transporters = ls.ToArray();
             } else if (obj is Target o) {
                 var ls = Targets.ToList();
@@ -190,6 +198,10 @@ namespace TacticalAgro {
                 var ls = Map.Obstacles.ToList();
                 ls.Remove(ob);
                 Map.Obstacles = ls.ToArray();
+            } else if (obj is Road r) {
+                var ls = Map.Roads.ToList();
+                ls.Remove(r);
+                Map.Roads = ls.ToArray();
             }
         }
         #endregion

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 
 using TacticalAgro.Map;
 
@@ -52,9 +52,16 @@ namespace TacticalAgro.Drones.Explorers.AStar {
                         currentPoint.Position.X + (i / 3 - 1) * Scale,// * (i % 2 - 1),
                                                                       //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
                         currentPoint.Position.Y + (i % 3 - 1) * Scale);// * (i % 2 - 1));
-                                                                       //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
-                AnalyzedPoint interimP = new AnalyzedPoint(currentPoint, pos,
-                    currentPoint.Distance + Distance(currentPoint, pos),
+																	   //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
+				var road = Map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
+					.MinBy(p => p.DistanceToRoad(pos));
+                double hardness;
+                if (road is null)
+                    hardness = 4.0;
+                else
+                    hardness = Road.DistanceHardness(road.Type);
+				AnalyzedPoint interimP = new AnalyzedPoint(currentPoint, pos,
+                    currentPoint.Distance + Distance(currentPoint, pos) * hardness,
                     Distance(pos, end));
                 if (ClosedPoints.Contains(interimP) || interimP == currentPoint)
                     continue;

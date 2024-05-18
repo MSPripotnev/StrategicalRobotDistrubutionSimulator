@@ -8,6 +8,7 @@ namespace TacticalAgro.Map {
     public class TacticalMap : INotifyPropertyChanged {
         private Obstacle[] obstacles;
         private Base[] bases;
+        private Road[] roads;
         private Size borders;
         private string path;
 
@@ -26,7 +27,34 @@ namespace TacticalAgro.Map {
                 PropertyChanged?.Invoke(Obstacles, new PropertyChangedEventArgs(nameof(Obstacles)));
             }
         }
-        [XmlArray("Bases")]
+		[XmlArray("Roads")]
+		[XmlArrayItem("Road")]
+		public Road[] Roads {
+			get => roads;
+			set {
+				roads = value;
+				List<Crossroad> crosses = new();
+				for (int i = 0; i < Roads.Length; i++) {
+					foreach (Road r in Roads.Where(r => r != Roads[i])) {
+						Point? crossPoint = r ^ Roads[i];
+						if (crossPoint.HasValue) {
+							Crossroad cr = new Crossroad(crossPoint.Value, r, Roads[i]);
+							if (crosses.Contains(cr)) {
+								var cr_ex = crosses.First(p => p == cr);
+								cr_ex.Roads = cr_ex.Roads.Union(cr.Roads).ToArray();
+							} else {
+								crosses.Add(cr);
+							}
+						}
+					}
+				}
+				Crossroads = crosses.ToArray();
+				PropertyChanged?.Invoke(Roads, new PropertyChangedEventArgs(nameof(Roads)));
+			}
+		}
+        [XmlIgnore]
+		public Crossroad[] Crossroads { get; private set; }
+		[XmlArray("Bases")]
         [XmlArrayItem("Base")]
         public Base[] Bases {
             get => bases;
@@ -60,11 +88,14 @@ namespace TacticalAgro.Map {
         public TacticalMap() {
             Obstacles = Array.Empty<Obstacle>();
             Bases = Array.Empty<Base>();
-            Borders = new Size(0, 0);
+			Roads = Array.Empty<Road>();
+            Crossroads = Array.Empty<Crossroad>();
+			Borders = new Size(0, 0);
         }
-        public TacticalMap(Obstacle[] _obstacles, Base[] _bases, Size _borders) {
+        public TacticalMap(Obstacle[] _obstacles, Base[] _bases, Road[] _roads, Size _borders) {
             Obstacles = _obstacles;
             Bases = _bases;
+            Roads = _roads;
             Borders = _borders;
         }
 
@@ -76,8 +107,9 @@ namespace TacticalAgro.Map {
                     newMap = (TacticalMap)xmlSerializer.Deserialize(fs);
                     fs.Close();
                 }
-                Obstacles = newMap.Obstacles;
+				Obstacles = newMap.Obstacles;
                 Bases = newMap.Bases;
+                Roads = newMap.Roads;
                 Borders = newMap.Borders;
                 Name = newMap.Name;
             } else

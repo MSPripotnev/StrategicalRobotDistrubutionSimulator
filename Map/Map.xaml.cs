@@ -74,20 +74,21 @@ namespace TacticalAgro.Map {
 
             if ((tester?.Models?.Any() == true) && File.Exists(tester.Models[0].Path)) {
                 try {
-                Director = tester.LoadModel(tester.Models[0].Path);
-                attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
+                    Director = tester.LoadModel(tester.Models[0].Path);
+					attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
 						$"Транспортеров: {Director.Transporters.Length}\n" +
-                    $"Моделей: {tester.Models.Length}";
+						$"Моделей: {tester.Models.Length}";
 				} catch (FileNotFoundException ex) {
 					mapCanvas.Children.Clear();
 					Director = new Director();
+				}
             }
-        }
         }
         #region Drawing
         private void DrawPlaceableObjects() {
-            for (int i = 0; i < Director.AllObjectsOnMap.Count; i++) {
-                IPlaceable obj = Director.AllObjectsOnMap[i];
+            var objs = Director.AllObjectsOnMap.Concat(Director.Map.Roads).ToArray();
+			for (int i = 0; i < objs.Length; i++) {
+                IPlaceable obj = objs[i];
                 var UIObj = obj.Build();
                 mapCanvas.Children.Add(UIObj);
 
@@ -101,7 +102,8 @@ namespace TacticalAgro.Map {
             }
         }
         Point lastClickPos = new(0, 0);
-        private Polygon? new_obstacle = null;
+		Point prevLastClickPos = new(0, 0);
+		private Polygon? new_obstacle = null;
         private void Window_MouseDown(object sender, MouseButtonEventArgs e) {
             Point clickPos = e.GetPosition(this);
             //if (e.RightButton == MouseButtonState.Pressed) {
@@ -118,7 +120,24 @@ namespace TacticalAgro.Map {
                         Points = ps
                     };
                     mapCanvas.Children.Add(new_obstacle);
-                } else {
+                } else if (prevLastClickPos.X != 0 || prevLastClickPos.Y != 0) {
+					Road r = new Road(lastClickPos, prevLastClickPos, 1, Director.Map.Roads.ToArray());
+                    Director.Add(r);
+					mapCanvas.Children.Remove(mapCanvas.Children[^1]);
+                    
+                    foreach(var cr in Director.Map.Crossroads) {
+                        UIElement el = cr.Build();
+                        if (mapCanvas.Children.Contains(el))
+                            mapCanvas.Children.Remove(el);
+						mapCanvas.Children.Add(el);
+					}
+					mapCanvas.Children.Add(r.Build());
+
+					prevLastClickPos = new Point(0, 0);
+					(mapCanvas.ContextMenu.Items[0] as MenuItem).IsEnabled = true;
+					(mapCanvas.ContextMenu.Items[1] as MenuItem).IsEnabled = true;
+					(mapCanvas.ContextMenu.Items[3] as MenuItem).IsEnabled = false;
+				} else {
                     IPlaceable? obj = FindObject(clickPos);
                     if (obj != null) {
                         Binding binding = new Binding();
@@ -134,6 +153,9 @@ namespace TacticalAgro.Map {
             var obj = Director.AllObjectsOnMap
                 .Where(p => PathFinder.Distance(p.Position, pos) < 20)
                 .MinBy(p => PathFinder.Distance(p.Position, pos));
+            obj ??= Director.Map.Roads
+                    .Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < 10)
+                    .MinBy(p => p.DistanceToRoad(pos));
             if (obj == null) {
                 for (int i = 0; i < Director.Map.Obstacles.Length; i++)
                     if (Director.Map.Obstacles[i].PointOnObstacle(lastClickPos))
@@ -337,7 +359,19 @@ namespace TacticalAgro.Map {
                     }
                     break;
                 case "5":
-                    obj = new Base(lastClickPos);
+                    if (prevLastClickPos.X == prevLastClickPos.Y && prevLastClickPos.X == 0) {
+                        prevLastClickPos = new Point(lastClickPos.X, lastClickPos.Y);
+						Rectangle el = new Rectangle();
+						el.Width = el.Height = 10;
+						el.Margin = new Thickness(lastClickPos.X, lastClickPos.Y, 0, 0);
+						el.Fill = new SolidColorBrush(Colors.DarkSlateGray);
+						mapCanvas.Children.Add(el);
+
+						(mapCanvas.ContextMenu.Items[0] as MenuItem).IsEnabled = false;
+						(mapCanvas.ContextMenu.Items[1] as MenuItem).IsEnabled = false;
+						(mapCanvas.ContextMenu.Items[3] as MenuItem).IsEnabled = true;
+						(mapCanvas.ContextMenu.Items[3] as MenuItem).Tag = button.Tag;
+					}
                     break;
                 default:
                     break;
@@ -376,9 +410,9 @@ namespace TacticalAgro.Map {
 				: button.Tag.ToString().Contains("save") ? false
 				: null;
             if (!action_is_open.HasValue) {
-                    Director = new Director();
+				Director = new Director();
 				return;
-                    }
+			}
             fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
             if (button.Tag.ToString().Contains("model")) {
                 fd.Filter = "Файлы модели|*.xml|Все файлы|*.*";
@@ -396,13 +430,13 @@ namespace TacticalAgro.Map {
 				} else
 					Director?.Serialize(fd.FileName);
 				return;
-            }
+			}
             if (action_is_open == true && serialized_object == Director.Map)
                 Director.MapPath = fd.FileName;
             else if (action_is_open == false)
                 Director.Map.Save(fd.FileName);
 			DrawPlaceableObjects();
-        }
+		}
         private void deleteObjectB_Click(object sender, RoutedEventArgs e) {
             IPlaceable? obj = null;
             obj = FindObject(lastClickPos);
