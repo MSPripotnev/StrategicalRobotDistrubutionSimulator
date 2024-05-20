@@ -160,7 +160,9 @@ namespace TacticalAgro.Map {
 
         #region Work
         Task mainTask;
+#if PARALLEL
         CancellationTokenSource tokenSource = new CancellationTokenSource();
+#endif
         private double iterations = 0;
         TimeSpan realWorkTime = TimeSpan.Zero, realWayTime = TimeSpan.Zero;
         private void OnAttemptStarted(object? sender, EventArgs e) {
@@ -230,10 +232,9 @@ namespace TacticalAgro.Map {
         private void Start() {
             for (int i = 0; i < menu.Items.Count; i++)
                 (menu.Items[i] as UIElement).IsEnabled = false;
-            tokenSource = new CancellationTokenSource();
 #if PARALLEL
+			tokenSource = new CancellationTokenSource();
             mainTask = new Task(() => {
-                //director.DistributeTask();
                 tokenSource.Token.Register(() => {
                     if (pauseTime == DateTime.MinValue) {
                         for (int i = 0; i < director.Transporters.Length; i++)
@@ -254,13 +255,17 @@ namespace TacticalAgro.Map {
                 Stop();
                 Director = tester.ReloadModel();
             }
+#if PARALLEL
+            mainTask.Start();
+#else
             refreshTimer.Start();
-
+#endif
             startTime = DateTime.Now;
-            //mainTask.Start();
         }
         private void Stop() {
-            //tokenSource.Cancel();
+#if PARALLEL
+            tokenSource.Cancel();
+#endif
             if (testingCB.IsChecked == false)
                 Director = tester.ReloadModel();
             refreshTimer.Stop();
