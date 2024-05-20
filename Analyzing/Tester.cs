@@ -14,9 +14,11 @@ namespace TacticalAgro.Analyzing {
         public Tester() {
             List<Model> models = new List<Model> {
             };
-            foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Complete")))
-                Directory.Move(fileName, fileName.Replace("Complete", "Active"));
-            LoadModels();
+            if (Directory.Exists(Path.Combine(Paths.Default.Tests, "Complete"))) {
+                foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Complete")))
+                    Directory.Move(fileName, fileName.Replace("Complete", "Active"));
+                LoadModels();
+            }
         }
 
         public void LoadModels() {

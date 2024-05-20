@@ -9,23 +9,23 @@
 //------------------------------------------------------------------------------
 
 namespace TacticalAgro {
-    
-    
+
+
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.4.0.0")]
     internal sealed partial class Paths : global::System.Configuration.ApplicationSettingsBase {
-        
+
         private static Paths defaultInstance = ((Paths)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Paths())));
-        
+
         public static Paths Default {
             get {
                 return defaultInstance;
             }
         }
-        
+
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\TacticalAgro\\Analyzing\\Maps")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string Maps {
             get {
                 return ((string)(this["Maps"]));
@@ -34,10 +34,10 @@ namespace TacticalAgro {
                 this["Maps"] = value;
             }
         }
-        
+
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\TacticalAgro\\Analyzing\\Tests")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string Tests {
             get {
                 return ((string)(this["Tests"]));
@@ -46,10 +46,10 @@ namespace TacticalAgro {
                 this["Tests"] = value;
             }
         }
-        
+
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("G:\\GosPlan\\Arbeiten\\Kreation\\Diplom\\TacticalAgro\\TacticalAgro\\Analyzing\\Results")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string Results {
             get {
                 return ((string)(this["Results"]));

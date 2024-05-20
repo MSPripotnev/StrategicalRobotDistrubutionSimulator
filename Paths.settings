@@ -3,13 +3,13 @@
   <Profiles />
   <Settings>
     <Setting Name="Maps" Type="System.String" Scope="User">
-      <Value Profile="(Default)">G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\TacticalAgro\Analyzing\Maps</Value>
+      <Value Profile="(Default)"></Value>
     </Setting>
     <Setting Name="Tests" Type="System.String" Scope="User">
-      <Value Profile="(Default)">G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\TacticalAgro\Analyzing\Tests</Value>
+      <Value Profile="(Default)"></Value>
     </Setting>
     <Setting Name="Results" Type="System.String" Scope="User">
-      <Value Profile="(Default)">G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\TacticalAgro\Analyzing\Results</Value>
+      <Value Profile="(Default)"></Value>
     </Setting>
   </Settings>
 </SettingsFile>
