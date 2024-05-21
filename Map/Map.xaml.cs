@@ -202,6 +202,11 @@ namespace TacticalAgro.Map {
             realWayTime += (DateTime.Now - dt);
             if (Director != null && !Director.CheckMission())
                 refreshTimer.Start();
+            if (propertyGrid.SelectedObject != null) {
+                object o = propertyGrid.SelectedObject;
+				propertyGrid.SelectedObject = null;
+				propertyGrid.SelectedObject = o;
+            }
         }
         private void Work() {
             try {
