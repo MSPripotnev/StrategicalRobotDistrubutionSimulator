@@ -1,7 +1,8 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 using TacticalAgro.Drones;
 using TacticalAgro.Map;
+using TacticalAgro.Map.Stations;
 
 namespace TacticalAgro {
     public partial class Director {
@@ -58,13 +59,14 @@ namespace TacticalAgro {
         }
         private void DistributeTaskForCarryingTransporters() {
             var CarryingTransporters = Transporters.Where(
-                p => p.CurrentState == RobotState.Carrying &&
-                Map.Bases.All(b => PathFinder.Distance(b.Position, p.TargetPosition) > p.InteractDistance)
-                ).ToList();
+                p => p.CurrentState == RobotState.Carrying && Map.Stations
+                .Where(p => p is CollectingStation)
+                .All(b => PathFinder.Distance(b.Position, p.TargetPosition) > p.InteractDistance))
+                .ToList();
             if (CarryingTransporters.Count > 0) {
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
                     Transporter transporter = CarryingTransporters[i];
-                    Base? nearBase = Map.Bases.MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
+                    CollectingStation? nearBase = (CollectingStation?)Map.Stations.Where(p => p is CollectingStation).MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
                     if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance/2) {
                         transporter.Trajectory = transporter.BackTrajectory.ToList();
                         if (transporter.Trajectory[^1] != nearBase.Position)

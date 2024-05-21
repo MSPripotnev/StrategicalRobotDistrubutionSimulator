@@ -1,4 +1,4 @@
-﻿<Window
+<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -26,7 +26,13 @@
                         <MenuItem Header="Объект" Click="MenuItem_Click" Tag="0"/>
                         <MenuItem Header="Робот" Click="MenuItem_Click" Tag="1"/>
                         <MenuItem Header="Разведчик" Click="MenuItem_Click" Tag="2"/>
-                        <MenuItem Header="База" Click="MenuItem_Click" Tag="3"/>
+                        <MenuItem Header="Станция">
+                            <MenuItem Header="АЗС" Click="MenuItem_Click" Tag="31"/>
+                            <MenuItem Header="Депо" Click="MenuItem_Click" Tag="32"/>
+
+                            <MenuItem Header="Склад ПГМ" Click="MenuItem_Click" Tag="34"/>
+                            <MenuItem Header="Элеватор" Click="MenuItem_Click" Tag="35"/>
+                        </MenuItem>
                         <MenuItem Header="Препятствие" Click="MenuItem_Click" Tag="4"/>
                         <MenuItem Header="Дорога" Click="MenuItem_Click" Tag="5"/>
                     </MenuItem>

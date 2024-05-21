@@ -124,7 +124,7 @@ namespace TacticalAgro.Map {
 					Road r = new Road(lastClickPos, prevLastClickPos, 1, Director.Map.Roads.ToArray());
                     Director.Add(r);
 					mapCanvas.Children.Remove(mapCanvas.Children[^1]);
-                    
+
                     foreach(var cr in Director.Map.Crossroads) {
                         UIElement el = cr.Build();
                         if (mapCanvas.Children.Contains(el))
@@ -333,10 +333,20 @@ namespace TacticalAgro.Map {
                 case "1":
                     obj = new Transporter(lastClickPos);
                     break;
-                case "3":
-                    obj = new Base(lastClickPos);
+                case "31":
+                    obj = new Stations.GasStation(lastClickPos);
                     break;
-                case "4":
+				case "32":
+					obj = new Stations.AgentStation(lastClickPos);
+					break;
+
+				case "34":
+					obj = new Stations.AntiIceStation(lastClickPos);
+					break;
+				case "35":
+					obj = new Stations.CollectingStation(lastClickPos);
+					break;
+				case "4":
                     if (new_obstacle == null) {
                         new_obstacle = new Polygon();
                         new_obstacle.StrokeThickness = 2;

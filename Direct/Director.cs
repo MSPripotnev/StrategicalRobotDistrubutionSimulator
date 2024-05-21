@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Xml.Serialization;
 
@@ -103,7 +103,7 @@ namespace TacticalAgro {
         public List<IPlaceable> AllObjectsOnMap {
             get {
                 return new List<IPlaceable>(Transporters).Concat(Targets)
-                    .Concat(Map.Bases).Concat(Map.Obstacles).ToList();
+                    .Concat(Map.Stations).Concat(Map.Obstacles).ToList();
             }
         }
         #endregion
@@ -135,7 +135,7 @@ namespace TacticalAgro {
             MapPath = testModel.Map;
             Scale = testModel.ScalesT[^1];
             for (int i = 0; i < testModel.TransportersT[^1]; i++) {
-                var t = new Transporter(Map.Bases[0].Position);
+                var t = new Transporter(Map.Stations[0].Position);
                 t.Speed = Scale;
                 Add(t);
             }
@@ -167,10 +167,10 @@ namespace TacticalAgro {
                 var ls = Targets.ToList();
                 ls.Add(o);
                 Targets = ls.ToArray();
-            } else if (obj is Base b) {
-                var ls = Map.Bases.ToList();
+            } else if (obj is Station b) {
+                var ls = Map.Stations.ToList();
                 ls.Add(b);
-                Map.Bases = ls.ToArray();
+                Map.Stations = ls.ToArray();
             } else if (obj is Obstacle ob) {
                 var ls = Map.Obstacles.ToList();
                 ls.Add(ob);
@@ -190,10 +190,10 @@ namespace TacticalAgro {
                 var ls = Targets.ToList();
                 ls.Remove(o);
                 Targets = ls.ToArray();
-            } else if (obj is Base b) {
-                var ls = Map.Bases.ToList();
+            } else if (obj is Station b) {
+                var ls = Map.Stations.ToList();
                 ls.Remove(b);
-                Map.Bases = ls.ToArray();
+                Map.Stations = ls.ToArray();
             } else if (obj is Obstacle ob) {
                 var ls = Map.Obstacles.ToList();
                 ls.Remove(ob);

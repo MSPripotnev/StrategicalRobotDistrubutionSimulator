@@ -1,13 +1,14 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml;
 using System.Xml.Serialization;
+using TacticalAgro.Map.Stations;
 
 namespace TacticalAgro.Map {
     public class TacticalMap : INotifyPropertyChanged {
         private Obstacle[] obstacles;
-        private Base[] bases;
+        private Station[] stations;
         private Road[] roads;
         private Size borders;
         private string path;
@@ -54,13 +55,13 @@ namespace TacticalAgro.Map {
 		}
         [XmlIgnore]
 		public Crossroad[] Crossroads { get; private set; }
-		[XmlArray("Bases")]
-        [XmlArrayItem("Base")]
-        public Base[] Bases {
-            get => bases;
+		[XmlArray("Stations")]
+        [XmlArrayItem("Station")]
+        public Station[] Stations {
+            get => stations;
             set {
-                bases = value;
-                PropertyChanged?.Invoke(Bases, new PropertyChangedEventArgs(nameof(Bases)));
+                stations = value;
+                PropertyChanged?.Invoke(Stations, new PropertyChangedEventArgs(nameof(Stations)));
             }
         }
         public Size Borders {
@@ -87,14 +88,14 @@ namespace TacticalAgro.Map {
 
         public TacticalMap() {
             Obstacles = Array.Empty<Obstacle>();
-            Bases = Array.Empty<Base>();
+            Stations = Array.Empty<CollectingStation>();
 			Roads = Array.Empty<Road>();
             Crossroads = Array.Empty<Crossroad>();
 			Borders = new Size(0, 0);
         }
-        public TacticalMap(Obstacle[] _obstacles, Base[] _bases, Road[] _roads, Size _borders) {
+        public TacticalMap(Obstacle[] _obstacles, Station[] _bases, Road[] _roads, Size _borders) {
             Obstacles = _obstacles;
-            Bases = _bases;
+            Stations = _bases;
             Roads = _roads;
             Borders = _borders;
         }
@@ -108,7 +109,7 @@ namespace TacticalAgro.Map {
                     fs.Close();
                 }
 				Obstacles = newMap.Obstacles;
-                Bases = newMap.Bases;
+                Stations = newMap.Stations;
                 Roads = newMap.Roads;
                 Borders = newMap.Borders;
                 Name = newMap.Name;
