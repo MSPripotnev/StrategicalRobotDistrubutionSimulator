@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-using TacticalAgro.Drones;
+using TacticalAgro.Agents;
 
 namespace TacticalAgro.Map.Stations {
 	internal class AgentStation : Station {

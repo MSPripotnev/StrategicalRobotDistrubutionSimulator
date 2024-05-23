@@ -1,10 +1,11 @@
 using System.ComponentModel;
 
-using TacticalAgro.Drones;
 using TacticalAgro.Map;
 using TacticalAgro.Map.Stations;
 
 namespace TacticalAgro {
+    using Agents;
+    using Agents.Drones;
     public partial class Director {
 
         #region Distribute
@@ -15,7 +16,7 @@ namespace TacticalAgro {
 
         //readonly Dictionary<Transporter, Task<Point[]>> trajectoryTasks = new Dictionary<Transporter, Task<Point[]>>();
         private void DistributeTaskForFreeTransporters() {
-            var freeTransport = new List<Transporter>(FreeTransporters).ToArray();
+            var freeTransport = new List<Transporter>(FreeAgents.Where(p => p is Transporter).Cast<Transporter>()).ToArray();
             if (freeTransport.Length > 0 && FreeTargets.Length > 0) {
                 CalculateTrajectoryForFreeTransporters(freeTransport);
                 SelectNearestTransporterWithTrajectoryForTarget();
@@ -28,7 +29,7 @@ namespace TacticalAgro {
             for (int i = 0; i < freeTransport.Length; i++) {
                 Transporter transporter = freeTransport[i];
                 IPlaceable targetPos;
-                targetPos = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p) && !Transporters.Any(t => t.AttachedObj == p))
+                targetPos = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p) && !Agents.Any(t => t.AttachedObj == p))
                     .MinBy(t => PathFinder.Distance(t.Position, transporter.Position));
                 if (targetPos == null)
                     continue;
@@ -42,14 +43,14 @@ namespace TacticalAgro {
             }
         }
         private void SelectNearestTransporterWithTrajectoryForTarget() {
-            for (int i = 0; i < FreeTargets.Length && FreeTransporters.Any(); i++) {
+            for (int i = 0; i < FreeTargets.Length && FreeAgents.Any(); i++) {
                 Target t = FreeTargets[i];
-                var AttachedTransporters = FreeTransporters.Where(p => p.AttachedObj == t).ToArray();
+                var AttachedTransporters = FreeAgents.Where(p => p is Transporter && p.AttachedObj == t).ToArray();
                 if (AttachedTransporters != null && AttachedTransporters.Length > 0) {
-                    t.ReservedTransporter = AttachedTransporters.MinBy(p => p.DistanceToTarget);
+                    t.ReservedTransporter = (Transporter)AttachedTransporters.MinBy(p => p.DistanceToTarget);
                     for (int j = 0; j < AttachedTransporters.Length; j++) {
                         if (AttachedTransporters[j] != t.ReservedTransporter) {
-                            UnlinkTargetFromTransporter(AttachedTransporters[j]);
+                            UnlinkTargetFromTransporter((Transporter)AttachedTransporters[j]);
                         } else {
                             AttachedTransporters[j].CurrentState = RobotState.Going;
                         }
@@ -58,14 +59,14 @@ namespace TacticalAgro {
             }
         }
         private void DistributeTaskForCarryingTransporters() {
-            var CarryingTransporters = Transporters.Where(
+            var CarryingTransporters = Agents.Where(
                 p => p.CurrentState == RobotState.Carrying && Map.Stations
                 .Where(p => p is CollectingStation)
                 .All(b => PathFinder.Distance(b.Position, p.TargetPosition) > p.InteractDistance))
                 .ToList();
             if (CarryingTransporters.Count > 0) {
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
-                    Transporter transporter = CarryingTransporters[i];
+                    Transporter transporter = (Transporter)CarryingTransporters[i];
                     CollectingStation? nearBase = (CollectingStation?)Map.Stations.Where(p => p is CollectingStation).MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
                     if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance/2) {
                         transporter.Trajectory = transporter.BackTrajectory.ToList();

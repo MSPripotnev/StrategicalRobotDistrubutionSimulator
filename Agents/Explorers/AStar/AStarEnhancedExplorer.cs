@@ -2,7 +2,7 @@
 
 using TacticalAgro.Map;
 
-namespace TacticalAgro.Drones.Explorers.AStar {
+namespace TacticalAgro.Agents.Explorers.AStar {
     internal class AStarEnhancedExplorer : AStarExplorer
     {
         public AStarEnhancedExplorer(Point _start, Point _end, double scale, TacticalMap map, double interactDistance)

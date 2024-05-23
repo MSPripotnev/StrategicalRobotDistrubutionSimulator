@@ -5,7 +5,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
 
-using TacticalAgro.Drones;
+using TacticalAgro.Agents;
 
 namespace TacticalAgro.Map.Stations
 {

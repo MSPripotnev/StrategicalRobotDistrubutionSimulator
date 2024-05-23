@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace TacticalAgro.Drones {
+namespace TacticalAgro.Agents {
     public interface IDrone : IMoveable {
         public int InteractDistance { get; init; }
         public int ViewingDistance { get; init; }

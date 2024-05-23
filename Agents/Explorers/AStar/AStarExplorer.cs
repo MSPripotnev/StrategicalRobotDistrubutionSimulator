@@ -2,7 +2,7 @@
 
 using TacticalAgro.Map;
 
-namespace TacticalAgro.Drones.Explorers.AStar {
+namespace TacticalAgro.Agents.Explorers.AStar {
     internal class AStarExplorer : IExplorer
     {
         protected Point start;

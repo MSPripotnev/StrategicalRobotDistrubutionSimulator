@@ -1,4 +1,4 @@
-﻿namespace TacticalAgro.Drones.Explorers {
+﻿namespace TacticalAgro.Agents.Explorers {
     public interface IExplorer
     {
         public AnalyzedPoint Result { get; set; }

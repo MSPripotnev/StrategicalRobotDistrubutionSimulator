@@ -11,7 +11,8 @@ using System.Xml;
 using System.Xml.Serialization;
 
 using TacticalAgro.Analyzing;
-using TacticalAgro.Drones;
+using TacticalAgro.Agents;
+using TacticalAgro.Agents.Drones;
 using TacticalAgro.Environment;
 
 namespace TacticalAgro.Map {
@@ -79,7 +80,7 @@ namespace TacticalAgro.Map {
                 try {
                     Director = tester.LoadModel(tester.Models[0].Path);
 					attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-						$"Транспортеров: {Director.Transporters.Length}\n" +
+						$"Транспортеров: {Director.Agents.Length}\n" +
 						$"Моделей: {tester.Models.Length}";
 				} catch (FileNotFoundException ex) {
 					mapCanvas.Children.Clear();
@@ -205,7 +206,7 @@ namespace TacticalAgro.Map {
             Director = tester.ReloadModel();
 
             attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                $"Транспортеров: {Director.Transporters.Length}\n" +
+                $"Транспортеров: {Director.Agents.Length}\n" +
                 $"Моделей: {tester.Models.Length}";
             trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
 
@@ -226,7 +227,7 @@ namespace TacticalAgro.Map {
             } else {
                 Director = tester.ReloadModel();
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                    $"Транспортеров: {Director.Transporters.Length}\n" +
+                    $"Транспортеров: {Director.Agents.Length}\n" +
                     $"Моделей: {tester.Models.Length}";
                 nextModelB.IsEnabled = tester.Models.Length > 1;
             }
@@ -541,7 +542,7 @@ namespace TacticalAgro.Map {
                 traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)} px";
                 if (drawCB.IsChecked == true) {
                     thinkTimeCountL.Content = $"Сложность расчёта: {Director.ThinkingIterations} it";
-                    if (Director.Transporters.Any())
+                    if (Director.Agents.Any())
                         wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
                     allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime).TotalSeconds, 3)} s";
                 }

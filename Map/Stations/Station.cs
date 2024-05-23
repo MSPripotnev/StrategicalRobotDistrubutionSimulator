@@ -29,7 +29,7 @@ namespace TacticalAgro.Map.Stations {
 		}
 
 		public event PropertyChangedEventHandler? PropertyChanged;
-
+		public virtual void Simulate() { }
 		public virtual UIElement Build() {
 			Rectangle el = new Rectangle();
 			el.Width = 20;

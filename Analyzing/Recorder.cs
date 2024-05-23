@@ -34,7 +34,7 @@ namespace TacticalAgro.Analyzing {
         public void SaveResults(Director director, string modelName, TimeSpan fullTime, ref double iterations) {
             var analyzer = new Reading() {
                 ModelName = modelName,
-                TransportersCount = director.Transporters.Length,
+                TransportersCount = director.Agents.Length,
                 Scale = Math.Round(director.Scale, 3),
                 ThinkingIterations = director.ThinkingIterations,
                 WayIterations = director.WayIterations,
@@ -42,13 +42,13 @@ namespace TacticalAgro.Analyzing {
                 DistributeIterations = Math.Round(iterations),
                 TraversedWayPx = director.TraversedWaySum,
                 TraversedWay = Math.Round(director.TraversedWaySum * Testing.Default.K_s, 14),
-                STransporterWay = new double[director.Transporters.Length],
+                STransporterWay = new double[director.Agents.Length],
                 TargetsCount = director.Targets.Length
             };
-            if (director.Transporters.Any()) {
-                analyzer.TransportersSpeed = Math.Round(director.Transporters[0].Speed, 8) * Testing.Default.K_v;
-                for (int i = 0; i < director.Transporters.Length; i++) {
-                    analyzer.STransporterWay[i] = director.Transporters[i].TraversedWay;
+            if (director.Agents.Any()) {
+                analyzer.TransportersSpeed = Math.Round(director.Agents[0].Speed, 8) * Testing.Default.K_v;
+                for (int i = 0; i < director.Agents.Length; i++) {
+                    analyzer.STransporterWay[i] = director.Agents[i].TraversedWay;
                     analyzer.WorkTimeIt = (uint)Math.Round(Math.Max(analyzer.WorkTimeIt, analyzer.STransporterWay[i]));
                 }
                 analyzer.WayTime = Math.Round(Testing.Default.K_v / Testing.Default.K_s * analyzer.WayIterations, 14);

@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace TacticalAgro.Drones.Explorers {
+namespace TacticalAgro.Agents.Explorers {
     public class AnalyzedPoint
     {
         public Point Position { get; init; }

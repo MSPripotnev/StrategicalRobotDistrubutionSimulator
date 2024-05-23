@@ -13,7 +13,7 @@ using PropertyTools.Wpf;
 using System.ComponentModel;
 
 namespace TacticalAgro.Map {
-	using TacticalAgro.Drones;
+	using TacticalAgro.Agents;
 	using TacticalAgro.Environment;
 
 	public enum RoadType {
