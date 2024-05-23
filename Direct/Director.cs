@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Windows;
 using System.IO;
 using System.Xml.Serialization;
 
@@ -136,20 +137,22 @@ namespace TacticalAgro {
         public event Action<float> SettingsChanged;
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public Director() {
+        public Director(System.Windows.Size map_size) {
             Scale = 5.0F;
-            Map = new TacticalMap();
-            Meteo = new GlobalMeteo(Map) {
-                Time = new DateTime(0),
+            Map = new TacticalMap() {
+                Borders = map_size
             };
             Meteo = new GlobalMeteo(Map);
             Targets = Array.Empty<Target>();
             Transporters = Array.Empty<Transporter>();
         }
-        public Director(Model testModel) : this() {
+        public Director(Model testModel) {
             MapPath = testModel.Map;
             Scale = testModel.ScalesT[^1];
-            for (int i = 0; i < testModel.TransportersT[^1]; i++) {
+			Meteo = new GlobalMeteo(Map);
+			Targets = Array.Empty<Target>();
+			Transporters = Array.Empty<Transporter>();
+			for (int i = 0; i < testModel.TransportersT[^1]; i++) {
                 var t = new Transporter(Map.Stations[0].Position);
                 t.Speed = Scale;
                 Add(t);
@@ -158,7 +161,7 @@ namespace TacticalAgro {
                 Add(new Target(testModel.TargetsT[i].Position));
             }
         }
-        public Director(string _mapPath) : this() {
+        public Director(string _mapPath, Size borders) : this(borders) {
             MapPath = _mapPath;
         }
         public void Work(DateTime time) {

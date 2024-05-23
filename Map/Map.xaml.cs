@@ -31,7 +31,8 @@ namespace TacticalAgro.Map {
                     trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
                     startB.IsEnabled = true;
 					director.Meteo.PropertyChanged += RefreshMeteo;
-                }
+                    director.Map.Borders = mapCanvas.RenderSize;
+				}
             }
         }
         TimeSpan tempTime = TimeSpan.Zero;
@@ -82,7 +83,7 @@ namespace TacticalAgro.Map {
 						$"Моделей: {tester.Models.Length}";
 				} catch (FileNotFoundException ex) {
 					mapCanvas.Children.Clear();
-					Director = new Director();
+					Director = new Director(mapCanvas.RenderSize);
 				}
             }
         }
@@ -436,7 +437,7 @@ namespace TacticalAgro.Map {
 				: button.Tag.ToString().Contains("save") ? false
 				: null;
             if (!action_is_open.HasValue) {
-				Director = new Director();
+				Director = new Director(mapCanvas.RenderSize);
 				return;
 			}
             fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
