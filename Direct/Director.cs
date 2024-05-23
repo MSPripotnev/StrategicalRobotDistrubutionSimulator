@@ -3,14 +3,15 @@ using System.Windows;
 using System.IO;
 using System.Xml.Serialization;
 
-using TacticalAgro.Analyzing;
-using TacticalAgro.Agents;
-using TacticalAgro.Environment;
-using TacticalAgro.Map;
-using TacticalAgro.Map.Stations;
+using SRDS.Analyzing;
+using SRDS.Agents;
+using SRDS.Agents.Drones;
+using SRDS.Environment;
+using SRDS.Map;
+using SRDS.Map.Stations;
 
-namespace TacticalAgro {
-    public partial class Director : System.ComponentModel.INotifyPropertyChanged, IDisposable {
+namespace SRDS {
+    public partial class Director : INotifyPropertyChanged, IDisposable {
 
         #region Properties
         public long ThinkingIterations {

@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using TacticalAgro.Map;
+using SRDS.Map;
 
-namespace TacticalAgro.Environment {
+namespace SRDS.Environment {
 	public class SnowCloud : IPlaceable {
 		public double Intensity { get; set; } = 0;
 		private Point position;

@@ -10,7 +10,7 @@ using System.Windows.Shapes;
 using System.Windows;
 using System.Xml.Serialization;
 
-namespace TacticalAgro.Map.Stations {
+namespace SRDS.Map.Stations {
 	public abstract class Station : IPlaceable {
 		private Point position;
 		[XmlElement(nameof(Point), ElementName = "Position")]

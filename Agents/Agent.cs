@@ -9,9 +9,9 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows;
 using System.Xml.Serialization;
-using TacticalAgro.Map;
+using SRDS.Map;
 
-namespace TacticalAgro.Agents {
+namespace SRDS.Agents {
 	public enum RobotState {
 		Disable,
 		Ready,

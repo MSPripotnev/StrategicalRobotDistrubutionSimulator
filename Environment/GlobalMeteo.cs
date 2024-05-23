@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 
-using TacticalAgro.Map;
+using SRDS.Map;
 
-namespace TacticalAgro.Environment {
+namespace SRDS.Environment {
 	public enum WindDirectionType {
 		N, NE, E, SE, S, SW, W, NW, Calm
 	}

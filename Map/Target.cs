@@ -5,10 +5,10 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
 
-using TacticalAgro.Agents.Drones;
-using TacticalAgro.Map;
+using SRDS.Agents.Drones;
+using SRDS.Map;
 
-namespace TacticalAgro {
+namespace SRDS {
     public class Target : IPlaceable {
         private Point position;
         [XmlElement(nameof(Point), ElementName = "Position")]

@@ -5,11 +5,11 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-using TacticalAgro.Agents.Explorers;
-using TacticalAgro.Agents.Explorers.AStar;
-using TacticalAgro.Map;
+using SRDS.Agents.Explorers;
+using SRDS.Agents.Explorers.AStar;
+using SRDS.Map;
 
-namespace TacticalAgro.Agents {
+namespace SRDS.Agents {
     public class TrajectoryConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
             return new PointCollection((List<Point>)value);

@@ -1,7 +1,7 @@
 using System.IO;
 using System.Xml.Serialization;
 
-namespace TacticalAgro.Analyzing {
+namespace SRDS.Analyzing {
     public class Tester {
         public Model[] Models { get; set; }
         string currentFilePath = "";

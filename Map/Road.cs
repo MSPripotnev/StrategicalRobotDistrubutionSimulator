@@ -12,9 +12,9 @@ using System.Windows.Media;
 using PropertyTools.Wpf;
 using System.ComponentModel;
 
-namespace TacticalAgro.Map {
-	using TacticalAgro.Agents;
-	using TacticalAgro.Environment;
+namespace SRDS.Map {
+	using SRDS.Agents;
+	using SRDS.Environment;
 
 	public enum RoadType {
 		Dirt,

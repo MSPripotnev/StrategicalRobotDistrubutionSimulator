@@ -5,9 +5,9 @@ using System.Windows.Shapes;
 using System.Xml;
 using System.Xml.Serialization;
 
-using TacticalAgro.Map;
+using SRDS.Map;
 
-namespace TacticalAgro.Analyzing {
+namespace SRDS.Analyzing {
     public class ParametrRange {
         public bool IsConst { get; init; }
         private List<double> Values;

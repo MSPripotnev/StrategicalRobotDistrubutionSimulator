@@ -2,7 +2,7 @@
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace TacticalAgro.Analyzing {
+namespace SRDS.Analyzing {
     internal class Recorder : IDisposable {
 
         List<Reading> readings = new List<Reading>();

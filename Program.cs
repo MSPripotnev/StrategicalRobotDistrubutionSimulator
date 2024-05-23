@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace TacticalAgro {
+namespace SRDS {
     internal static class Program {
         /// <summary>
         ///  The main entry point for the application.

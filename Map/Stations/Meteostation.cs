@@ -9,8 +9,8 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
 
-namespace TacticalAgro.Map.Stations {
-	using TacticalAgro.Environment;
+namespace SRDS.Map.Stations {
+	using SRDS.Environment;
     internal class Meteostation : Station, IPlaceableWithArea {
 		private Stack<double> temperatures = new Stack<double>(),
 							  humidities = new Stack<double>(),

@@ -1,9 +1,9 @@
 using System.ComponentModel;
 
-using TacticalAgro.Map;
-using TacticalAgro.Map.Stations;
+using SRDS.Map;
+using SRDS.Map.Stations;
 
-namespace TacticalAgro {
+namespace SRDS {
     using Agents;
     using Agents.Drones;
     public partial class Director {

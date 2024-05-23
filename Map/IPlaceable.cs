@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Media;
 
-namespace TacticalAgro.Map {
+namespace SRDS.Map {
     public interface IPlaceableWithArea : IPlaceable {
 		public UIElement BuildArea();
 	}

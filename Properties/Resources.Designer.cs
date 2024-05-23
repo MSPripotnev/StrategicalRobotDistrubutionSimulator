@@ -8,9 +8,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace TacticalAgro.Properties {
+namespace SRDS.Properties {
     using System;
-    
     
     /// <summary>
     ///   Класс ресурса со строгой типизацией для поиска локализованных строк и т.д.
@@ -39,7 +38,7 @@ namespace TacticalAgro.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("TacticalAgro.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("StrategicalRobotDistrubutionSimulator.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -61,7 +60,7 @@ namespace TacticalAgro.Properties {
         }
         
         /// <summary>
-        ///   Ищет локализованную строку, похожую на G:\GosPlan\Arbeiten\Kreation\Diplom\TacticalAgro\testInside.xml.
+        ///   Ищет локализованную строку, похожую на .
         /// </summary>
         internal static string defaultFile {
             get {

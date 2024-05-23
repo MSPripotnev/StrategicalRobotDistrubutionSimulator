@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace TacticalAgro.Analyzing {
+namespace SRDS.Analyzing {
     public class Reading {
         public string ModelName { get; set; }
         public int TransportersCount { get; set; }

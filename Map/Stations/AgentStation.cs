@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-using TacticalAgro.Agents;
+using SRDS.Agents;
 
-namespace TacticalAgro.Map.Stations {
+namespace SRDS.Map.Stations {
 	internal class AgentStation : Station {
 		public List<IDrone> Agents { get; init; } = new List<IDrone>();
 		public AgentStation() : base() {

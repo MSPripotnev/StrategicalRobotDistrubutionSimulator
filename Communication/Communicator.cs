@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TacticalAgro.Communication {
+namespace SRDS.Communication {
     internal class Communicator {
     }
 }

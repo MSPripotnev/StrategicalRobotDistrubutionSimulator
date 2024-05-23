@@ -5,9 +5,9 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
 
-using TacticalAgro.Agents;
+using SRDS.Agents;
 
-namespace TacticalAgro.Map.Stations
+namespace SRDS.Map.Stations
 {
     public class CollectingStation : Station {
         public int Capacity { get; set; }

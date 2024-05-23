@@ -10,12 +10,12 @@ using System.Windows.Threading;
 using System.Xml;
 using System.Xml.Serialization;
 
-using TacticalAgro.Analyzing;
-using TacticalAgro.Agents;
-using TacticalAgro.Agents.Drones;
-using TacticalAgro.Environment;
+using SRDS.Analyzing;
+using SRDS.Agents;
+using SRDS.Agents.Drones;
+using SRDS.Environment;
 
-namespace TacticalAgro.Map {
+namespace SRDS.Map {
     /// <summary>
     /// Логика взаимодействия для Map.xaml
     /// </summary>
@@ -453,7 +453,7 @@ namespace TacticalAgro.Map {
 				return;
             if (serialized_object == Director) {
 				if (action_is_open == true) {
-					Director = TacticalAgro.Director.Deserialize(fd.FileName);
+					Director = SRDS.Director.Deserialize(fd.FileName);
 					DrawPlaceableObjects();
 				} else
 					Director?.Serialize(fd.FileName);

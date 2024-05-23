@@ -3,9 +3,9 @@ using System.IO;
 using System.Windows;
 using System.Xml;
 using System.Xml.Serialization;
-using TacticalAgro.Map.Stations;
+using SRDS.Map.Stations;
 
-namespace TacticalAgro.Map {
+namespace SRDS.Map {
     public class TacticalMap : INotifyPropertyChanged {
         private Obstacle[] obstacles;
         private Station[] stations;

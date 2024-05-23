@@ -1,4 +1,4 @@
-﻿namespace TacticalAgro.Agents.Explorers {
+﻿namespace SRDS.Agents.Explorers {
     public interface IExplorer
     {
         public AnalyzedPoint Result { get; set; }

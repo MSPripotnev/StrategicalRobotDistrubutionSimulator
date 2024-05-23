@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace TacticalAgro.Agents.Explorers {
+namespace SRDS.Agents.Explorers {
     public class AnalyzedPoint
     {
         public Point Position { get; init; }

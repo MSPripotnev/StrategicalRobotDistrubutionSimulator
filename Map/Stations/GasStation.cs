@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-namespace TacticalAgro.Map.Stations {
+namespace SRDS.Map.Stations {
 	internal class GasStation : Station {
 		public GasStation() : base() {
 			Color = Colors.Gold;

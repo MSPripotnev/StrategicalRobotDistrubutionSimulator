@@ -1,8 +1,8 @@
 ﻿using System.Windows;
 
-using TacticalAgro.Map;
+using SRDS.Map;
 
-namespace TacticalAgro.Agents.Explorers.AStar {
+namespace SRDS.Agents.Explorers.AStar {
     internal class AStarGreedyExplorer : AStarExplorer
     {
         public AStarGreedyExplorer(Point _start, Point _end, double scale, TacticalMap map, double interactDistance)

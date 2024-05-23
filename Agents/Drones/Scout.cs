@@ -2,9 +2,9 @@
 using System.Windows;
 using System.Windows.Media;
 
-using TacticalAgro.Map;
+using SRDS.Map;
 
-namespace TacticalAgro.Agents.Drones {
+namespace SRDS.Agents.Drones {
     public class Scout : Agent {
 
         public const int ViewingRange = 50;

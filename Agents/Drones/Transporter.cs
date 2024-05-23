@@ -4,8 +4,8 @@ using System.Windows.Media;
 using System.Xml.Serialization;
 
 
-namespace TacticalAgro.Agents.Drones {
-    using TacticalAgro.Agents;
+namespace SRDS.Agents.Drones {
+    using SRDS.Agents;
     public class Transporter : Agent {
 
         #region Properties

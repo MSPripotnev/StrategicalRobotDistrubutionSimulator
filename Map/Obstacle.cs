@@ -4,7 +4,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
 
-namespace TacticalAgro.Map {
+namespace SRDS.Map {
     public class Obstacle : IPlaceable {
         private Point[] borders;
         [XmlArray("Points")]
