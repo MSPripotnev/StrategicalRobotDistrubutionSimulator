@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 
 using TacticalAgro.Map;
 
@@ -59,7 +59,7 @@ namespace TacticalAgro.Drones.Explorers.AStar {
                 if (road is null)
                     hardness = 4.0;
                 else
-                    hardness = Road.DistanceHardness(road.Type);
+                    hardness = Road.DistanceHardness(road.Type) + Math.Min(road.Snowness, 2);
 				AnalyzedPoint interimP = new AnalyzedPoint(currentPoint, pos,
                     currentPoint.Distance + Distance(currentPoint, pos) * hardness,
                     Distance(pos, end));

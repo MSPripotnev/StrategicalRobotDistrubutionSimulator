@@ -12,6 +12,7 @@ using System.Xml.Serialization;
 
 using TacticalAgro.Analyzing;
 using TacticalAgro.Drones;
+using TacticalAgro.Environment;
 
 namespace TacticalAgro.Map {
     /// <summary>
@@ -29,11 +30,12 @@ namespace TacticalAgro.Map {
                         DrawPlaceableObjects();
                     trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
                     startB.IsEnabled = true;
+					director.Meteo.PropertyChanged += RefreshMeteo;
                 }
             }
         }
         TimeSpan tempTime = TimeSpan.Zero;
-        DateTime startTime = DateTime.MinValue, pauseTime;
+        DateTime startTime = DateTime.MinValue, pauseTime, d_time = new DateTime(0);
         DispatcherTimer refreshTimer;
         Tester tester= new Tester();
         Recorder recorder = new Recorder();
@@ -61,7 +63,7 @@ namespace TacticalAgro.Map {
         public MapWPF() {
             InitializeComponent();
             refreshTimer = new DispatcherTimer {
-                Interval = new TimeSpan(0,0,0,0,1)
+                Interval = new TimeSpan(0,0,0,0,100)
             };
             tester = new Tester();
             recorder = new Recorder();
@@ -84,13 +86,23 @@ namespace TacticalAgro.Map {
 				}
             }
         }
-        #region Drawing
-        private void DrawPlaceableObjects() {
-            var objs = Director.AllObjectsOnMap.Concat(Director.Map.Roads).ToArray();
+		#region Drawing
+		private void RefreshMeteo(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
+			for (int i = 0; i < mapCanvas.Children.Count; i++)
+				if (mapCanvas.Children[i].Uid == "cloud")
+					mapCanvas.Children.Remove(mapCanvas.Children[i]);
+			foreach (SnowCloud o in Director.Meteo.Clouds)
+				mapCanvas.Children.Add(o.Build());
+		}
+		private void DrawPlaceableObjects() {
+            var objs = Director.AllObjectsOnMap.Concat(Director.Map.Roads).Concat(Director.Meteo.Clouds).ToArray();
 			for (int i = 0; i < objs.Length; i++) {
                 IPlaceable obj = objs[i];
                 var UIObj = obj.Build();
                 mapCanvas.Children.Add(UIObj);
+
+                if (obj is IPlaceableWithArea obja)
+					mapCanvas.Children.Add(obja.BuildArea());
 
                 if (obj is Transporter t) {
                     mapCanvas.Children.Add(t.BuildTrajectory());
@@ -220,6 +232,7 @@ namespace TacticalAgro.Map {
         }
         private void RefreshTimer_Tick(object? sender, EventArgs e) {
             refreshTimer.Stop();
+            d_time = d_time.AddMinutes(1);
             var dt = DateTime.Now;
             Work();
             realWayTime += (DateTime.Now - dt);
@@ -230,12 +243,12 @@ namespace TacticalAgro.Map {
 				propertyGrid.SelectedObject = null;
 				propertyGrid.SelectedObject = o;
             }
-        }
+		}
         private void Work() {
             try {
                 if (Director == null) return;
                 Director.DistributeTask();
-                Director.Work();
+                Director.Work(d_time);
 #if !ALWAYS
                 if (Director.CheckMission()) {
                     Director.Work();
@@ -339,7 +352,9 @@ namespace TacticalAgro.Map {
 				case "32":
 					obj = new Stations.AgentStation(lastClickPos);
 					break;
-
+                case "33":
+					obj = new Stations.Meteostation(lastClickPos);
+					break;
 				case "34":
 					obj = new Stations.AntiIceStation(lastClickPos);
 					break;
@@ -389,9 +404,10 @@ namespace TacticalAgro.Map {
             if (obj == null) return;
             Director.Add(obj);
             mapCanvas.Children.Add(obj.Build());
-            if (obj is Transporter t) {
+            if (obj is IPlaceableWithArea obja)
+				mapCanvas.Children.Add(obja.BuildArea());
+			if (obj is Transporter t)
                 mapCanvas.Children.Add(t.BuildTrajectory());
-            }
 
             lastClickPos = new Point(0, 0);
         }
@@ -518,7 +534,7 @@ namespace TacticalAgro.Map {
 
         public void Refresh() {
             if (Director != null) {
-                collectedObjsCountL.Content = $"Cобранных целей: {Director.CollectedTargets.Length}";
+                localTimeL.Content = $"Местное время: {Director.Meteo.Time.ToShortTimeString()}";
                 currentObjsCountL.Content = "Осталось целей: " +
                     (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
                 traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)} px";

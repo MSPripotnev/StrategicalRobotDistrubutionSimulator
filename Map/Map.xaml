@@ -29,7 +29,7 @@
                         <MenuItem Header="Станция">
                             <MenuItem Header="АЗС" Click="MenuItem_Click" Tag="31"/>
                             <MenuItem Header="Депо" Click="MenuItem_Click" Tag="32"/>
-
+                            <MenuItem Header="Метеостанция" Click="MenuItem_Click" Tag="33"/>
                             <MenuItem Header="Склад ПГМ" Click="MenuItem_Click" Tag="34"/>
                             <MenuItem Header="Элеватор" Click="MenuItem_Click" Tag="35"/>
                         </MenuItem>
@@ -56,7 +56,7 @@
             Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="stepB_Click" Margin="65,35,0,0"/>
         <Button x:Name="nextModelB" Grid.Column="1" Content="След. модель" HorizontalAlignment="Center" IsEnabled="True"
             Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="nextModelB_Click" Margin="0, 0, 0, -60"/>
-        <Label x:Name="collectedObjsCountL" Grid.Column="1" Grid.Row="0" MaxHeight="50" Margin="0,20,200,0" VerticalAlignment="Top"/>
+        <Label x:Name="localTimeL" Grid.Column="1" Grid.Row="0" MaxHeight="50" Margin="0,20,200,0" VerticalAlignment="Top"/>
         <Label x:Name="attemptsCountL" Grid.Column="1" Grid.Row="0" MaxHeight="80" Margin="0,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Right"/>
         <Label x:Name="currentObjsCountL" Grid.Column="2" Grid.Row="0" MaxHeight="60" Margin="0,50,0,0" VerticalAlignment="Top"/>
         <Label x:Name="wayTimeCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,80,0,0" VerticalAlignment="Top"/>

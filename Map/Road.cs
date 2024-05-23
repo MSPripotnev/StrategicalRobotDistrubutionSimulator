@@ -14,6 +14,8 @@ using System.ComponentModel;
 
 namespace TacticalAgro.Map {
 	using TacticalAgro.Drones;
+	using TacticalAgro.Environment;
+
 	public enum RoadType {
 		Dirt,
 		Gravel,
@@ -91,6 +93,8 @@ namespace TacticalAgro.Map {
 				Type = (RoadType)category;
 			}
 		}
+		[XmlAttribute("Snowness")]
+		public double Snowness { get; set; } = 0;
 		[XmlIgnore]
 		public List<Road> RoadsConnected { get; set; } = new List<Road>();
 		public IDrone[] GetAgentsOnRoad(IPlaceable[] agents) {
@@ -144,6 +148,13 @@ namespace TacticalAgro.Map {
 				if (L - 10 >= rv.Length) return -h;
 			}
 			return h;
+		}
+		public void Simulate(GlobalMeteo meteo) {
+			if (Snowness < 0.01)
+				Snowness -= 0.00001;
+			if (meteo.Temperature > 0)
+				Snowness -= 0.002;
+			Snowness = Math.Max(0, Math.Min(Snowness, Height*Length/100));
 		}
 		/// <summary>
 		/// ����������� �����

@@ -2,6 +2,9 @@
 using System.Windows.Media;
 
 namespace TacticalAgro.Map {
+    public interface IPlaceableWithArea : IPlaceable {
+		public UIElement BuildArea();
+	}
     public interface IPlaceable : System.ComponentModel.INotifyPropertyChanged {
         public UIElement Build();
         public Point Position { get; set; }

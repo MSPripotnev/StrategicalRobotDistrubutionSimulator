@@ -4,7 +4,9 @@ using System.Xml.Serialization;
 
 using TacticalAgro.Analyzing;
 using TacticalAgro.Drones;
+using TacticalAgro.Environment;
 using TacticalAgro.Map;
+using TacticalAgro.Map.Stations;
 
 namespace TacticalAgro {
     public partial class Director : System.ComponentModel.INotifyPropertyChanged, IDisposable {
@@ -99,7 +101,16 @@ namespace TacticalAgro {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
             }
         }
-        [XmlIgnore]
+		private GlobalMeteo meteomap;
+		[XmlIgnore]
+		public GlobalMeteo Meteo {
+			get { return meteomap; }
+			private set {
+				meteomap = value;
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Meteo)));
+			}
+		}
+		[XmlIgnore]
         public List<IPlaceable> AllObjectsOnMap {
             get {
                 return new List<IPlaceable>(Transporters).Concat(Targets)
@@ -128,6 +139,10 @@ namespace TacticalAgro {
         public Director() {
             Scale = 5.0F;
             Map = new TacticalMap();
+            Meteo = new GlobalMeteo(Map) {
+                Time = new DateTime(0),
+            };
+            Meteo = new GlobalMeteo(Map);
             Targets = Array.Empty<Target>();
             Transporters = Array.Empty<Transporter>();
         }
@@ -146,8 +161,14 @@ namespace TacticalAgro {
         public Director(string _mapPath) : this() {
             MapPath = _mapPath;
         }
-        public void Work() {
-            for (int i = 0; i < Transporters.Length; i++)
+        public void Work(DateTime time) {
+            Meteo.Time = time;
+            foreach (var s in Map.Stations)
+                if (s is Meteostation m)
+                    m.Simulate(Meteo);
+			foreach (var r in Map.Roads)
+                r.Simulate(Meteo);
+			for (int i = 0; i < Transporters.Length; i++)
                 do
                     Transporters[i].Simulate();
                 while (Transporters[i].CurrentState == RobotState.Thinking);
