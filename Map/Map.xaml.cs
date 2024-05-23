@@ -263,6 +263,7 @@ namespace TacticalAgro.Map {
             if (Director.CheckMission()) {
                 Stop();
                 Director = tester.ReloadModel();
+                startTime = DateTime.Now;
             }
 #endif
 #if PARALLEL
@@ -270,7 +271,6 @@ namespace TacticalAgro.Map {
 #else
             refreshTimer.Start();
 #endif
-            startTime = DateTime.Now;
         }
         private void Stop() {
 #if PARALLEL
