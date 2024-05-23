@@ -149,10 +149,7 @@ namespace TacticalAgro {
                 while (Transporters[i].CurrentState == RobotState.Thinking);
         }
         public bool CheckMission() {
-            for (int i = 0; i < Targets.Length; i++)
-                if (!Targets[i].Finished)
-                    return false;
-            return true;
+            return false;
         }
 
         #region Edit

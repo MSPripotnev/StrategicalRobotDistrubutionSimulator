@@ -1,4 +1,5 @@
-﻿using System.IO;
+#define ALWAYS
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -213,6 +214,7 @@ namespace TacticalAgro.Map {
                 if (Director == null) return;
                 Director.DistributeTask();
                 Director.Work();
+#if !ALWAYS
                 if (Director.CheckMission()) {
                     Director.Work();
                     if (testingCB.IsChecked == true) {
@@ -227,7 +229,8 @@ namespace TacticalAgro.Map {
                 } else if (realWayTime.TotalSeconds > 60) {
                     tester.StopAttempt();
                 }
-            } catch (Exception ex) {
+#endif
+			} catch (Exception ex) {
                 MessageBox.Show(ex.ToString());
                 recorder.Dispose();
                 Director.Dispose();
@@ -256,10 +259,12 @@ namespace TacticalAgro.Map {
                 }
             }, tokenSource.Token, TaskCreationOptions.LongRunning);
 #endif
+#if !ALWAYS
             if (Director.CheckMission()) {
                 Stop();
                 Director = tester.ReloadModel();
             }
+#endif
 #if PARALLEL
             mainTask.Start();
 #else
@@ -293,7 +298,7 @@ namespace TacticalAgro.Map {
             if (Director != null && float.TryParse((sender as TextBox).Text.Replace('.', ','), out float scale))
                 Director.Scale = scale;
         }
-        #endregion
+#endregion
 
         #region Buttons
         private void MenuItem_Click(object sender, RoutedEventArgs e) {
