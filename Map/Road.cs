@@ -55,6 +55,9 @@ namespace SRDS.Map {
 		public static bool operator !=(Crossroad left, Crossroad right) {
 			return !(left == right);
 		}
+		public override bool Equals(object? obj) {
+			return obj is Crossroad c && this == c;
+		}
 	}
 
 	public class Road : IPlaceable {
@@ -170,10 +173,10 @@ namespace SRDS.Map {
 			double k = (((Vector)left).X * ((Vector)right).Y - ((Vector)left).Y * ((Vector)right).X),
 				   s = ((right.Position.X - left.Position.X) * ((Vector)right).Y -
 				(right.Position.Y - left.Position.Y) * ((Vector)right).X) / k,
-				   t = ((right.Position.Y - left.Position.Y) * ((Vector)right).X -
-				(right.Position.X - left.Position.X) * ((Vector)right).Y) / k;
-			if (-1 <= s && s <= 1 && -1 <= t && t <= 1)
-				return new Point(left.Position.X + (int)(s * ((Vector)left).X), (int)(left.Position.Y + s * ((Vector)left).Y));
+				   t = -((right.Position.Y - left.Position.Y) * ((Vector)left).X -
+				(right.Position.X - left.Position.X) * ((Vector)left).Y) / k;
+			if (0 <= s && s <= 1 && 0 <= t && t <= 1)
+				return new Point(left.Position.X + (s * ((Vector)left).X), (left.Position.Y + s * ((Vector)left).Y));
 			return null;
 		}
 		public static explicit operator Vector(Road self) => self.EndPosition - self.Position;
