@@ -323,8 +323,10 @@ namespace SRDS.Map {
 #if PARALLEL
             tokenSource.Cancel();
 #endif
-            if (testingCB.IsChecked == false)
+            if (testingCB.IsChecked == false && tester.Models?.Length < 1)
                 Director = tester.ReloadModel();
+            else
+                Director = new Director(mapCanvas.RenderSize);
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
