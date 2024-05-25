@@ -135,22 +135,32 @@ namespace SRDS.Map {
                     };
                     mapCanvas.Children.Add(new_obstacle);
                 } else if (prevLastClickPos.X != 0 || prevLastClickPos.Y != 0) {
-					Road r = new Road(lastClickPos, prevLastClickPos, 1, Director.Map.Roads.ToArray());
+                    Road r = new Road(prevLastClickPos, lastClickPos, 1, Director.Map.Roads.ToArray());
                     Director.Add(r);
-					mapCanvas.Children.Remove(mapCanvas.Children[^1]);
+                    mapCanvas.Children.Remove(mapCanvas.Children[^1]);
 
-                    foreach(var cr in Director.Map.Crossroads) {
+                    foreach (var cr in Director.Map.Crossroads) {
                         UIElement el = cr.Build();
                         if (mapCanvas.Children.Contains(el))
                             mapCanvas.Children.Remove(el);
-						mapCanvas.Children.Add(el);
-					}
-					mapCanvas.Children.Add(r.Build());
+                        mapCanvas.Children.Add(el);
+                    }
+                    mapCanvas.Children.Add(r.Build());
 
-					prevLastClickPos = new Point(0, 0);
-					(mapCanvas.ContextMenu.Items[0] as MenuItem).IsEnabled = true;
-					(mapCanvas.ContextMenu.Items[1] as MenuItem).IsEnabled = true;
-					(mapCanvas.ContextMenu.Items[3] as MenuItem).IsEnabled = false;
+                    if (!Keyboard.IsKeyDown(Key.LeftShift)) {
+                        prevLastClickPos = new Point(0, 0);
+                        (mapCanvas.ContextMenu.Items[0] as MenuItem).IsEnabled = true;
+                        (mapCanvas.ContextMenu.Items[1] as MenuItem).IsEnabled = true;
+                        (mapCanvas.ContextMenu.Items[3] as MenuItem).IsEnabled = false;
+                        return;
+                    }
+                    prevLastClickPos = lastClickPos;
+                    Rectangle crossroad_r = new Rectangle() {
+                        Width = Height = 10,
+                        Margin = new Thickness(prevLastClickPos.X, prevLastClickPos.Y, 0, 0),
+                        Fill = new SolidColorBrush(Colors.DarkSlateGray),
+                    };
+					mapCanvas.Children.Add(crossroad_r);
 				} else {
                     IPlaceable? obj = FindObject(clickPos);
                     if (obj != null) {
@@ -388,9 +398,24 @@ namespace SRDS.Map {
                 case "5":
                     if (prevLastClickPos.X == prevLastClickPos.Y && prevLastClickPos.X == 0) {
                         prevLastClickPos = new Point(lastClickPos.X, lastClickPos.Y);
+                        var r = Director?.Map.Roads.MinBy(p => p.DistanceToRoad(prevLastClickPos));
+                        if (r?.DistanceToRoad(prevLastClickPos) < 25) {
+                            Vector v = (Vector)r;
+                            (v.X, v.Y) = (v.Y, v.X);
+							v.Normalize(); v *= r.DistanceToRoad(prevLastClickPos);
+                            if (r.DistanceToRoad(v + prevLastClickPos) > r.DistanceToRoad(-v + prevLastClickPos))
+                                v.Negate();
+                            prevLastClickPos += v;
+                            Vector v1 = (prevLastClickPos - r.Position), v2 = (prevLastClickPos - r.EndPosition);
+                            if (v1.Length < 20)
+                                prevLastClickPos = r.Position;
+                            else if (v2.Length < 20)
+                                prevLastClickPos = r.EndPosition;
+						}
+                        (prevLastClickPos.X, prevLastClickPos.Y) = (Math.Round(prevLastClickPos.X), Math.Round(prevLastClickPos.Y));
 						Rectangle el = new Rectangle();
 						el.Width = el.Height = 10;
-						el.Margin = new Thickness(lastClickPos.X, lastClickPos.Y, 0, 0);
+						el.Margin = new Thickness(prevLastClickPos.X, prevLastClickPos.Y, 0, 0);
 						el.Fill = new SolidColorBrush(Colors.DarkSlateGray);
 						mapCanvas.Children.Add(el);
 
