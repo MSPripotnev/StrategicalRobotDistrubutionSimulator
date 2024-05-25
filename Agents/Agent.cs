@@ -10,10 +10,11 @@ using System.Windows.Shapes;
 using System.Windows;
 using System.Xml.Serialization;
 using SRDS.Map;
+using SRDS.Map.Stations;
 
 namespace SRDS.Agents {
 	public enum RobotState {
-		Disable,
+		Disable = -1,
 		Ready,
 		Thinking,
 		Going,
@@ -66,6 +67,7 @@ namespace SRDS.Agents {
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
 			}
 		}
+		public AgentStation Home { get; set; }
 		#endregion
 
 		#region Brain

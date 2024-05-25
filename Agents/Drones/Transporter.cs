@@ -29,7 +29,8 @@ namespace SRDS.Agents.Drones {
                             AttachedObj.Finished = true;
                             AttachedObj.ReservedTransporter = null;
                             AttachedObj = null;
-                        } else if (CurrentState == RobotState.Thinking) {
+                            TargetPosition = Home.Position;
+						} else if (CurrentState == RobotState.Thinking) {
                             ResetTarget();
                         } else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
                             //робот сломался/выключился
@@ -94,9 +95,11 @@ namespace SRDS.Agents.Drones {
                 case RobotState.Broken:
                     return;
                 case RobotState.Ready:
-                    break;
+					if (Home != null && (Home.Position - Position).Length > 10)
+						TargetPosition = Home.Position;
+					break;
                 case RobotState.Thinking:
-                    if (AttachedObj.ReservedTransporter != null && OtherAgents.Contains(AttachedObj.ReservedTransporter)) {
+                    if (AttachedObj != null && AttachedObj.ReservedTransporter != null && OtherAgents.Contains(AttachedObj.ReservedTransporter)) {
                         CurrentState = RobotState.Ready;
                         break;
                     }
@@ -109,7 +112,7 @@ namespace SRDS.Agents.Drones {
                         //путь найден
                         Pathfinder.IsCompleted = false;
                         //робот едет к объекту
-                        if (AttachedObj != null && AttachedObj.ReservedTransporter != this)
+                        if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedTransporter != this)
                             CurrentState = RobotState.Going;
                         //робот доставляет объект
                         else if (AttachedObj.ReservedTransporter == this) {
@@ -135,11 +138,14 @@ namespace SRDS.Agents.Drones {
                         //двигаемся
                         Move();
                         //дошли до нужной точки
-                        if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance)
+                        if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance) {
                             //цель = объект
                             if (AttachedObj != null)
                                 //захватываем объект
                                 CurrentState = RobotState.Carrying;
+                            else
+                                CurrentState = RobotState.Ready;
+                        }
                     }
 #endif
                     break;

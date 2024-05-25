@@ -40,11 +40,16 @@ namespace SRDS {
                             Agents[i].Pathfinder = new PathFinder(Map, Scale);
                             PropertyChanged += Agents[i].Pathfinder.Refresh;
                             SettingsChanged += Agents[i].Pathfinder.Refresh;
+                            if (Agents[i].CurrentState == RobotState.Ready && (Agents[i].Position - Agents[i].Home.Position).Length > 5)
+                                Agents[i].TargetPosition = Agents[i].Home.Position;
                         }
                         Agents[i].OtherAgents = Agents.Except(new Agent[] { Agents[i] }).ToList();
                     }
                 }
             }
+        }
+        public Agent[] NonAssignedAgents {
+            get => Agents.Where(p => p.Home == null).ToArray();
         }
         [XmlIgnore]
         public Agent[] FreeAgents {

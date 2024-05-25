@@ -14,6 +14,7 @@ using SRDS.Analyzing;
 using SRDS.Agents;
 using SRDS.Agents.Drones;
 using SRDS.Environment;
+using SRDS.Map.Stations;
 
 namespace SRDS.Map {
     /// <summary>
@@ -86,6 +87,8 @@ namespace SRDS.Map {
 					mapCanvas.Children.Clear();
 					Director = new Director(mapCanvas.RenderSize);
 				}
+            } else {
+                Director = new Director(mapCanvas.RenderSize);
             }
         }
 		#region Drawing
@@ -356,10 +359,17 @@ namespace SRDS.Map {
             switch (button.Tag) {
                 case "0":
                     obj = new Target(lastClickPos);
+                    if (!Director.Map.Stations.Any(p => p is CollectingStation))
+                        return;
                     break;
                 case "1":
                     obj = new Transporter(lastClickPos);
-                    break;
+					AgentStation? near_ags = (AgentStation)Director.Map.Stations.Where(p => p is AgentStation).MinBy(p => (p.Position - lastClickPos).Length);
+					if (near_ags == null)
+						return;
+                    Agent a = obj as Agent;
+					a.Home = near_ags;
+					break;
                 case "31":
                     obj = new Stations.GasStation(lastClickPos);
                     break;

@@ -1,18 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media;
+﻿using System.Windows.Media;
+using System.Xml.Serialization;
 
 using SRDS.Agents;
 
 namespace SRDS.Map.Stations {
-	internal class AgentStation : Station {
-		public List<IDrone> Agents { get; init; } = new List<IDrone>();
+	public class AgentStation : Station {
+		public Agent[] AssignedAgents { get; set; } = Array.Empty<Agent>();
+		[XmlIgnore]
+		public Agent[] FreeAgents {
+			get {
+				return AssignedAgents.Where(x => x.CurrentState == RobotState.Ready).ToArray();
+			}
+		}
 		public AgentStation() : base() {
 			Color = Colors.SandyBrown;
 		}
 		public AgentStation(System.Windows.Point pos) : base(pos) { }
+		public override void Simulate() {
+			for (int i = 0; i < AssignedAgents.Length; i++)
+				do
+					AssignedAgents[i].Simulate();
+				while (AssignedAgents[i].CurrentState == RobotState.Thinking);
+		}
 	}
 }

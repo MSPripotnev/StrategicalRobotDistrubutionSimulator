@@ -68,6 +68,8 @@ namespace SRDS {
                 for (int i = 0; i < CarryingTransporters.Count; i++) {
                     Transporter transporter = (Transporter)CarryingTransporters[i];
                     CollectingStation? nearBase = (CollectingStation?)Map.Stations.Where(p => p is CollectingStation).MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
+                    if (nearBase == null)
+                        return;
                     if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance/2) {
                         transporter.Trajectory = transporter.BackTrajectory.ToList();
                         if (transporter.Trajectory[^1] != nearBase.Position)
