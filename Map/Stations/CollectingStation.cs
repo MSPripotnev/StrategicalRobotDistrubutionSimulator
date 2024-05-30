@@ -6,6 +6,7 @@ using System.Windows.Shapes;
 using System.Xml.Serialization;
 
 using SRDS.Agents;
+using SRDS.Map.Targets;
 
 namespace SRDS.Map.Stations
 {

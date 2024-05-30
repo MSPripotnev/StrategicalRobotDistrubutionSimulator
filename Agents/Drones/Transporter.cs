@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Xml.Serialization;
@@ -6,6 +6,8 @@ using System.Xml.Serialization;
 
 namespace SRDS.Agents.Drones {
     using SRDS.Agents;
+    using SRDS.Map.Targets;
+
     public class Transporter : Agent {
 
         #region Properties
@@ -27,7 +29,7 @@ namespace SRDS.Agents.Drones {
                         //объект взят
                         if (CurrentState == RobotState.Carrying) {
                             AttachedObj.Finished = true;
-                            AttachedObj.ReservedTransporter = null;
+                            AttachedObj.ReservedAgent = null;
                             AttachedObj = null;
                             TargetPosition = Home.Position;
 						} else if (CurrentState == RobotState.Thinking) {
@@ -44,7 +46,7 @@ namespace SRDS.Agents.Drones {
                         break;
                     case RobotState.Going:
                         if (CurrentState == RobotState.Thinking && AttachedObj != null) {
-                            AttachedObj.ReservedTransporter = this;
+                            AttachedObj.ReservedAgent = this;
                         }
                         var vs = new List<Point>(Trajectory); vs.Reverse();
                         BackTrajectory = vs.ToArray();
@@ -99,7 +101,7 @@ namespace SRDS.Agents.Drones {
 						TargetPosition = Home.Position;
 					break;
                 case RobotState.Thinking:
-                    if (AttachedObj != null && AttachedObj.ReservedTransporter != null && OtherAgents.Contains(AttachedObj.ReservedTransporter)) {
+                    if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
                         CurrentState = RobotState.Ready;
                         break;
                     }
@@ -112,10 +114,10 @@ namespace SRDS.Agents.Drones {
                         //путь найден
                         Pathfinder.IsCompleted = false;
                         //робот едет к объекту
-                        if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedTransporter != this)
+                        if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedAgent != this)
                             CurrentState = RobotState.Going;
                         //робот доставляет объект
-                        else if (AttachedObj.ReservedTransporter == this) {
+                        else if (AttachedObj.ReservedAgent == this) {
                             CurrentState = RobotState.Carrying;
                         }
                         //переключение на другую задачу

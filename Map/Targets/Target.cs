@@ -8,34 +8,36 @@ using System.Xml.Serialization;
 using SRDS.Agents.Drones;
 using SRDS.Map;
 
-namespace SRDS {
-    public class Target : IPlaceable {
+namespace SRDS.Map.Targets
+{
+    public abstract class Target : IPlaceable
+    {
         private Point position;
         [XmlElement(nameof(Point), ElementName = "Position")]
-        public Point Position {
+        public Point Position
+        {
             get { return position; }
-            set { 
-                position = value; 
+            set
+            {
+                position = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
             }
         }
         [XmlIgnore]
         public Color Color { get; set; }
         [XmlIgnore]
-        public Transporter? ReservedTransporter { get; set; } = null;
+        public SRDS.Agents.Agent? ReservedAgent { get; set; } = null;
         [XmlIgnore]
         public bool Finished { get; set; } = false;
         public Target(Point pos) : this() {
             Position = pos;
         }
-        public Target() {
-            Finished = false;
-            Color = Colors.Green;
-        }
+        public Target() { }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public UIElement Build() {
+        public virtual UIElement Build()
+        {
             Ellipse el = new Ellipse();
             el.Width = 15;
             el.Height = 15;
@@ -43,7 +45,7 @@ namespace SRDS {
             el.Stroke = Brushes.Black;
             el.StrokeThickness = 1;
             el.Margin = new Thickness(-5, -5, 0, 0);
-            System.Windows.Controls.Canvas.SetZIndex(el, 4);
+            System.Windows.Controls.Panel.SetZIndex(el, 4);
 
             Binding binding = new Binding(nameof(Position) + ".X");
             binding.Source = this;
@@ -55,7 +57,8 @@ namespace SRDS {
             return el;
         }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             return Position.ToString();
         }
     }

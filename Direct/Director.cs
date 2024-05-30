@@ -9,6 +9,7 @@ using SRDS.Agents.Drones;
 using SRDS.Environment;
 using SRDS.Map;
 using SRDS.Map.Stations;
+using SRDS.Map.Targets;
 
 namespace SRDS {
     public partial class Director : INotifyPropertyChanged, IDisposable {
@@ -72,7 +73,7 @@ namespace SRDS {
         public Target[] Targets { get; set; }
         public Target[] FreeTargets {
             get {
-                return Targets.Where(x => x.ReservedTransporter == null && !x.Finished).ToArray();
+                return Targets.Where(x => x.ReservedAgent == null && !x.Finished).ToArray();
             }
         }
         [XmlIgnore]
@@ -165,7 +166,7 @@ namespace SRDS {
                 Add(t);
             }
             for (int i = 0; i < testModel.TargetsT.Count; i++) {
-                Add(new Target(testModel.TargetsT[i].Position));
+                Add(new Crop(testModel.TargetsT[i].Position));
             }
         }
         public Director(string _mapPath, Size borders) : this(borders) {

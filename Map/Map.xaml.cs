@@ -15,6 +15,7 @@ using SRDS.Agents;
 using SRDS.Agents.Drones;
 using SRDS.Environment;
 using SRDS.Map.Stations;
+using SRDS.Map.Targets;
 
 namespace SRDS.Map {
     /// <summary>
@@ -364,13 +365,14 @@ namespace SRDS.Map {
             var button = sender as MenuItem;
             IPlaceable obj = null;
             switch (button.Tag) {
-                case "0":
-                    obj = new Target(lastClickPos);
+                case "01":
+                    obj = new Crop(lastClickPos);
                     if (!Director.Map.Stations.Any(p => p is CollectingStation))
                         return;
                     break;
-                case "1":
-                    obj = new Transporter(lastClickPos);
+				case "02":
+					obj = new Snowdrift(lastClickPos, new Random().NextDouble()*10);
+					break;
 					AgentStation? near_ags = (AgentStation)Director.Map.Stations.Where(p => p is AgentStation).MinBy(p => (p.Position - lastClickPos).Length);
 					if (near_ags == null)
 						return;

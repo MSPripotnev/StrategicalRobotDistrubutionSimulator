@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -11,9 +11,10 @@ using System.Windows;
 using System.Xml.Serialization;
 using SRDS.Map;
 using SRDS.Map.Stations;
+using SRDS.Map.Targets;
 
 namespace SRDS.Agents {
-	public enum RobotState {
+    public enum RobotState {
 		Disable = -1,
 		Ready,
 		Thinking,
@@ -88,7 +89,7 @@ namespace SRDS.Agents {
 						//объект взят
 						if (CurrentState == RobotState.Carrying) {
 							AttachedObj.Finished = true;
-							AttachedObj.ReservedTransporter = null;
+							AttachedObj.ReservedAgent = null;
 							AttachedObj = null;
 						} else if (CurrentState == RobotState.Thinking) {
 

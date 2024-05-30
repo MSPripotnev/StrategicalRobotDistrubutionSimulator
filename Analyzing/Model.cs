@@ -6,6 +6,7 @@ using System.Xml;
 using System.Xml.Serialization;
 
 using SRDS.Map;
+using SRDS.Map.Targets;
 
 namespace SRDS.Analyzing {
     public class ParametrRange {
@@ -127,11 +128,11 @@ namespace SRDS.Analyzing {
                         }
                         V.Normalize();
                         var pos = field.Borders[bi] + V * (marginPerTarget - temp);
-                        targets.Add(new Target(pos));
+                        targets.Add(new Crop(pos));
                         temp = 0;
                         for (int i = 1; ; i++) {
                             if (obstacles[fi].PointOnObstacle(pos + V * marginPerTarget * i))
-                                targets.Add(new Target(pos + V * marginPerTarget * i));
+                                targets.Add(new Crop(pos + V * marginPerTarget * i));
                             if ((field.Borders[bi + 1] - pos - V * marginPerTarget * i).Length <= marginPerTarget) {
                                 temp += (field.Borders[bi + 1] - pos - V * marginPerTarget * i).Length;
                                 break;
@@ -141,20 +142,20 @@ namespace SRDS.Analyzing {
                 } else {
                     double lineD;
                     if (targetsPerField % 2 == 1)
-                        targets.Add(new Target(centerP));
+                        targets.Add(new Crop(centerP));
                     if (polygonSize.Width > polygonSize.Height) {
                         lineD = obstacles[fi].Borders.MaxBy(p => p.X).X - obstacles[fi].Borders.MinBy(p => p.X).X;
                         marginPerTarget = lineD * 0.9 / targetsPerField;
                         for (int i = 0; i < targetsPerField / 2; i++) {
-                            targets.Add(new Target(new Point(centerP.X + marginPerTarget * (i + 1) - marginPerTarget / 2 * (1 - targetsPerField % 2), centerP.Y)));
-                            targets.Add(new Target(new Point(centerP.X - marginPerTarget * (i + 1) + marginPerTarget / 2 * (1 - targetsPerField % 2), centerP.Y)));
+                            targets.Add(new Crop(new Point(centerP.X + marginPerTarget * (i + 1) - marginPerTarget / 2 * (1 - targetsPerField % 2), centerP.Y)));
+                            targets.Add(new Crop(new Point(centerP.X - marginPerTarget * (i + 1) + marginPerTarget / 2 * (1 - targetsPerField % 2), centerP.Y)));
                         }
                     } else {
                         lineD = obstacles[fi].Borders.MaxBy(p => p.Y).Y - obstacles[fi].Borders.MinBy(p => p.Y).Y;
                         marginPerTarget = lineD * 0.9 / targetsPerField;
                         for (int i = 0; i < targetsPerField / 2; i++) {
-                            targets.Add(new Target(new Point(centerP.X, centerP.Y + marginPerTarget * (i + 1) - marginPerTarget / 2 * (1 - targetsPerField % 2))));
-                            targets.Add(new Target(new Point(centerP.X, centerP.Y - marginPerTarget * (i + 1) + marginPerTarget / 2 * (1 - targetsPerField % 2))));
+                            targets.Add(new Crop(new Point(centerP.X, centerP.Y + marginPerTarget * (i + 1) - marginPerTarget / 2 * (1 - targetsPerField % 2))));
+                            targets.Add(new Crop(new Point(centerP.X, centerP.Y - marginPerTarget * (i + 1) + marginPerTarget / 2 * (1 - targetsPerField % 2))));
                         }
                     }
                 }
