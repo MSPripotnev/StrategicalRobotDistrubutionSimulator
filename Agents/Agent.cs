@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -29,6 +29,14 @@ namespace SRDS.Agents {
 
 		#region Properties
 		public double MaxStraightRange { get; init; }
+		[XmlIgnore]
+		public const double FuelDecrease = 0.01;
+
+		private double fuel = 100;
+		public double Fuel {
+			get => fuel;
+			set => fuel = Math.Min(100, Math.Max(0, value));
+		}
 
 		#region Map
 		private Point position;
@@ -91,6 +99,8 @@ namespace SRDS.Agents {
 							TargetPosition = Home.Position;
 						break;
 					case RobotState.Ready:
+						if (Home != null && (Position - Home.Position).Length < 10)
+							Fuel = 100;
 						//объект взят
 						if (CurrentState == RobotState.Working) {
 							AttachedObj.Finished = true;
@@ -268,11 +278,13 @@ namespace SRDS.Agents {
 		#endregion
 
 		public virtual void Simulate() {
+			Fuel -= FuelDecrease;
 			switch (CurrentState) {
 				case RobotState.Ready:
 					if (Home != null && (Home.Position - Position).Length > 10 && TargetPosition != Home.Position)
 						TargetPosition = Home.Position;
-
+					else if ((Position - Home.Position).Length < 10)
+						Fuel = 100;
 					break;
 				case RobotState.Thinking:
 					if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {

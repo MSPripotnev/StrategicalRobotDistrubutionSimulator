@@ -92,6 +92,7 @@ namespace SRDS.Agents.Drones {
             Pathfinder.Result = new List<Point>();
         }
         public override void Simulate() {
+            Fuel -= FuelDecrease;
             switch (CurrentState) {
                 case RobotState.Disable:
                     return;

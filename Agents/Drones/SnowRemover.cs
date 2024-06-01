@@ -1,4 +1,4 @@
-using SRDS.Map.Targets;
+﻿using SRDS.Map.Targets;
 
 using System.Windows;
 using System.Windows.Data;
@@ -72,6 +72,7 @@ namespace SRDS.Agents.Drones {
 			return el;
 		}
 		public override void Simulate() {
+			Fuel -= FuelDecrease;
 			switch (CurrentState) {
 				case RobotState.Broken:
 					base.Simulate();
