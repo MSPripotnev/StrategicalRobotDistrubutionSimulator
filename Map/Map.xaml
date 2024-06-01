@@ -27,6 +27,11 @@
                             <MenuItem Header="Плод" Click="MenuItem_Click" Tag="01"/>
                             <MenuItem Header="Сугроб" Click="MenuItem_Click" Tag="02"/>
                         </MenuItem>
+                        <MenuItem Header="Робот">
+                            <MenuItem Header="Перевозчик" Click="MenuItem_Click" Tag="11"/>
+                            <MenuItem Header="Снегоуборщик" Click="MenuItem_Click" Tag="12"/>
+                            <MenuItem Header="Разведчик" Click="MenuItem_Click" Tag="13"/>
+                        </MenuItem>
                         <MenuItem Header="Станция">
                             <MenuItem Header="АЗС" Click="MenuItem_Click" Tag="31"/>
                             <MenuItem Header="Депо" Click="MenuItem_Click" Tag="32"/>

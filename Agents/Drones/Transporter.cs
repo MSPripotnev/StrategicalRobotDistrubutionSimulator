@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Xml.Serialization;
@@ -27,7 +27,7 @@ namespace SRDS.Agents.Drones {
                         break;
                     case RobotState.Ready:
                         //объект взят
-                        if (CurrentState == RobotState.Carrying) {
+                        if (CurrentState == RobotState.Working) {
                             AttachedObj.Finished = true;
                             AttachedObj.ReservedAgent = null;
                             AttachedObj = null;
@@ -51,7 +51,7 @@ namespace SRDS.Agents.Drones {
                         var vs = new List<Point>(Trajectory); vs.Reverse();
                         BackTrajectory = vs.ToArray();
                         break;
-                    case RobotState.Carrying:
+                    case RobotState.Working:
                         if (CurrentState == RobotState.Thinking)
                             Trajectory.Add(Trajectory[^1]);
                         break;
@@ -94,11 +94,10 @@ namespace SRDS.Agents.Drones {
         public override void Simulate() {
             switch (CurrentState) {
                 case RobotState.Disable:
-                case RobotState.Broken:
                     return;
+                case RobotState.Broken:
                 case RobotState.Ready:
-					if (Home != null && (Home.Position - Position).Length > 10)
-						TargetPosition = Home.Position;
+                    base.Simulate();
 					break;
                 case RobotState.Thinking:
                     if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
@@ -118,7 +117,7 @@ namespace SRDS.Agents.Drones {
                             CurrentState = RobotState.Going;
                         //робот доставляет объект
                         else if (AttachedObj.ReservedAgent == this) {
-                            CurrentState = RobotState.Carrying;
+                            CurrentState = RobotState.Working;
                         }
                         //переключение на другую задачу
                         else
@@ -132,7 +131,7 @@ namespace SRDS.Agents.Drones {
                     TraversedWay += DistanceToTarget;
                     Position = Trajectory[^1];
                     Trajectory.Clear();
-                    CurrentState = RobotState.Carrying;
+                    CurrentState = RobotState.Working;
                     break;
 #else
                     //есть куда двигаться
@@ -144,14 +143,14 @@ namespace SRDS.Agents.Drones {
                             //цель = объект
                             if (AttachedObj != null)
                                 //захватываем объект
-                                CurrentState = RobotState.Carrying;
+                                CurrentState = RobotState.Working;
                             else
                                 CurrentState = RobotState.Ready;
                         }
                     }
 #endif
                     break;
-                case RobotState.Carrying:
+                case RobotState.Working:
 #if !DEBUG
                     TraversedWay += DistanceToTarget;
                     Position = Trajectory[^1];

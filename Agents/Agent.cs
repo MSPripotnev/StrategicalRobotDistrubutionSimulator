@@ -12,6 +12,7 @@ using System.Xml.Serialization;
 using SRDS.Map;
 using SRDS.Map.Stations;
 using SRDS.Map.Targets;
+using SRDS.Agents.Drones;
 
 namespace SRDS.Agents {
     public enum RobotState {
@@ -19,9 +20,11 @@ namespace SRDS.Agents {
 		Ready,
 		Thinking,
 		Going,
-		Carrying,
+		Working,
 		Broken
 	}
+	[XmlInclude(typeof(SnowRemover))]
+	[XmlInclude(typeof(Transporter))]
 	public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
 
 		#region Properties
@@ -84,10 +87,12 @@ namespace SRDS.Agents {
 					case RobotState.Disable:
 						break;
 					case RobotState.Broken:
+						if (Home != null && (TargetPosition - Home.Position).Length > InteractDistance)
+							TargetPosition = Home.Position;
 						break;
 					case RobotState.Ready:
 						//объект взят
-						if (CurrentState == RobotState.Carrying) {
+						if (CurrentState == RobotState.Working) {
 							AttachedObj.Finished = true;
 							AttachedObj.ReservedAgent = null;
 							AttachedObj = null;
@@ -110,7 +115,7 @@ namespace SRDS.Agents {
 						var vs = new List<Point>(Trajectory); vs.Reverse();
 						BackTrajectory = vs.ToArray();
 						break;
-					case RobotState.Carrying:
+					case RobotState.Working:
 						if (CurrentState == RobotState.Thinking)
 							Trajectory.Add(Trajectory[^1]);
 						break;
@@ -195,7 +200,7 @@ namespace SRDS.Agents {
 		#endregion
 
 		#region Drawing
-		public UIElement Build() {
+		public virtual UIElement Build() {
 			Ellipse el = new Ellipse();
 			el.Width = 20;
 			el.Height = 20;
@@ -214,7 +219,7 @@ namespace SRDS.Agents {
 
 			return el;
 		}
-		public UIElement BuildTrajectory() {
+		public virtual UIElement BuildTrajectory() {
 			Polyline polyline = new Polyline();
 			polyline.Stroke = new SolidColorBrush(Colors.Gray);
 			polyline.StrokeThickness = 2;
@@ -228,7 +233,7 @@ namespace SRDS.Agents {
 			polyline.SetBinding(Polyline.PointsProperty, b);
 			return polyline;
 		}
-		public UIElement PointsAnalyzed(bool opened) {
+		public virtual UIElement PointsAnalyzed(bool opened) {
 			Polyline polyline = new Polyline();
 			polyline.Stroke = new SolidColorBrush(opened ? Colors.LightGreen : Colors.DarkRed);
 			polyline.StrokeThickness = 5.0;
@@ -263,7 +268,41 @@ namespace SRDS.Agents {
 		#endregion
 
 		public virtual void Simulate() {
+			switch (CurrentState) {
+				case RobotState.Ready:
+					if (Home != null && (Home.Position - Position).Length > 10 && TargetPosition != Home.Position)
+						TargetPosition = Home.Position;
 
+					break;
+				case RobotState.Thinking:
+					if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
+						CurrentState = RobotState.Ready;
+						break;
+					}
+					Trajectory = Pathfinder.Result;
+					//ошибка при расчётах
+					if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
+						if (AttachedObj != null)
+							BlockedTargets.Add(AttachedObj);
+						AttachedObj = null;
+					} else if (Pathfinder.IsCompleted) {
+						//путь найден
+						Pathfinder.IsCompleted = false;
+						//робот едет к объекту
+						if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedAgent != this)
+							CurrentState = RobotState.Going;
+						//робот доставляет объект
+						else if (AttachedObj.ReservedAgent == this) {
+							CurrentState = RobotState.Working;
+						}
+						//переключение на другую задачу
+						else
+							CurrentState = RobotState.Ready;
+						ThinkingIterations += Pathfinder.Iterations;
+					} else
+						Pathfinder.NextStep(); //продолжение расчёта
+					break;
+			}
 		}
 		protected virtual void Move() {
 			Point nextPoint = Trajectory[0];

@@ -16,6 +16,7 @@ using SRDS.Agents.Drones;
 using SRDS.Environment;
 using SRDS.Map.Stations;
 using SRDS.Map.Targets;
+using SRDS.Agents.Drones.Snow;
 
 namespace SRDS.Map {
     /// <summary>
@@ -117,7 +118,7 @@ namespace SRDS.Map {
                 if (obj is IPlaceableWithArea obja)
 					mapCanvas.Children.Add(obja.BuildArea());
 
-                if (obj is Transporter t) {
+                if (obj is Agent t) {
                     mapCanvas.Children.Add(t.BuildTrajectory());
 #if DRAW_SEARCH_AREA
                     mapCanvas.Children.Add(t.PointsAnalyzed(true));
@@ -373,6 +374,28 @@ namespace SRDS.Map {
 				case "02":
 					obj = new Snowdrift(lastClickPos, new Random().NextDouble()*10);
 					break;
+				case "11":
+                case "12":
+                case "13":
+                    if (button.Tag.ToString() == "11")
+                        obj = new Transporter(lastClickPos);
+                    else if (button.Tag.ToString() == "12") {
+                        List<SnowRemoverType> snowRemovers = new List<SnowRemoverType>();
+                        Random rnd = new Random();
+                        if (rnd.NextDouble() < 0.3)
+                            snowRemovers.Add(SnowRemoverType.Rotor);
+						else if (rnd.NextDouble() < 0.5)
+							snowRemovers.Add(SnowRemoverType.PlowBrush);
+						else
+							snowRemovers.Add(SnowRemoverType.Shovel);
+						if (rnd.NextDouble() > 0.4)
+							snowRemovers.Add(SnowRemoverType.Cleaver);
+                        else
+							snowRemovers.Add(SnowRemoverType.AntiIceDistributor);
+						obj = new SnowRemover(lastClickPos, snowRemovers.ToArray());
+					}
+                    if (obj == null)
+                        return;
 					AgentStation? near_ags = (AgentStation)Director.Map.Stations.Where(p => p is AgentStation).MinBy(p => (p.Position - lastClickPos).Length);
 					if (near_ags == null)
 						return;
