@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 
 namespace SRDS.Map.Stations {
-	internal class GasStation : Station {
+	public class GasStation : Station {
 		public GasStation() : base() {
 			Color = Colors.Gold;
 		}

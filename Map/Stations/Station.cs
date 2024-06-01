@@ -11,6 +11,9 @@ using System.Windows;
 using System.Xml.Serialization;
 
 namespace SRDS.Map.Stations {
+	[XmlInclude(typeof(AgentStation))]
+	[XmlInclude(typeof(GasStation))]
+	[XmlInclude(typeof(AntiIceStation))]
 	public abstract class Station : IPlaceable {
 		private Point position;
 		[XmlElement(nameof(Point), ElementName = "Position")]

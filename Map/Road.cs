@@ -84,7 +84,9 @@ namespace SRDS.Map {
 		public Color Color { get; set; } = Color.FromRgb(70, 70, 0);
 
 		public event PropertyChangedEventHandler? PropertyChanged;
+		[XmlIgnore]
 		public double Length { get => (EndPosition - Position).Length; }
+		[XmlIgnore]
 		public int Height { get; private set; }
 		private int category;
 		[XmlAttribute("Category")]

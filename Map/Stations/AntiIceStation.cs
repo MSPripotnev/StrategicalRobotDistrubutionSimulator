@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 
 namespace SRDS.Map.Stations {
-	internal class AntiIceStation : Station {
+	public class AntiIceStation : Station {
 		public AntiIceStation() : base() {
 			Color = Colors.CadetBlue;
 		}

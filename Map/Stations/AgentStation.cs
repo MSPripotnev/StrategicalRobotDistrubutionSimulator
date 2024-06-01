@@ -5,6 +5,7 @@ using SRDS.Agents;
 
 namespace SRDS.Map.Stations {
 	public class AgentStation : Station {
+		[XmlIgnore]
 		public Agent[] AssignedAgents { get; set; } = Array.Empty<Agent>();
 		[XmlIgnore]
 		public Agent[] FreeAgents {

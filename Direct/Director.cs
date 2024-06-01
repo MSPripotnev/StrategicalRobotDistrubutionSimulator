@@ -140,7 +140,9 @@ namespace SRDS {
 
         public event Action<float> SettingsChanged;
         public event PropertyChangedEventHandler? PropertyChanged;
+        public Director() : this(new Size(0,0)) {
 
+        }
         public Director(System.Windows.Size map_size) {
             Scale = 5.0F;
             Map = new TacticalMap() {
