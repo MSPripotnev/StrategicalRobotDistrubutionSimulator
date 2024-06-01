@@ -188,6 +188,9 @@ namespace SRDS {
                 do
                     Agents[i].Simulate();
                 while (Agents[i].CurrentState == RobotState.Thinking);
+            for (int i = 0; i < Targets.Length; i++)
+                if (Targets[i].Finished)
+                    Remove(Targets[i]);
         }
         public bool CheckMission() {
             return false;

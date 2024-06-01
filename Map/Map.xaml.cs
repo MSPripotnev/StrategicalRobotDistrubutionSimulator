@@ -36,6 +36,7 @@ namespace SRDS.Map {
                     startB.IsEnabled = true;
                     if (director.Meteo != null)
 					    director.Meteo.PropertyChanged += RefreshMeteo;
+                    director.PropertyChanged += RefreshMeteo;
                     director.Map.Borders = mapCanvas.RenderSize;
 				}
             }
@@ -98,6 +99,11 @@ namespace SRDS.Map {
 		private void RefreshMeteo(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
             if (drawCB.IsChecked != true)
                 return;
+            if (e.PropertyName == "Targets") {
+                mapCanvas.Children.Clear();
+                DrawPlaceableObjects();
+                return;
+            }
             if (Director.Meteo != null) {
                 for (int i = 0; i < mapCanvas.Children.Count; i++)
                     if (mapCanvas.Children[i].Uid == "cloud")
