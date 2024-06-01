@@ -19,6 +19,7 @@ namespace SRDS {
                 return Agents.Sum(t => t.ThinkingIterations);
             }
         }
+        public DateTime Time { get; set; } = DateTime.MinValue;
         public long WayIterations {
             get {
                 return Agents.Sum(t => t.WayIterations);
@@ -144,14 +145,18 @@ namespace SRDS {
             Map = new TacticalMap() {
                 Borders = map_size
             };
+        #if METEO
             Meteo = new GlobalMeteo(Map);
+        #endif
             Targets = Array.Empty<Target>();
             Agents = Array.Empty<Agent>();
         }
         public Director(Model testModel) {
             MapPath = testModel.Map;
             Scale = testModel.ScalesT[^1];
+        #if METEO
 			Meteo = new GlobalMeteo(Map);
+        #endif
 			Targets = Array.Empty<Target>();
 			Agents = Array.Empty<Agent>();
 			for (int i = 0; i < testModel.TransportersT[^1]; i++) {
@@ -167,12 +172,15 @@ namespace SRDS {
             MapPath = _mapPath;
         }
         public void Work(DateTime time) {
-            Meteo.Time = time;
-            foreach (var s in Map.Stations)
-                if (s is Meteostation m)
-                    m.Simulate(Meteo);
-			foreach (var r in Map.Roads)
-                r.Simulate(Meteo);
+            Time = time;
+            if (Meteo != null) {
+                Meteo.Time = time;
+                foreach (var s in Map.Stations)
+                    if (s is Meteostation m)
+                        m.Simulate(Meteo);
+                foreach (var r in Map.Roads)
+                    r.Simulate(Meteo);
+            }
 			for (int i = 0; i < Agents.Length; i++)
                 do
                     Agents[i].Simulate();

@@ -32,7 +32,8 @@ namespace SRDS.Map {
                         DrawPlaceableObjects();
                     trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
                     startB.IsEnabled = true;
-					director.Meteo.PropertyChanged += RefreshMeteo;
+                    if (director.Meteo != null)
+					    director.Meteo.PropertyChanged += RefreshMeteo;
                     director.Map.Borders = mapCanvas.RenderSize;
 				}
             }
@@ -93,14 +94,20 @@ namespace SRDS.Map {
         }
 		#region Drawing
 		private void RefreshMeteo(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
-			for (int i = 0; i < mapCanvas.Children.Count; i++)
-				if (mapCanvas.Children[i].Uid == "cloud")
-					mapCanvas.Children.Remove(mapCanvas.Children[i]);
-			foreach (SnowCloud o in Director.Meteo.Clouds)
-				mapCanvas.Children.Add(o.Build());
+            if (drawCB.IsChecked != true)
+                return;
+            if (Director.Meteo != null) {
+                for (int i = 0; i < mapCanvas.Children.Count; i++)
+                    if (mapCanvas.Children[i].Uid == "cloud")
+                        mapCanvas.Children.Remove(mapCanvas.Children[i]);
+                foreach (SnowCloud o in Director.Meteo.Clouds)
+                    mapCanvas.Children.Add(o.Build());
+            }
 		}
 		private void DrawPlaceableObjects() {
-            var objs = Director.AllObjectsOnMap.Concat(Director.Map.Roads).Concat(Director.Meteo.Clouds).ToArray();
+            var objs = Director.AllObjectsOnMap.Concat(Director.Map.Roads).ToArray();
+            if (Director.Meteo != null)
+                objs = objs.Concat(Director.Meteo.Clouds).ToArray();
 			for (int i = 0; i < objs.Length; i++) {
                 IPlaceable obj = objs[i];
                 var UIObj = obj.Build();
@@ -573,7 +580,7 @@ namespace SRDS.Map {
 
         public void Refresh() {
             if (Director != null) {
-                localTimeL.Content = $"Местное время: {Director.Meteo.Time.ToShortTimeString()}";
+                localTimeL.Content = $"Местное время: {Director.Time.ToShortTimeString()}";
                 currentObjsCountL.Content = "Осталось целей: " +
                     (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
                 traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)} px";
