@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.IO;
 using System.Xml.Serialization;
@@ -191,6 +191,24 @@ namespace SRDS {
             for (int i = 0; i < Targets.Length; i++)
                 if (Targets[i].Finished)
                     Remove(Targets[i]);
+            GenerateSnow();
+        }
+        private void GenerateSnow() {
+            Random rnd = new Random(Map.Path.GetHashCode() + Time.Minute);
+            if (Time.Minute % 10 != 0 || rnd.Next(0, 100) > 50)
+                return;
+            Point pos;
+            long iter = 0;
+            do {
+                pos = new Point(rnd.Next(0, (int)Map.Borders.Width), rnd.Next(0, (int)Map.Borders.Height));
+            } while (Map.Roads.Any(r => r.DistanceToRoad(pos) < 20.0) ||
+            Obstacle.IsPointOnAnyObstacle(pos, Map.Obstacles, ref iter) ||
+            Targets.Any(p => (p.Position-pos).Length < 20.0)
+            );
+            const int msize = 20, deviation = 10;
+			Snowdrift s = new Snowdrift(pos, msize + rnd.Next(-deviation, deviation));
+            this.Add(s);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Targets)));
         }
         public bool CheckMission() {
             return false;
