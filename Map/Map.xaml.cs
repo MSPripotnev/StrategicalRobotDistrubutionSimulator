@@ -16,7 +16,7 @@ using SRDS.Agents.Drones;
 using SRDS.Environment;
 using SRDS.Map.Stations;
 using SRDS.Map.Targets;
-using SRDS.Agents.Drones.Snow;
+using SRDS.Direct;
 
 namespace SRDS.Map {
     /// <summary>
@@ -528,7 +528,7 @@ namespace SRDS.Map {
 				return;
             if (serialized_object == Director) {
 				if (action_is_open == true) {
-					Director = SRDS.Director.Deserialize(fd.FileName);
+					Director = Director.Deserialize(fd.FileName);
 					DrawPlaceableObjects();
 				} else
 					Director?.Serialize(fd.FileName);

@@ -1,4 +1,4 @@
-﻿using SRDS.Map.Targets;
+using SRDS.Map.Targets;
 
 using System.Windows;
 using System.Windows.Data;
@@ -75,6 +75,7 @@ namespace SRDS.Agents.Drones {
 			Fuel -= FuelDecrease;
 			switch (CurrentState) {
 				case RobotState.Broken:
+				case RobotState.Ready:
 					base.Simulate();
 					break;
 				case RobotState.Going:

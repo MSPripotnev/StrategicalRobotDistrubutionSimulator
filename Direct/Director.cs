@@ -11,7 +11,7 @@ using SRDS.Map;
 using SRDS.Map.Stations;
 using SRDS.Map.Targets;
 
-namespace SRDS {
+namespace SRDS.Direct {
     public partial class Director : INotifyPropertyChanged, IDisposable {
 
         #region Properties

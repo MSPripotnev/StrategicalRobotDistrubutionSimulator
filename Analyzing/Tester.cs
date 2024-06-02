@@ -2,6 +2,7 @@ using System.IO;
 using System.Xml.Serialization;
 
 namespace SRDS.Analyzing {
+    using SRDS.Direct;
     public class Tester {
         public Model[] Models { get; set; }
         string currentFilePath = "";

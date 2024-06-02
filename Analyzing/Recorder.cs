@@ -3,6 +3,7 @@ using System.Xml;
 using System.Xml.Serialization;
 
 namespace SRDS.Analyzing {
+    using SRDS.Direct;
     internal class Recorder : IDisposable {
 
         List<Reading> readings = new List<Reading>();

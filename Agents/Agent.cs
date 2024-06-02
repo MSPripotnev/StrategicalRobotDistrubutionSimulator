@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -103,9 +103,11 @@ namespace SRDS.Agents {
 							Fuel = 100;
 						//объект взят
 						if (CurrentState == RobotState.Working) {
-							AttachedObj.Finished = true;
-							AttachedObj.ReservedAgent = null;
-							AttachedObj = null;
+							if (AttachedObj != null) {
+								AttachedObj.Finished = true;
+								AttachedObj.ReservedAgent = null;
+								AttachedObj = null;
+							}
 						} else if (CurrentState == RobotState.Thinking) {
 
 						} else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
@@ -281,10 +283,12 @@ namespace SRDS.Agents {
 			Fuel -= FuelDecrease;
 			switch (CurrentState) {
 				case RobotState.Ready:
-					if (Home != null && (Home.Position - Position).Length > 10 && TargetPosition != Home.Position)
+					if (Home != null && (Home.Position - Position).Length > 10 && AttachedObj == null && (TargetPosition - Home.Position).Length > InteractDistance)
 						TargetPosition = Home.Position;
-					else if ((Position - Home.Position).Length < 10)
+					else if (Home != null && (Position - Home.Position).Length < 10)
 						Fuel = 100;
+					else if ((TargetPosition - Home.Position).Length <= InteractDistance && Trajectory.Count > 2)
+						Move();
 					break;
 				case RobotState.Thinking:
 					if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {

@@ -1,9 +1,8 @@
 using System.ComponentModel;
 
-namespace SRDS {
+namespace SRDS.Direct {
     using Agents;
     using Agents.Drones;
-    using Map;
     using Map.Stations;
     using Map.Targets;
     public partial class Director {
@@ -15,44 +14,41 @@ namespace SRDS {
         }
 
         private void DistributeTaskForFreeAgents() {
-            var freeTransport = new List<Agent>(FreeAgents).ToArray();
-            if (freeTransport.Length > 0 && FreeTargets.Length > 0) {
-                CalculateTrajectoryForFreeAgents(freeTransport);
+            var freeAgents = new List<Agent>(FreeAgents).ToArray();
+            if (freeAgents.Length > 0 && FreeTargets.Length > 0) {
+                CalculateTrajectoryForFreeAgents(freeAgents.Where(p => p.AttachedObj == null).ToArray());
                 FindNearestAgentWithTrajectoryForTarget();
             }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FreeTargets)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CollectedTargets)));
         }
-        private void CalculateTrajectoryForFreeAgents(Agent[] freeTransport) {
+        private void CalculateTrajectoryForFreeAgents(Agent[] freeAgents) {
             //распределение ближайших целей по роботам
-            for (int i = 0; i < freeTransport.Length; i++) {
-                Agent transporter = freeTransport[i];
-                IPlaceable targetPos;
-                targetPos = FreeTargets.Where(p => !transporter.BlockedTargets.Contains(p) && !Agents.Any(t => t.AttachedObj == p))
-                    .MinBy(t => PathFinder.Distance(t.Position, transporter.Position));
+            for (int i = 0; i < freeAgents.Length; i++) {
+                Agent agent = freeAgents[i];
+				Target? targetPos = Qualifier.RecommendTargetForAgent(agent, FreeTargets.Where(p => !agent.BlockedTargets.Contains(p)));
                 if (targetPos == null)
                     continue;
 
-                LinkTargetToAgent(transporter, targetPos as Target);
+                LinkTargetToAgent(agent, targetPos);
 
-                if (!transporter.Trajectory.Any()) {
-                    transporter.AttachedObj = null;
-                    transporter.BlockedTargets.Add(targetPos as Target);
+                if (!agent.Trajectory.Any()) {
+                    agent.AttachedObj = null;
+                    agent.BlockedTargets.Add(targetPos);
                 }
             }
         }
         private void FindNearestAgentWithTrajectoryForTarget() {
-            for (int i = 0; i < FreeTargets.Length && FreeAgents.Any(); i++) {
+            for (int i = 0; i < FreeTargets.Length; i++) {
                 Target t = FreeTargets[i];
-                var AttachedTransporters = FreeAgents.Where(p => p is Transporter && p.AttachedObj == t).ToArray();
-                if (AttachedTransporters != null && AttachedTransporters.Length > 0) {
-                    t.ReservedAgent = AttachedTransporters.MinBy(p => p.DistanceToTarget);
-                    for (int j = 0; j < AttachedTransporters.Length; j++) {
-                        if (AttachedTransporters[j] != t.ReservedAgent) {
-                            UnlinkTargetFromTransporter((Transporter)AttachedTransporters[j]);
-                        } else {
-                            AttachedTransporters[j].CurrentState = RobotState.Going;
-                        }
+                var AttachedAgents = FreeAgents.Where(p => p.AttachedObj == t).ToArray();
+                if (AttachedAgents?.Length > 0) {
+                    t.ReservedAgent = AttachedAgents.MaxBy(p => Qualifier.Qualify(p, t));
+                    for (int j = 0; j < AttachedAgents.Length; j++) {
+                        if (AttachedAgents[j] != t.ReservedAgent)
+                            UnlinkTargetFromAgent(AttachedAgents[j]);
+                        else
+                            AttachedAgents[j].CurrentState = RobotState.Going;
                     }
                 }
             }
@@ -86,17 +82,17 @@ namespace SRDS {
             }
         }
 
-        #region Main
-        private void LinkTargetToAgent(Agent transporter, Target target) {
+        #region Links
+        private void LinkTargetToAgent(Agent agent, Target target) {
             if (target == null)
                 return;
-            transporter.AttachedObj = target;
-            transporter.TargetPosition = target.Position;
+            agent.AttachedObj = target;
+            agent.TargetPosition = target.Position;
         }
-        private void UnlinkTargetFromTransporter(Agent transporter) {
-            transporter.AttachedObj = null;
-            transporter.Trajectory.Clear();
-            transporter.CurrentState = RobotState.Ready;
+        private void UnlinkTargetFromAgent(Agent agent) {
+            agent.AttachedObj = null;
+            agent.Trajectory.Clear();
+            agent.CurrentState = RobotState.Ready;
         }
         #endregion
 
