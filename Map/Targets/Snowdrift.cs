@@ -1,4 +1,4 @@
-using SRDS.Environment;
+﻿using SRDS.Environment;
 
 using System.Windows;
 using System.Windows.Data;
@@ -40,11 +40,11 @@ namespace SRDS.Map.Targets {
 				Color = SnowColor(Type);
 			}
 		}
-		public Snowdrift(Point pos, double level) : base(pos) {
-			MashPercent = (new Random()).NextDouble() * 100;
+		public Snowdrift(Point pos, double level, Random rnd) : base(pos) {
+			MashPercent = rnd.NextDouble() * 100;
 			Level = level;
 		}
-		public Snowdrift() : this(new Point(0,0), 0) { }
+		public Snowdrift() : this(new Point(0,0), 0, new Random()) { }
 		public override UIElement Build() {
 			Random rnd = new Random();
 			int msize = (int)Math.Round(Level) + 3;

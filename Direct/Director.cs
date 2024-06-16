@@ -176,6 +176,16 @@ namespace SRDS.Direct {
         public Director(string _mapPath, Size borders) : this(borders) {
             MapPath = _mapPath;
         }
+        private int seed;
+        [XmlIgnore]
+        public int Seed {
+            get => seed;
+            set {
+                Rnd = new Random(value);
+                seed = value;
+            }
+        }
+        private Random Rnd { get; set; }
         public void Work(DateTime time) {
             Time = time;
             if (Meteo != null) {
@@ -196,19 +206,19 @@ namespace SRDS.Direct {
             GenerateSnow();
         }
         private void GenerateSnow() {
-            Random rnd = new Random(Map.Path.GetHashCode() + Time.Minute);
-            if (Time.Minute % 10 != 0 || rnd.Next(0, 100) > 50)
+			if (Time.Minute % 10 != 0 || Rnd.Next(0, 10) < 5)
                 return;
             Point pos;
             long iter = 0;
             do {
-                pos = new Point(rnd.Next(0, (int)Map.Borders.Width), rnd.Next(0, (int)Map.Borders.Height));
-            } while (Map.Roads.Any(r => r.DistanceToRoad(pos) < 20.0) ||
-            Obstacle.IsPointOnAnyObstacle(pos, Map.Obstacles, ref iter) ||
-            Targets.Any(p => (p.Position-pos).Length < 20.0)
+                pos = new Point(Rnd.Next(50, (int)Map.Borders.Width-50), Rnd.Next(50, (int)Map.Borders.Height-50));
+                iter++;
+            } while (Map.Roads.Any(r => Math.Abs(r.DistanceToRoad(pos)) < 20.0) ||
+                Obstacle.IsPointOnAnyObstacle(pos, Map.Obstacles, ref iter) ||
+                Targets.Any(p => (p.Position-pos).Length < 20.0 || iter < 10000)
             );
             const int msize = 20, deviation = 10;
-			Snowdrift s = new Snowdrift(pos, msize + rnd.Next(-deviation, deviation));
+			Snowdrift s = new Snowdrift(pos, msize + Rnd.Next(-deviation, deviation), Rnd);
             this.Add(s);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Targets)));
         }

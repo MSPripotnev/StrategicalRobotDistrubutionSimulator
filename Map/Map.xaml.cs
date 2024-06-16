@@ -38,6 +38,7 @@ namespace SRDS.Map {
 					    director.Meteo.PropertyChanged += RefreshMeteo;
                     director.PropertyChanged += RefreshMeteo;
                     director.Map.Borders = mapCanvas.RenderSize;
+                    director.Seed = 1;
 				}
             }
         }
@@ -378,7 +379,7 @@ namespace SRDS.Map {
                         return;
                     break;
 				case "02":
-					obj = new Snowdrift(lastClickPos, new Random().NextDouble()*10);
+					obj = new Snowdrift(lastClickPos, new Random().NextDouble()*10, new Random());
 					break;
 				case "11":
                 case "12":
