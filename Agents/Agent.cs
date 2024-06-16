@@ -291,10 +291,6 @@ namespace SRDS.Agents {
 						Move();
 					break;
 				case RobotState.Thinking:
-					if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
-						CurrentState = RobotState.Ready;
-						break;
-					}
 					Trajectory = Pathfinder.Result;
 					//ошибка при расчётах
 					if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
@@ -304,16 +300,7 @@ namespace SRDS.Agents {
 					} else if (Pathfinder.IsCompleted) {
 						//путь найден
 						Pathfinder.IsCompleted = false;
-						//робот едет к объекту
-						if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedAgent != this)
-							CurrentState = RobotState.Going;
-						//робот доставляет объект
-						else if (AttachedObj.ReservedAgent == this) {
-							CurrentState = RobotState.Working;
-						}
-						//переключение на другую задачу
-						else
-							CurrentState = RobotState.Ready;
+						CurrentState = RobotState.Going;
 						ThinkingIterations += Pathfinder.Iterations;
 					} else
 						Pathfinder.NextStep(); //продолжение расчёта

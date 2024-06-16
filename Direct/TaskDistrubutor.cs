@@ -41,14 +41,13 @@ namespace SRDS.Direct {
         private void FindNearestAgentWithTrajectoryForTarget() {
             for (int i = 0; i < FreeTargets.Length; i++) {
                 Target t = FreeTargets[i];
-                var AttachedAgents = FreeAgents.Where(p => p.AttachedObj == t).ToArray();
+                var AttachedAgents = Agents.Where(p => p.AttachedObj == t && (p.CurrentState == RobotState.Ready ||
+                        p.CurrentState == RobotState.Thinking)).ToArray();
                 if (AttachedAgents?.Length > 0) {
                     t.ReservedAgent = AttachedAgents.MaxBy(p => Qualifier.Qualify(p, t));
                     for (int j = 0; j < AttachedAgents.Length; j++) {
                         if (AttachedAgents[j] != t.ReservedAgent)
                             UnlinkTargetFromAgent(AttachedAgents[j]);
-                        else
-                            AttachedAgents[j].CurrentState = RobotState.Going;
                     }
                 }
             }
