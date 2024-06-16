@@ -71,7 +71,16 @@ namespace SRDS.Agents {
             Result = null;
             IsCompleted = true;
         }
-
+        public double GetPointHardness(Point pos) {
+			var road = map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
+					.MinBy(p => p.DistanceToRoad(pos));
+			double hardness;
+			if (road is null)
+				hardness = 4.0;
+			else
+				hardness = Road.DistanceHardness(road.Type) + Math.Min(road.Snowness, 2);
+            return hardness;
+		}
         #region StaticFunc
         public static double Distance(Point p1, Point p2) {
             return AStarExplorer.Distance(p1, p2);
@@ -80,6 +89,7 @@ namespace SRDS.Agents {
             return Distance(currentPosition, targetPosition);
         }
         private static List<Point> CreatePathFromLastPoint(AnalyzedPoint p) {
+            if (p is null) return null;
             List<Point> path = new List<Point>();
             path.Add(p);
             while (p.Previous != null)

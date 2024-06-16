@@ -326,7 +326,7 @@ namespace SRDS.Agents {
 			if (PathFinder.Distance(Position, nextPoint) < MaxStraightRange) {
 				List<Point> pc = new(Trajectory.Skip(1));
 				if (pc.Any()) {
-					TraversedWay += PathFinder.Distance(nextPoint, pc[0]);
+					TraversedWay += PathFinder.Distance(nextPoint, pc[0]) * Pathfinder.GetPointHardness(nextPoint);
 					nextPoint = pc[0];
 				}
 				Trajectory = pc;
@@ -334,8 +334,9 @@ namespace SRDS.Agents {
 			Vector V = nextPoint - Position;
 			if (V.Length > 0)
 				V.Normalize();
+			V *= Speed / Pathfinder.GetPointHardness(nextPoint);
 			//новое значение
-			Position = new Point(Position.X + V.X * Speed, Position.Y + V.Y * Speed);
+			Position = new Point(Position.X + V.X, Position.Y + V.Y);
 			WayIterations++;
 		}
 		public override string ToString() {
