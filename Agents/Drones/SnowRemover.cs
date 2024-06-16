@@ -100,41 +100,7 @@ namespace SRDS.Agents.Drones {
 					if (Fuel < (Position - Home.Position).Length / Speed * FuelDecrease)
 						CurrentState = RobotState.Broken;
 					Snowdrift s = AttachedObj as Snowdrift;
-					double realWorkSpeed = RemoveSpeed;
-					switch (s.Type) {
-						case Environment.SnowType.LooseSnow:
-							if (!Devices.Contains(SnowRemoverType.PlowBrush) && !Devices.Contains(SnowRemoverType.Rotor) && !Devices.Contains(SnowRemoverType.Shovel)) {
-								realWorkSpeed = 0;
-								break;
-							}
-							break;
-						case Environment.SnowType.Snowfall:
-							if (!Devices.Contains(SnowRemoverType.PlowBrush) && !Devices.Contains(SnowRemoverType.Rotor) && !Devices.Contains(SnowRemoverType.Shovel)) {
-								realWorkSpeed = 0;
-								break;
-							}
-							if (Devices.Contains(SnowRemoverType.Cleaver))
-								realWorkSpeed += 0.2 * RemoveSpeed;
-							break;
-						case Environment.SnowType.IceSlick:
-							if (!Devices.Contains(SnowRemoverType.Cleaver) && !Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
-								realWorkSpeed = 0;
-								break;
-							}
-							break;
-						case Environment.SnowType.BlackIce:
-							if (!Devices.Contains(SnowRemoverType.Shovel) && !Devices.Contains(SnowRemoverType.Cleaver))
-								realWorkSpeed = 0;
-							else if (Devices.Contains(SnowRemoverType.Cleaver) && Devices.Contains(SnowRemoverType.Rotor))
-								realWorkSpeed = 0.9 * RemoveSpeed;
-							break;
-						case Environment.SnowType.Icy:
-							if (s.MashPercent < 50 && !Devices.Contains(SnowRemoverType.Cleaver) && !Devices.Contains(SnowRemoverType.AntiIceDistributor))
-								realWorkSpeed = 0;
-							break;
-					}
-					realWorkSpeed = Math.Max(0, realWorkSpeed);
-					s.Level -= realWorkSpeed * s.MashPercent / 100.0;
+					s.Level -= RemoveSpeed * s.MashPercent * s.MashPercent / 10000.0;
 					s.MashPercent += MashSpeed;
 
 					if (s.Level <= 0)

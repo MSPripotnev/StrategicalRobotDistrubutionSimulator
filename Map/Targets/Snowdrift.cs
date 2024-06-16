@@ -1,4 +1,4 @@
-﻿using SRDS.Environment;
+using SRDS.Environment;
 
 using System.Windows;
 using System.Windows.Data;
@@ -14,42 +14,40 @@ namespace SRDS.Map.Targets {
 			SnowType.BlackIce => Colors.DarkGray,
 			SnowType.Icy => Colors.LightSkyBlue
 		};
-		public SnowType Type { get; init; }
+		public SnowType Type { get; private set; }
 		private double level;
 		public double Level {
 			get => level;
 			set {
-				Math.Max(0, level = value);
+				level = Math.Max(0, value);
 			}
 		}
 		private double mash = 100;
 		public double MashPercent {
 			get => mash;
-			set => mash = Math.Max(0, Math.Min(100, value));
+			set {
+				mash = Math.Max(0, Math.Min(100, value));
+				if (mash < 30)
+					Type = SnowType.Icy;
+				else if (mash < 50)
+					Type = SnowType.IceSlick;
+				else if (mash < 75)
+					Type = SnowType.BlackIce;
+				else if (mash < 90)
+					Type = SnowType.Snowfall;
+				else
+					Type = SnowType.LooseSnow;
+				Color = SnowColor(Type);
+			}
 		}
 		public Snowdrift(Point pos, double level) : base(pos) {
-			Type = (SnowType)(new Random().Next(0, Enum.GetValues(typeof(SnowType)).Length-1));
+			MashPercent = (new Random()).NextDouble() * 100;
 			Level = level;
-			switch (this.Type) {
-				case SnowType.Snowfall:
-					MashPercent = 95;
-					break;
-				case SnowType.IceSlick:
-					MashPercent = 80;
-					break;
-				case SnowType.BlackIce:
-					MashPercent = 50;
-					break;
-				case SnowType.Icy:
-					MashPercent = 0;
-					break;
-			}
-			Color = SnowColor(Type);
 		}
 		public Snowdrift() : this(new Point(0,0), 0) { }
 		public override UIElement Build() {
 			Random rnd = new Random();
-			int msize = (int)Math.Round(Level);
+			int msize = (int)Math.Round(Level) + 3;
 			Ellipse el = new Ellipse() {
 				Width = msize,
 				Height = msize,
