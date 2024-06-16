@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.IO;
 using System.Xml.Serialization;
@@ -42,6 +42,8 @@ namespace SRDS.Direct {
                             Agents[i].Pathfinder = new PathFinder(Map, Scale);
                             PropertyChanged += Agents[i].Pathfinder.Refresh;
                             SettingsChanged += Agents[i].Pathfinder.Refresh;
+                            if (Agents[i].Home is null)
+                                Agents[i].Home = Map.Stations.Where(p => p is AgentStation).MinBy(p => (p.Position - Agents[i].Position).Length) as AgentStation;
                             if (Agents[i].CurrentState == RobotState.Ready && (Agents[i].Position - Agents[i].Home.Position).Length > 5)
                                 Agents[i].TargetPosition = Agents[i].Home.Position;
                         }
