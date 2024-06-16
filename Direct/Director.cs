@@ -10,6 +10,7 @@ using SRDS.Environment;
 using SRDS.Map;
 using SRDS.Map.Stations;
 using SRDS.Map.Targets;
+using SRDS.Direct.Qualifiers;
 
 namespace SRDS.Direct {
     public partial class Director : INotifyPropertyChanged, IDisposable {
@@ -155,6 +156,7 @@ namespace SRDS.Direct {
         #endif
             Targets = Array.Empty<Target>();
             Agents = Array.Empty<Agent>();
+            Qualifier = new FuzzyQualifier();
         }
         public Director(Model testModel) {
             MapPath = testModel.Map;
@@ -172,6 +174,7 @@ namespace SRDS.Direct {
             for (int i = 0; i < testModel.TargetsT.Count; i++) {
                 Add(new Crop(testModel.TargetsT[i].Position));
             }
+            Qualifier = new DistanceQualifier();
         }
         public Director(string _mapPath, Size borders) : this(borders) {
             MapPath = _mapPath;

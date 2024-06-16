@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FuzzyLogic" Version="0.5.1-alpha" />
     <PackageReference Include="PropertyTools.Wpf" Version="3.1.0" />
   </ItemGroup>
 

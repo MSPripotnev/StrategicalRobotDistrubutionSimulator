@@ -5,8 +5,9 @@ namespace SRDS.Direct {
     using Agents.Drones;
     using Map.Stations;
     using Map.Targets;
+    using Qualifiers;
     public partial class Director {
-
+        IQualifier Qualifier { get; set; }
         #region Distribute
         public void DistributeTask() {
             DistributeTaskForFreeAgents();
