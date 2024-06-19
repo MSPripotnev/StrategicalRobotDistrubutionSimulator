@@ -53,8 +53,7 @@ namespace SRDS.Map {
         TimeSpan tempTime = TimeSpan.Zero;
         DateTime startTime = DateTime.MinValue, pauseTime, d_time = new DateTime(0);
         DispatcherTimer refreshTimer;
-        Tester tester= new Tester();
-        Recorder recorder = new Recorder();
+        Tester tester = new Tester();
         bool pause = true;
         private bool Pause {
             get => pause;
@@ -82,8 +81,6 @@ namespace SRDS.Map {
                 Interval = new TimeSpan(0,0,0,0,100)
             };
             tester = new Tester();
-            recorder = new Recorder();
-            tester.ModelSwitched += recorder.OnModelSwitched;
             tester.ModelSwitched += OnModelSwitched;
             tester.AttemptStarted += OnAttemptStarted;
             tester.AttemptCompleted += OnAttemptCompleted;
@@ -251,6 +248,7 @@ namespace SRDS.Map {
         }
         private void OnAttemptCompleted(object? sender, EventArgs e) {
             realWorkTime += (DateTime.Now - startTime);
+            Director.Recorder.SaveResults(Director, tester.Models[0].Name, realWorkTime, ref iterations);
             Director.DistributionQualifyReadings = new();
             tester.ActiveDirector = Director;
             Stop();
@@ -262,6 +260,8 @@ namespace SRDS.Map {
             if (sender == null) {
                 Director = null;
             } else {
+                if (Director is not null)
+                    Director.Recorder = new Recorder();
                 Director = tester.ReloadModel();
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
                     $"Транспортеров: {Director.Agents.Length}\n" +
@@ -318,7 +318,7 @@ namespace SRDS.Map {
 #endif
 			} catch (Exception ex) {
                 MessageBox.Show(ex.ToString());
-                recorder.Dispose();
+                Director.Recorder.Dispose();
                 Director.Dispose();
             }
             Refresh();
@@ -631,7 +631,6 @@ namespace SRDS.Map {
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             Director.Dispose();
-            recorder.Dispose();
         }
 
         public void Refresh() {

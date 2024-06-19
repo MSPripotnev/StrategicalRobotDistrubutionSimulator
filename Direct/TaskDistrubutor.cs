@@ -12,6 +12,8 @@ namespace SRDS.Direct {
         [XmlIgnore]
         public IQualifier Qualifier { get; set; }
         [XmlIgnore]
+        internal Recorder Recorder { get; set; } = new Recorder();
+        [XmlIgnore]
         public Dictionary<Target, DistributionQualifyReading> DistributionQualifyReadings { get; set; } = new();
         #region Distribute
         public void DistributeTask() {

@@ -269,6 +269,7 @@ namespace SRDS.Direct {
         #region Finalize
         public void Dispose() {
             Serialize("autosave.xml");
+            this.Recorder.Dispose();
         }
         public void Serialize(string path) {
             using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
