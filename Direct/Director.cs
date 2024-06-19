@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.IO;
 using System.Xml.Serialization;
@@ -157,6 +157,8 @@ namespace SRDS.Direct {
             Agents = Array.Empty<Agent>();
             Qualifier = new FuzzyQualifier();
         }
+        [XmlIgnore]
+        public Learning Learning { get; set; } = new Learning();
         private int seed;
         [XmlIgnore]
         public int Seed {

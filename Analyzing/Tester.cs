@@ -74,13 +74,16 @@ namespace SRDS.Analyzing {
         }
         public Director ReloadModel() {
             Recorder r = new Recorder();
+            Learning l = new Learning();
             IQualifier q = new FuzzyQualifier();
             if (ActiveDirector != null) {
                 r = ActiveDirector.Recorder;
+                l = ActiveDirector.Learning;
                 q = ActiveDirector.Qualifier;
             }
             ActiveDirector = Models[0].Unpack();
             ActiveDirector.Recorder = r;
+            ActiveDirector.Learning = l;
             ActiveDirector.Qualifier = q;
             return ActiveDirector;
         }

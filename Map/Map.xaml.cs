@@ -18,6 +18,7 @@ using SRDS.Map.Stations;
 using SRDS.Map.Targets;
 using SRDS.Direct;
 using SRDS.Analyzing.Models;
+using SRDS.Direct.Qualifiers;
 
 namespace SRDS.Map {
     /// <summary>
@@ -249,6 +250,9 @@ namespace SRDS.Map {
         private void OnAttemptCompleted(object? sender, EventArgs e) {
             realWorkTime += (DateTime.Now - startTime);
             Director.Recorder.SaveResults(Director, tester.Models[0].Name, realWorkTime, ref iterations);
+            Director.Learning.Select(Director.Recorder);
+            if (Director.Qualifier is FuzzyQualifier fq)
+                Director.Learning.Mutate(ref fq.Net);
             Director.DistributionQualifyReadings = new();
             tester.ActiveDirector = Director;
             Stop();
