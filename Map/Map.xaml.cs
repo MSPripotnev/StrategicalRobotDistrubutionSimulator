@@ -17,6 +17,7 @@ using SRDS.Environment;
 using SRDS.Map.Stations;
 using SRDS.Map.Targets;
 using SRDS.Direct;
+using SRDS.Analyzing.Models;
 
 namespace SRDS.Map {
     /// <summary>
@@ -38,8 +39,15 @@ namespace SRDS.Map {
 					    director.Meteo.PropertyChanged += RefreshMeteo;
                     director.PropertyChanged += RefreshMeteo;
                     director.Map.Borders = mapCanvas.RenderSize;
-                    director.Seed = 1;
-				}
+
+                    director.Seed = 0;
+                    if (!tester.Models.Any()) {
+                        var vs = tester.Models.ToList();
+                        vs.Add(new CopyModel(director));
+                        tester.Models = vs.ToArray();
+                    }
+                    tester.ModelSwitched += director.Recorder.OnModelSwitched;
+                }
             }
         }
         TimeSpan tempTime = TimeSpan.Zero;
@@ -84,7 +92,7 @@ namespace SRDS.Map {
 
             if ((tester?.Models?.Any() == true) && File.Exists(tester.Models[0].Path)) {
                 try {
-                    Director = tester.LoadModel(tester.Models[0].Path);
+                    Director = tester.Models[0].Unpack();
 					attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
 						$"Транспортеров: {Director.Agents.Length}\n" +
 						$"Моделей: {tester.Models.Length}";
@@ -244,8 +252,8 @@ namespace SRDS.Map {
         private void OnAttemptCompleted(object? sender, EventArgs e) {
             realWorkTime += (DateTime.Now - startTime);
             Director.DistributionQualifyReadings = new();
+            tester.ActiveDirector = Director;
             Stop();
-            Director = null;
         }
         private void OnAttemptFailed(object? sender, EventArgs e) {
             OnAttemptCompleted(sender, e);
@@ -267,6 +275,18 @@ namespace SRDS.Map {
             var dt = DateTime.Now;
             Work();
             realWayTime += (DateTime.Now - dt);
+			if (d_time.Hour == 0 && d_time.Minute == 0) {
+                if (testingCB.IsChecked == true) {
+                    tester.NextAttempt();
+                    return;
+                } else {
+                    menu.IsEnabled = true;
+                    stopB.IsEnabled = false;
+                    Pause = true;
+                    Refresh();
+                    return;
+                }
+			}
             if (Director != null && !Director.CheckMission())
                 refreshTimer.Start();
             if (propertyGrid.SelectedObject != null) {
@@ -344,8 +364,6 @@ namespace SRDS.Map {
 #endif
             if (testingCB.IsChecked == false && tester.Models?.Length < 1)
                 Director = tester.ReloadModel();
-            else
-                Director = new Director(mapCanvas.RenderSize);
             refreshTimer.Stop();
             RefreshTime();
             Refresh();
@@ -356,6 +374,7 @@ namespace SRDS.Map {
             stepB.IsEnabled = false;
         }
         private void RefreshTime() {
+            d_time = new DateTime(0);
             tempTime = TimeSpan.Zero;
             realWorkTime = TimeSpan.Zero;
             realWayTime = TimeSpan.Zero;
@@ -530,6 +549,9 @@ namespace SRDS.Map {
             if (serialized_object == Director) {
 				if (action_is_open == true) {
 					Director = Director.Deserialize(fd.FileName);
+                    if (tester.Models.Any() && tester.Models[0] is CopyModel cm && cm.Unpack() != Director)
+                        tester.Models[0] = new CopyModel(Director) { Path = fd.FileName };
+                    tester.AttemptsN = tester.Models[0].MaxAttempts;
 					DrawPlaceableObjects();
 				} else
 					Director?.Serialize(fd.FileName);
@@ -601,9 +623,11 @@ namespace SRDS.Map {
             Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
             window.ShowDialog();
             tester.LoadModels();
-            if (File.Exists(tester.Models[0].Path))
-                Director = tester.LoadModel(tester.Models[0].Path);
+            if (File.Exists(tester.Models[0].Path)) {
+                tester.LoadModel(tester.Models[0].Path);
+                Director = tester.ActiveDirector;
             }
+        }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             Director.Dispose();

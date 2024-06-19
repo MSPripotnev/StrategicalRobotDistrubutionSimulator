@@ -2,18 +2,20 @@ using System.IO;
 using System.Xml.Serialization;
 
 namespace SRDS.Analyzing {
+    using SRDS.Analyzing.Models;
     using SRDS.Direct;
+    using SRDS.Direct.Qualifiers;
     public class Tester {
-        public Model[] Models { get; set; }
+        public IModel[] Models { get; set; } = Array.Empty<IModel>();
         string currentFilePath = "";
-        private Director director;
-        public int AttemptsN { get; private set; } = Testing.Default.AttemptsMax;
+        public Director ActiveDirector { get; set; }
+        public int AttemptsN { get; set; } = 0;
         public event EventHandler AttemptStarted;
         public event EventHandler AttemptCompleted;
         public event EventHandler AttemptFailed;
         public event EventHandler ModelSwitched;
         public Tester() {
-            List<Model> models = new List<Model> {
+            List<ParametrRangeGeneratedModel> models = new List<ParametrRangeGeneratedModel> {
             };
             if (Directory.Exists(Path.Combine(Paths.Default.Tests, "Complete"))) {
                 foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Complete")))
@@ -23,23 +25,35 @@ namespace SRDS.Analyzing {
         }
 
         public void LoadModels() {
-            List<Model> models = new List<Model>();
-            foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Active")))
-                models.Add(new Model(fileName));
+            List<IModel> models = new List<IModel>();
+            foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Active"))) {
+                if (fileName.EndsWith(".prgm"))
+                    models.Add(new ParametrRangeGeneratedModel(fileName));
+                else if (fileName.EndsWith(".cm"))
+                    models.Add(new CopyModel(fileName));
+            }
             Models = models.ToArray();
-            if (Models.Any())
+            if (Models.Any()) {
                 currentFilePath = Models[0].Path;
+                AttemptsN = Models[0].MaxAttempts;
+                LoadModel(currentFilePath);
+            }
         }
-
         public void NextAttempt() {
             AttemptCompleted(this, new());
             if (--AttemptsN < 1) {
-                Models[0].TransportersT = Models[0].TransportersT.SkipLast(1).ToList();
-                Models[0].ScalesT = Models[0].ScalesT.SkipLast(1).ToList();
-                AttemptsN = Testing.Default.AttemptsMax;
+                if (Models[0] is ParametrRangeGeneratedModel pm) {
+                    pm.TransportersT = pm.TransportersT.SkipLast(1).ToList();
+                    pm.ScalesT = pm.ScalesT.SkipLast(1).ToList();
 
-                if (!Models[0].TransportersT.Any()) {
+                    if (!pm.TransportersT.Any()) {
+                        NextModel();
+                    }
+                } else if (Models[0] is CopyModel cm) {
                     NextModel();
+                }
+                if (Models.Any()) {
+                    AttemptsN = Models[0].MaxAttempts;
                 }
             }
             if (Models.Any())
@@ -48,7 +62,7 @@ namespace SRDS.Analyzing {
         public void NextModel() {
             Directory.Move(Models[0].Path,
                 Path.Combine(Paths.Default.Tests, "Complete",
-                Models[0].Path[(Array.LastIndexOf(Models[0].Path.ToCharArray(), '\\')+1)..Models[0].Path.Length]));
+                Models[0].Path[(Array.LastIndexOf(Models[0].Path.ToCharArray(), '\\') + 1)..Models[0].Path.Length]));
             Models = Models.Skip(1).ToArray();
             if (Models.Any())
                 ModelSwitched(Models[0], new());
@@ -59,21 +73,34 @@ namespace SRDS.Analyzing {
             AttemptFailed(this, new());
         }
         public Director ReloadModel() {
-            director = new Director(Models[0]);
-            return director;
+            Recorder r = new Recorder();
+            IQualifier q = new FuzzyQualifier();
+            if (ActiveDirector != null) {
+                r = ActiveDirector.Recorder;
+                q = ActiveDirector.Qualifier;
+            }
+            ActiveDirector = Models[0].Unpack();
+            ActiveDirector.Recorder = r;
+            ActiveDirector.Qualifier = q;
+            return ActiveDirector;
         }
-        public Director LoadModel(string path) {
-            XmlSerializer serializer = new XmlSerializer(typeof(Model));
+        public void LoadModel(string path) {
+            XmlSerializer serializer;
+            if (path.EndsWith(".pgrm"))
+                serializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
+            else if (path.EndsWith(".cm"))
+                serializer = new XmlSerializer(typeof(CopyModel));
+            else return;
+
             using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                Model model = serializer.Deserialize(fs) as Model;
-                if (model == null) return null;
-                director = new Director(model);
+                if (serializer.Deserialize(fs) is not IModel model)
+                    return;
+                ActiveDirector = model.Unpack();
 
                 if (currentFilePath != path)
                     currentFilePath = path;
                 fs.Close();
             }
-            return director;
         }
     }
 }

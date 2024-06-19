@@ -92,7 +92,7 @@ namespace SRDS.Direct {
             }
             set {
                 mapPath = value;
-                if (value != "") {
+                if (value is not null && value != "") {
                     Map = new TacticalMap(mapPath);
                     for (int i = 0; i < Map.Roads.Length; i++)
                         Map.Roads[i].Connect(Map.Roads.Where(p => p != Map.Roads[i]).ToArray());
