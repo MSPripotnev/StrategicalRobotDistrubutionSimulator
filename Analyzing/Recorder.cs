@@ -4,17 +4,32 @@ using System.Xml.Serialization;
 
 namespace SRDS.Analyzing {
     using SRDS.Direct;
-    internal class Recorder : IDisposable {
+    using Models;
 
-        List<Reading> readings = new List<Reading>();
+    public class Recorder : IDisposable {
+        public int Epoch { get => SystemQuality.Count; }
+        public List<double> SystemQuality { get; init; } = new();
+        List<List<DistributionQualifyReading>> qualifyReadings = new();
+        [XmlArray(ElementName = "QualifyReadings")]
+        [XmlArrayItem(ElementName = "QualifyReading")]
+        public DistributionQualifyReading[][] QualifyReadings {
+            get {
+                return qualifyReadings.Select(p => p.ToArray()).ToArray();
+            }
+            set {
+                qualifyReadings = new List<List<DistributionQualifyReading>>(value.Select(p => p.ToList()));
+                SystemQuality.Add(value.Last().Sum(p => (p.TakedLevel - (p.TakedTarget as SRDS.Map.Targets.Snowdrift).Level)));
+            }
+        }
+        List<ModelReading> readings = new List<ModelReading>();
         [XmlArray(ElementName = "Readings")]
         [XmlArrayItem(ElementName = "Reading")]
-        public Reading[] Readings {
+        public ModelReading[] Readings {
             get {
                 return readings.ToArray();
             }
             set {
-                readings = new List<Reading>(value);
+                readings = new List<ModelReading>(value);
             }
         }
         public void OnModelSwitched(object? sender, EventArgs e) {
@@ -33,7 +48,7 @@ namespace SRDS.Analyzing {
             }
         }
         public void SaveResults(Director director, string modelName, TimeSpan fullTime, ref double iterations) {
-            var analyzer = new Reading() {
+            var analyzer = new ModelReading() {
                 ModelName = modelName,
                 TransportersCount = director.Agents.Length,
                 Scale = Math.Round(director.Scale, 3),
@@ -55,10 +70,13 @@ namespace SRDS.Analyzing {
                 analyzer.WayTime = Math.Round(Testing.Default.K_v / Testing.Default.K_s * analyzer.WayIterations, 14);
             }
             readings.Add(analyzer);
+            var vs = QualifyReadings.ToList();
+            vs.Add(director.DistributionQualifyReadings.Values.ToArray());
+            QualifyReadings = vs.ToArray();
             iterations = 0;
         }
         private void SaveInXMLFile(string resFileName) {
-            XmlSerializer serializer = new XmlSerializer(typeof(Reading));
+            XmlSerializer serializer = new XmlSerializer(typeof(ModelReading));
             if (!File.Exists(resFileName))
                 using (FileStream fs = new FileStream(resFileName, FileMode.Create)) {
                     XmlWriterSettings settings = new XmlWriterSettings() {
@@ -84,6 +102,16 @@ namespace SRDS.Analyzing {
                     serializer.Serialize(xmlWriter, Readings[i], null);
                 }
             File.AppendAllLines(resFileName, new string[] { "</" + nameof(Readings) + ">" });
+
+            using (StreamWriter fstream = new StreamWriter($"epoch{Epoch}.txt", false)) {
+                fstream.WriteLine($"Time = {QualifyReadings.Last().Sum(p => p.SumTime)}\n" +
+                    $"Targets collected = {QualifyReadings.Last().Length}\n" +
+                    $"Quality = {SystemQuality.Last()}\n" +
+                    $"WayTime = {QualifyReadings.Last().Sum(p => p.WayTime)}\n" +
+                    $"WorkingTime = {QualifyReadings.Last().Sum(p => p.WorkingTime)}\n" +
+                    $"SumLevel = {QualifyReadings.Last().Sum(p => p.TakedLevel)}\n" +
+                    $"LeavedLevel = {QualifyReadings.Last().Sum(p => (p.TakedTarget as SRDS.Map.Targets.Snowdrift).Level)}\n");
+            }
         }
 
         public void Dispose() {

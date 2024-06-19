@@ -1,13 +1,18 @@
 using System.ComponentModel;
+using System.Xml.Serialization;
 
 namespace SRDS.Direct {
     using Agents;
     using Agents.Drones;
+    using Analyzing;
     using Map.Stations;
     using Map.Targets;
     using Qualifiers;
     public partial class Director {
-        IQualifier Qualifier { get; set; }
+        [XmlIgnore]
+        public IQualifier Qualifier { get; set; }
+        [XmlIgnore]
+        public Dictionary<Target, DistributionQualifyReading> DistributionQualifyReadings { get; set; } = new();
         #region Distribute
         public void DistributeTask() {
             DistributeTaskForFreeAgents();
@@ -50,6 +55,24 @@ namespace SRDS.Direct {
                         if (AttachedAgents[j] != t.ReservedAgent)
                             UnlinkTargetFromAgent(AttachedAgents[j]);
                     }
+
+                    if (Qualifier is FuzzyQualifier f) {
+                        f.Qualify(t.ReservedAgent, t, out var rs);
+                        DistributionQualifyReadings.Add(t, new() {
+                            ModelName = this.MapPath,
+                            Rules = rs,
+                            TakedTarget = t,
+                            AgentPosition = t.ReservedAgent.Position,
+                            TakedLevel = (t is Snowdrift s) ? s.Level : 0,
+                        });
+                    } else {
+						DistributionQualifyReadings.Add(t, new() {
+							ModelName = this.MapPath,
+							TakedTarget = t,
+							AgentPosition = t.ReservedAgent.Position,
+							TakedLevel = (t is Snowdrift s) ? s.Level : 0,
+						});
+					}
                 }
             }
         }

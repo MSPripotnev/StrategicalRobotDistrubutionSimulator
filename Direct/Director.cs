@@ -5,7 +5,6 @@ using System.Xml.Serialization;
 
 using SRDS.Analyzing;
 using SRDS.Agents;
-using SRDS.Agents.Drones;
 using SRDS.Environment;
 using SRDS.Map;
 using SRDS.Map.Stations;
@@ -158,27 +157,6 @@ namespace SRDS.Direct {
             Agents = Array.Empty<Agent>();
             Qualifier = new FuzzyQualifier();
         }
-        public Director(Model testModel) {
-            MapPath = testModel.Map;
-            Scale = testModel.ScalesT[^1];
-        #if METEO
-			Meteo = new GlobalMeteo(Map);
-        #endif
-			Targets = Array.Empty<Target>();
-			Agents = Array.Empty<Agent>();
-			for (int i = 0; i < testModel.TransportersT[^1]; i++) {
-                var t = new Agents.Drones.Transporter(Map.Stations[0].Position);
-                t.Speed = Scale;
-                Add(t);
-            }
-            for (int i = 0; i < testModel.TargetsT.Count; i++) {
-                Add(new Crop(testModel.TargetsT[i].Position));
-            }
-            Qualifier = new DistanceQualifier();
-        }
-        public Director(string _mapPath, Size borders) : this(borders) {
-            MapPath = _mapPath;
-        }
         private int seed;
         [XmlIgnore]
         public int Seed {
@@ -199,10 +177,19 @@ namespace SRDS.Direct {
                 foreach (var r in Map.Roads)
                     r.Simulate(Meteo);
             }
-			for (int i = 0; i < Agents.Length; i++)
+            for (int i = 0; i < Agents.Length; i++) {
                 do
                     Agents[i].Simulate();
                 while (Agents[i].CurrentState == RobotState.Thinking);
+                if (Agents[i].AttachedObj is not null &&
+                    DistributionQualifyReadings.ContainsKey(Agents[i].AttachedObj)) {
+                    if (Agents[i].CurrentState == RobotState.Working)
+                        DistributionQualifyReadings[Agents[i].AttachedObj].WorkingTime++;
+                    else if (Agents[i].CurrentState == RobotState.Going)
+                        DistributionQualifyReadings[Agents[i].AttachedObj].WayTime++;
+                    DistributionQualifyReadings[Agents[i].AttachedObj].FuelCost += Agent.FuelDecrease;
+                }
+            }
             for (int i = 0; i < Targets.Length; i++)
                 if (Targets[i].Finished)
                     Remove(Targets[i]);

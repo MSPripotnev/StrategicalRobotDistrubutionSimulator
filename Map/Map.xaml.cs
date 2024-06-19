@@ -243,7 +243,7 @@ namespace SRDS.Map {
         }
         private void OnAttemptCompleted(object? sender, EventArgs e) {
             realWorkTime += (DateTime.Now - startTime);
-            recorder.SaveResults(Director, tester.Models[0].Name, realWorkTime, ref iterations);
+            Director.DistributionQualifyReadings = new();
             Stop();
             Director = null;
         }

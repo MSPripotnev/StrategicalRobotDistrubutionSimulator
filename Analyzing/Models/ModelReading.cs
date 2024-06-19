@@ -1,7 +1,7 @@
 ﻿using System.Xml.Serialization;
 
-namespace SRDS.Analyzing {
-    public class Reading {
+namespace SRDS.Analyzing.Models {
+    public class ModelReading {
         public string ModelName { get; set; }
         public int TransportersCount { get; set; }
         public double TransportersSpeed { get; set; }
@@ -17,8 +17,6 @@ namespace SRDS.Analyzing {
         public uint WorkTimeIt { get; set; }
         public double TraversedWayPx { get; set; }
         public double TraversedWay { get; set; }
-        public Reading() {
-
-        }
+        public ModelReading() { }
     }
 }
