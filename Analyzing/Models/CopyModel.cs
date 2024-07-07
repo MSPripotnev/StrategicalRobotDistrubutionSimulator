@@ -22,8 +22,8 @@ public class CopyModel : IModel {
     public string Name { get; set; }
     public int MaxAttempts { get; set; } = 250;
     private int seed;
-    public int Seed { 
-        get => seed; 
+    public int Seed {
+        get => seed;
         set => seed = model.Seed = value;
     }
     public CopyModel() {
@@ -50,7 +50,7 @@ public class CopyModel : IModel {
                 XmlSerializer xmlSerializer = new XmlSerializer(typeof(CopyModel));
                 CopyModel m = (CopyModel)xmlSerializer.Deserialize(fs);
                 Name = m.Name is not null && m.Name != "" ? m.Name : System.IO.Path.GetFileNameWithoutExtension(path);
-                
+
                 ModelPath = m.ModelPath;
                 Seed = m.Seed;
                 MaxAttempts = m.MaxAttempts;

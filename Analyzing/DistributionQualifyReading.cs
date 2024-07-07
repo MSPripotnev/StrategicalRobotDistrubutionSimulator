@@ -1,4 +1,5 @@
 ﻿using SRDS.Map.Targets;
+
 using System.Xml.Serialization;
 
 namespace SRDS.Analyzing;

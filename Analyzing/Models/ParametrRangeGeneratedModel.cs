@@ -1,15 +1,13 @@
+using SRDS.Direct;
+using SRDS.Map;
+using SRDS.Map.Targets;
+
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml;
 using System.Xml.Serialization;
-
-using SRDS.Agents;
-using SRDS.Direct;
-using SRDS.Direct.Qualifiers;
-using SRDS.Map;
-using SRDS.Map.Targets;
 
 namespace SRDS.Analyzing.Models;
 public class ParametrRange {
@@ -19,8 +17,7 @@ public class ParametrRange {
     public ParametrRange((double start, double end, double step) range) {
         if (IsConst = range.step == 0) {
             Values = Enumerable.Repeat(Math.Round(range.start, 15), (int)range.end).ToList();
-        }
-        else {
+        } else {
             Values = new List<double>((int)(range.end - range.start + 1));
             for (double i = Math.Round(range.start, 15); i <= range.end; i += range.step)
                 Values.Add(Math.Round(i, 15));
@@ -77,8 +74,7 @@ public class ParametrRangeGeneratedModel : IModel {
         Path = System.IO.Path.Combine(Paths.Default.Tests, "Complete", $"{Name}.xml");
         using (FileStream fs = new FileStream(Path, FileMode.Create)) {
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
-            XmlWriterSettings settings = new XmlWriterSettings()
-            {
+            XmlWriterSettings settings = new XmlWriterSettings() {
                 Indent = true,
                 CloseOutput = true,
             };
@@ -88,8 +84,7 @@ public class ParametrRangeGeneratedModel : IModel {
     public ParametrRangeGeneratedModel(string path) {
         path = System.IO.Path.Combine(Paths.Default.Tests, path);
         if (File.Exists(path))
-            using (FileStream fs = new FileStream(path, FileMode.Open))
-            {
+            using (FileStream fs = new FileStream(path, FileMode.Open)) {
                 XmlSerializer xmlSerializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
                 ParametrRangeGeneratedModel m = (ParametrRangeGeneratedModel)xmlSerializer.Deserialize(fs);
                 Map = m.Map;
