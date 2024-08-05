@@ -1,4 +1,4 @@
-using SRDS.Agents.Drones;
+using SRDS.Direct.Agents.Drones;
 using SRDS.Map;
 using SRDS.Map.Stations;
 using SRDS.Map.Targets;
@@ -10,7 +10,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
 
-namespace SRDS.Agents;
+namespace SRDS.Direct.Agents;
 public enum RobotState {
     Disable = -1,
     Ready,

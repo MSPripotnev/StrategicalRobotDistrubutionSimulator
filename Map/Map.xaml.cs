@@ -1,11 +1,13 @@
 #define ALWAYS
-using SRDS.Agents;
-using SRDS.Agents.Drones;
 using SRDS.Analyzing;
 using SRDS.Analyzing.Models;
 using SRDS.Direct;
+using SRDS.Direct.Agents;
+using SRDS.Direct.Agents.Drones;
 using SRDS.Direct.Qualifiers;
 using SRDS.Environment;
+using SRDS.Map.Stations;
+using SRDS.Map.Targets;
 
 using System.IO;
 using System.Windows;
@@ -17,9 +19,6 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace SRDS.Map;
-using Stations;
-
-using Targets;
 /// <summary>
 /// Логика взаимодействия для Map.xaml
 /// </summary>

@@ -5,8 +5,8 @@ using System.Windows.Shapes;
 using System.Xml.Serialization;
 
 namespace SRDS.Map;
-using Agents;
-using Environment;
+using SRDS.Direct.Agents;
+using SRDS.Environment;
 
 public enum RoadType {
     Dirt,

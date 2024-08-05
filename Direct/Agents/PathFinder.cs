@@ -1,5 +1,5 @@
-﻿using SRDS.Agents.Explorers;
-using SRDS.Agents.Explorers.AStar;
+﻿using SRDS.Direct.Agents.Explorers;
+using SRDS.Direct.Agents.Explorers.AStar;
 using SRDS.Map;
 
 using System.Collections;
@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace SRDS.Agents;
+namespace SRDS.Direct.Agents;
 public class TrajectoryConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
         return new PointCollection((List<Point>)value);

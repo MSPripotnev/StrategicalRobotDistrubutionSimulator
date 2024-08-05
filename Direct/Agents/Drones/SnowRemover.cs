@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Xml.Serialization;
 
-namespace SRDS.Agents.Drones {
+namespace SRDS.Direct.Agents.Drones {
     public enum SnowRemoverType {
         PlowBrush,
         Shovel,

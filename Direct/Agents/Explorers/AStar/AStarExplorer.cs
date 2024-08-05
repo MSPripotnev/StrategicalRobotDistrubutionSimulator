@@ -2,7 +2,7 @@
 
 using System.Windows;
 
-namespace SRDS.Agents.Explorers.AStar;
+namespace SRDS.Direct.Agents.Explorers.AStar;
 internal class AStarExplorer : IExplorer {
     protected Point start;
     protected Point end;

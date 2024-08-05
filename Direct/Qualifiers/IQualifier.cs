@@ -1,5 +1,5 @@
-﻿namespace SRDS.Direct.Qualifiers; 
-using SRDS.Agents;
+﻿namespace SRDS.Direct.Qualifiers;
+using SRDS.Direct.Agents;
 using SRDS.Map.Targets;
 public interface IQualifier {
 	public double Qualify(Agent agent, Target target);

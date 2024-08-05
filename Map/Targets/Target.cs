@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using SRDS.Direct.Agents;
+
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -22,7 +24,7 @@ public abstract class Target : IPlaceable {
     [XmlIgnore]
     public Color Color { get; set; }
     [XmlIgnore]
-    public SRDS.Agents.Agent? ReservedAgent { get; set; } = null;
+    public Agent? ReservedAgent { get; set; } = null;
     [XmlIgnore]
     public bool Finished { get; set; } = false;
     public Target(Point pos) : this() {

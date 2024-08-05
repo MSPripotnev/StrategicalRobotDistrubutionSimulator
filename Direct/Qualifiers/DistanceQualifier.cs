@@ -1,5 +1,5 @@
 ﻿namespace SRDS.Direct.Qualifiers;
-using SRDS.Agents;
+using SRDS.Direct.Agents;
 using SRDS.Map.Targets;
 public class DistanceQualifier : IQualifier {
     public double Qualify(Agent agent, Target t) =>

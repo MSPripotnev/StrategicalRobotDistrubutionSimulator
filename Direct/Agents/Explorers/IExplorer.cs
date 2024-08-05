@@ -1,4 +1,4 @@
-﻿namespace SRDS.Agents.Explorers;
+﻿namespace SRDS.Direct.Agents.Explorers;
 public interface IExplorer {
     public AnalyzedPoint Result { get; set; }
     public long Iterations { get; set; }

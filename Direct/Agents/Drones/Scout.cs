@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 
-namespace SRDS.Agents.Drones;
+namespace SRDS.Direct.Agents.Drones;
 public class Scout : Agent {
 
     public const int ViewingRange = 50;

@@ -4,9 +4,8 @@ using FuzzyLogic.Inference;
 using FuzzyLogic.Logic;
 using FuzzyLogic.Logic.Operators;
 using FuzzyLogic.MembershipFunctions;
-
-using SRDS.Agents;
-using SRDS.Agents.Drones;
+using SRDS.Direct.Agents;
+using SRDS.Direct.Agents.Drones;
 using SRDS.Map.Targets;
 
 public class FuzzyQualifier : IQualifier {

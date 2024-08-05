@@ -1,6 +1,4 @@
-﻿using SRDS.Agents;
-using SRDS.Analyzing;
-using SRDS.Direct.Qualifiers;
+﻿using SRDS.Analyzing;
 using SRDS.Environment;
 using SRDS.Map;
 using SRDS.Map.Stations;
@@ -12,6 +10,8 @@ using System.Windows;
 using System.Xml.Serialization;
 
 namespace SRDS.Direct;
+using Agents;
+using Qualifiers;
 public partial class Director : INotifyPropertyChanged, IDisposable {
 
     #region Properties

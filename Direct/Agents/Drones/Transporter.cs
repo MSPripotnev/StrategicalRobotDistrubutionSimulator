@@ -4,8 +4,8 @@ using System.Windows.Media;
 using System.Xml.Serialization;
 
 
-namespace SRDS.Agents.Drones;
-using SRDS.Agents;
+namespace SRDS.Direct.Agents.Drones;
+using SRDS.Direct.Agents;
 using SRDS.Map.Targets;
 
 public class Transporter : Agent {

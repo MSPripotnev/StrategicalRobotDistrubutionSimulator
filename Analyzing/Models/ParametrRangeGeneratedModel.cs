@@ -105,7 +105,7 @@ public class ParametrRangeGeneratedModel : IModel {
 #endif
         };
         for (int i = 0; i < TransportersT[^1]; i++) {
-            var t = new Agents.Drones.Transporter(res.Map.Stations[0].Position);
+            var t = new Direct.Agents.Drones.Transporter(res.Map.Stations[0].Position);
             t.Speed = ScalesT[^1];
             res.Add(t);
         }

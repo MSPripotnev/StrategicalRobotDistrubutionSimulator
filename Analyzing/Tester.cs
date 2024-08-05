@@ -1,7 +1,7 @@
 using System.IO;
 using System.Xml.Serialization;
 
-namespace SRDS.Analyzing; 
+namespace SRDS.Analyzing;
 using SRDS.Analyzing.Models;
 using SRDS.Direct;
 using SRDS.Direct.Qualifiers;

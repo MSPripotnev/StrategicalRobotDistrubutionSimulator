@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace SRDS.Agents.Explorers;
+namespace SRDS.Direct.Agents.Explorers;
 public class AnalyzedPoint {
     public Point Position { get; init; }
     public AnalyzedPoint Previous { get; init; }

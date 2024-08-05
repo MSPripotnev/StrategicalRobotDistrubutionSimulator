@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace SRDS.Agents;
+namespace SRDS.Direct.Agents;
 public interface IDrone : IMoveable {
     public int InteractDistance { get; init; }
     public int ViewingDistance { get; init; }

@@ -1,10 +1,10 @@
 ﻿using SRDS.Direct;
-using SRDS.Agents;
 using SRDS.Map.Targets;
-using SRDS.Agents.Drones;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
+using SRDS.Direct.Agents.Drones;
+using SRDS.Direct.Agents;
 
 namespace SRDS.Analyzing.Models;
 public class CopyModel : IModel {
