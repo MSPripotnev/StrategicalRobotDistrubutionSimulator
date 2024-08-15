@@ -99,9 +99,6 @@ public class ParametrRangeGeneratedModel : IModel {
         var res = new Director() {
             MapPath = Map,
             Scale = ScalesT[^1],
-#if METEO
-			    Meteo = new GlobalMeteo(Map);
-#endif
         };
         for (int i = 0; i < TransportersT[^1]; i++) {
             var t = new Direct.Agents.Drones.Transporter(res.Map.Stations[0].Position);

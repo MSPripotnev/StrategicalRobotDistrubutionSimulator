@@ -107,6 +107,9 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         get { return map; }
         private set {
             map = value;
+#if METEO
+            Meteo = new GlobalMeteo(map);
+#endif
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
         }
     }
@@ -150,14 +153,11 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     public event PropertyChangedEventHandler? PropertyChanged;
     public Director() : this(new Size(0, 0)) {
     }
-    public Director(Size map_size) {
+    public Director(Size mapSize) {
         Scale = 5.0F;
         Map = new TacticalMap() {
-            Borders = map_size
+            Borders = mapSize
         };
-#if METEO
-        Meteo = new GlobalMeteo(Map);
-#endif
         Targets = Array.Empty<Target>();
         Agents = Array.Empty<Agent>();
         Distributor = new TaskDistributor(typeof(FuzzyQualifier));

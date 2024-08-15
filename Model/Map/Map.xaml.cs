@@ -364,7 +364,7 @@ public partial class MapWPF : Window {
 #if PARALLEL
         tokenSource.Cancel();
 #endif
-        if (testingCB.IsChecked == false && tester.Models?.Length < 1)
+        if (testingCB.IsChecked == false && tester.Models?.Length < 2)
             Director = tester.ReloadModel();
         refreshTimer.Stop();
         RefreshTime();
