@@ -47,7 +47,7 @@ public class Snowdrift : Target {
     public Snowdrift() : this(new Point(0, 0), 0, new Random()) { }
     public override UIElement Build() {
         Random rnd = new Random();
-        int msize = (int)Math.Round(Level) + 3;
+        int msize = Math.Max(3, (int)Math.Round(Level));
         Ellipse el = new Ellipse() {
             Width = msize,
             Height = msize,

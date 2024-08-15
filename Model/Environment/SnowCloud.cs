@@ -60,16 +60,19 @@ public class SnowCloud : IPlaceable {
         return el;
     }
 
-    public void Simulate(TacticalMap map) {
-        double S = Radius * Radius * Math.PI;
-
+    public void Simulate() {
         Position += Velocity;
-        var roads = map.Roads.Where(p => p.DistanceToRoad(Position) < Radius).ToArray();
-        for (int i = 0; i < roads.Length; i++) {
-            double d = roads[i].DistanceToRoad(Position),
-                intersect_length = (Radius * (Radius + d) - 2 * d * d) / Math.Sqrt(Radius * Radius - d * d),
-                Si = intersect_length * roads[i].Height;
-            roads[i].Snowness += Intensity * Si / S;
-        }
+        if (Intensity < 0.01)
+            Color = Colors.LightGray;
+    }
+
+    public bool IsOutside(TacticalMap map) {
+        Point[] cloudBorders = {
+            Position - new Vector(Radius, 0),
+            Position - new Vector(-Radius, 0),
+            Position - new Vector(0, Radius),
+            Position - new Vector(0, -Radius),
+        };
+        return (cloudBorders.All(p => map.PointOutsideBorders(p)));
     }
 }

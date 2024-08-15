@@ -54,10 +54,6 @@ public class Obstacle : IPlaceable {
                 return true;
         return false;
     }
-    public static bool PointOutsideBorders(Point point, Size borders) {
-        return point.X > borders.Width || point.Y > borders.Height
-                || point.X < 0 || point.Y < 0;
-    }
     public static bool IsPointNearAnyObstacle(Point point, Obstacle[] obstacles) {
         float obstacleScale = 1.0F;
         var nearPoints = new Point[9];

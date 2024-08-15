@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -11,7 +11,7 @@ using Model;
 using Model.Environment;
 using Model.Map;
 using Model.Map.Stations;
-using Model.Targets;    
+using Model.Targets;
 
 using Strategical.Qualifiers;
 using Tactical;
@@ -58,7 +58,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
                 Distributor.Agents = agents;
         }
     }
-    
+
     [XmlIgnore]
     public double TraversedWaySum {
         get {
@@ -71,11 +71,12 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     private Target[] targets;
     [XmlArray("Targets")]
     [XmlArrayItem("Target")]
-    public Target[] Targets { get => targets;
-        set { 
+    public Target[] Targets {
+        get => targets;
+        set {
             targets = value;
             if (Distributor is not null)
-                Distributor.Targets = value; 
+                Distributor.Targets = value;
         }
     }
     [XmlIgnore]
@@ -108,7 +109,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         private set {
             map = value;
             if (EnableMeteo)
-                Meteo = new GlobalMeteo(map);
+                Meteo = new GlobalMeteo(map, seed);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
         }
     }
@@ -118,9 +119,10 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         set {
             if (!value)
                 Meteo = null;
-            else Meteo = new GlobalMeteo(map);
+            else
+                Meteo = new GlobalMeteo(map, seed);
             enableMeteo = value;
-        } 
+        }
     }
     private GlobalMeteo meteomap;
     [XmlIgnore]
@@ -128,6 +130,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         get { return meteomap; }
         private set {
             meteomap = value;
+            Meteo.PropertyChanged += RefreshMeteo;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Meteo)));
         }
     }
@@ -179,11 +182,11 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     public int Seed {
         get => seed;
         set {
-            Rnd = new Random(value);
+            if (Meteo is not null)
+                Meteo.Rnd = new Random(value);
             seed = value;
         }
     }
-    private Random Rnd { get; set; }
     public void Work(DateTime time) {
         Distributor.DistributeTask(PropertyChanged);
 
@@ -206,25 +209,26 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         for (int i = 0; i < Targets.Length; i++)
             if (Targets[i].Finished)
                 Remove(Targets[i]);
-        GenerateSnow();
     }
-    private void GenerateSnow() {
-        if (Time.Minute % 10 != 0 || Rnd.Next(0, 10) < 5)
-            return;
-        Point pos;
-        long iter = 0;
-        do {
-            pos = new Point(Rnd.Next(50, (int)Map.Borders.Width - 50), Rnd.Next(50, (int)Map.Borders.Height - 50));
-            iter++;
-        } while (Map.Roads.Any(r => Math.Abs(r.DistanceToRoad(pos)) < 20.0) ||
-            Obstacle.IsPointOnAnyObstacle(pos, Map.Obstacles, ref iter) ||
-            Targets.Any(p => (p.Position - pos).Length < 20.0 || iter < 10000)
-        );
-        const int msize = 20, deviation = 10;
-        Snowdrift s = new Snowdrift(pos, msize + Rnd.Next(-deviation, deviation), Rnd);
-        this.Add(s);
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Targets)));
+
+    public void RefreshMeteo(object? sender, PropertyChangedEventArgs e) {
+        if (e.PropertyName == nameof(Meteo.GeneratedSnowdrifts)) {
+            for (int i = 0; i < Meteo.GeneratedSnowdrifts.Count; i++) {
+                var g = Meteo.GeneratedSnowdrifts[i];
+                var t = Targets.FirstOrDefault(p => p is Snowdrift s && (p.Position - g.Position).Length < (s.Level + g.Level + 10)) as Snowdrift;
+                if (t is not null) {
+                    if (t.Level > 50)
+                        continue;
+                    t.MashPercent = (t.MashPercent * t.Level + g.MashPercent * g.Level) / (t.Level + g.Level);
+                    t.Level += g.Level;
+                } else {
+                    Add(g);
+                }
+            }
+            Meteo.GeneratedSnowdrifts.Clear();
+        }
     }
+
     public bool CheckMission() {
         return false;
     }

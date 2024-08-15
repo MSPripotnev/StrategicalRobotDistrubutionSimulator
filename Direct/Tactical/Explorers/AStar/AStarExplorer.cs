@@ -73,8 +73,7 @@ internal class AStarExplorer : IExplorer
             //проверка на препятствие или уход за границу карты
             if (Obstacle.IsPointOnAnyObstacle(interimP, Map.Obstacles, ref iterations) ||
                 Obstacle.IsPointNearAnyObstacle(interimP, Map.Obstacles) ||
-                Obstacle.PointOutsideBorders(interimP, Map.Borders))
-            {
+                Map.PointOutsideBorders(interimP)) {
                 if (!ClosedPoints.Contains(interimP))
                     ClosedPoints.Add(interimP);
                 continue;

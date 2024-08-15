@@ -100,16 +100,17 @@ public partial class MapWPF : Window {
             Director = new Director(mapCanvas.RenderSize);
         }
     }
+
     #region Drawing
     private void RefreshMeteo(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
         if (drawCB.IsChecked != true)
             return;
-        if (e.PropertyName == "Targets") {
+        if (e.PropertyName == nameof(Director.Targets) || e.PropertyName == nameof(Director.Meteo.GeneratedSnowdrifts)) {
             mapCanvas.Children.Clear();
             DrawPlaceableObjects();
             return;
         }
-        if (Director.Meteo != null) {
+        if (Director.Meteo != null && e.PropertyName == nameof(Director.Meteo.Clouds)) {
             for (int i = 0; i < mapCanvas.Children.Count; i++)
                 if (mapCanvas.Children[i].Uid == "cloud")
                     mapCanvas.Children.Remove(mapCanvas.Children[i]);

@@ -86,7 +86,14 @@ public class TacticalMap : INotifyPropertyChanged {
         Path = path;
         Name = path[path.LastIndexOf('\\')..^4];
     }
-
+    public bool PointOutsideBorders(Point point) {
+        return point.X > borders.Width - 0 || point.Y > borders.Height - 0
+                || point.X < 0 || point.Y < 0;
+    }
+    public bool PointNearBorders(Point point) {
+        return point.X > borders.Width - 20 || point.Y > borders.Height - 20
+                || point.X < 20 || point.Y < 20;
+    }
     public TacticalMap() {
         Obstacles = Array.Empty<Obstacle>();
         Stations = Array.Empty<CollectingStation>();
