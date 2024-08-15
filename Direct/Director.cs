@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -107,11 +107,20 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         get { return map; }
         private set {
             map = value;
-#if METEO
-            Meteo = new GlobalMeteo(map);
-#endif
+            if (EnableMeteo)
+                Meteo = new GlobalMeteo(map);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
         }
+    }
+    private bool enableMeteo;
+    public bool EnableMeteo {
+        get => enableMeteo;
+        set {
+            if (!value)
+                Meteo = null;
+            else Meteo = new GlobalMeteo(map);
+            enableMeteo = value;
+        } 
     }
     private GlobalMeteo meteomap;
     [XmlIgnore]
@@ -155,6 +164,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     }
     public Director(Size mapSize) {
         Scale = 5.0F;
+        EnableMeteo = true;
         Map = new TacticalMap() {
             Borders = mapSize
         };

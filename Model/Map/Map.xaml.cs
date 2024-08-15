@@ -221,7 +221,7 @@ public partial class MapWPF : Window {
             wayTimeCountL.Content = "";
             allTimeCountL.Content = "";
         }
-        nextModelB.IsEnabled = testingCB.IsChecked == true;
+        meteoCB.IsEnabled = !(nextModelB.IsEnabled = testingCB.IsChecked == true);
     }
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
         if (Director != null)
@@ -364,8 +364,10 @@ public partial class MapWPF : Window {
 #if PARALLEL
         tokenSource.Cancel();
 #endif
-        if (testingCB.IsChecked == false && tester.Models?.Length < 2)
+        if (testingCB.IsChecked == false && tester.Models?.Length < 2) {
             Director = tester.ReloadModel();
+            meteoCB.IsEnabled = true;
+        }
         refreshTimer.Stop();
         RefreshTime();
         Refresh();
@@ -519,6 +521,8 @@ public partial class MapWPF : Window {
             stopB.IsEnabled = true;
             startB.Content = "||";
             Pause = false;
+            if (testingCB.IsChecked == true)
+                meteoCB.IsEnabled = false;
         } else {
             startB.Content = "▶️";
             Pause = true;
@@ -619,6 +623,11 @@ public partial class MapWPF : Window {
         tempTime -= DateTime.Now - pauseTime; Refresh();
         tempTime += DateTime.Now - pauseTime;
         realWayTime += ts;
+    }
+
+    private void meteoCB_Checked(object sender, RoutedEventArgs e) {
+        if (Director is not null)
+            Director.EnableMeteo = meteoCB.IsChecked.Value;
     }
 
     private void testsB_Click(object sender, RoutedEventArgs e) {

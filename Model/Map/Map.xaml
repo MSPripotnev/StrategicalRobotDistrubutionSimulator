@@ -87,5 +87,6 @@
                          Name="propertyGrid"
                          ></pt:PropertyGrid>
         <Button x:Name="testsB" Grid.Column="1" Content="Модели" HorizontalAlignment="Right" Margin="0,66,10,0" Grid.Row="2" VerticalAlignment="Top" Height="30" Width="69" Click="testsB_Click"/>
+        <CheckBox x:Name="meteoCB" Grid.Column="1" Content="Погода" HorizontalAlignment="Left" Margin="10,37,0,0" Grid.Row="2" VerticalAlignment="Top" IsChecked="True" Checked="meteoCB_Checked"/>
     </Grid>
 </Window>
