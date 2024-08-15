@@ -4,7 +4,6 @@ using System.Xml.Serialization;
 namespace SRDS.Analyzing;
 using SRDS.Analyzing.Models;
 using SRDS.Direct;
-using SRDS.Direct.Strategical.Qualifiers;
 
 public class Tester {
     public IModel[] Models { get; set; } = Array.Empty<IModel>();
@@ -76,16 +75,16 @@ public class Tester {
     public Director ReloadModel() {
         Recorder r = new Recorder();
         Learning l = new Learning();
-        IQualifier q = new FuzzyQualifier();
+        Type? q = null;
         if (ActiveDirector != null) {
             r = ActiveDirector.Recorder;
             l = ActiveDirector.Learning;
-            q = ActiveDirector.Qualifier;
+            q = ActiveDirector.Distributor.Qualifier.GetType();
         }
         ActiveDirector = Models[0].Unpack();
         ActiveDirector.Recorder = r;
         ActiveDirector.Learning = l;
-        ActiveDirector.Qualifier = q;
+        ActiveDirector.Distributor = new(q);
         return ActiveDirector;
     }
     public void LoadModel(string path) {

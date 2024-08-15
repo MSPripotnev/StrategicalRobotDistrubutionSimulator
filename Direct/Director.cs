@@ -1,18 +1,17 @@
-﻿using SRDS.Analyzing;
-
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
 
 namespace SRDS.Direct;
 using Agents;
+using Analyzing;
 
 using Model;
 using Model.Environment;
 using Model.Map;
 using Model.Map.Stations;
-using Model.Targets;
+using Model.Targets;    
 
 using Strategical.Qualifiers;
 using Tactical;
@@ -55,17 +54,11 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
                     Agents[i].OtherAgents = Agents.Except(new Agent[] { Agents[i] }).ToList();
                 }
             }
+            if (Distributor is not null)
+                Distributor.Agents = agents;
         }
     }
-    public Agent[] NonAssignedAgents {
-        get => Agents.Where(p => p.Home == null).ToArray();
-    }
-    [XmlIgnore]
-    public Agent[] FreeAgents {
-        get {
-            return Agents.Where(x => x.CurrentState == RobotState.Ready).ToArray();
-        }
-    }
+    
     [XmlIgnore]
     public double TraversedWaySum {
         get {
@@ -75,12 +68,14 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     #endregion
 
     #region Map
+    private Target[] targets;
     [XmlArray("Targets")]
     [XmlArrayItem("Target")]
-    public Target[] Targets { get; set; }
-    public Target[] FreeTargets {
-        get {
-            return Targets.Where(x => x.ReservedAgent == null && !x.Finished).ToArray();
+    public Target[] Targets { get => targets;
+        set { 
+            targets = value;
+            if (Distributor is not null)
+                Distributor.Targets = value; 
         }
     }
     [XmlIgnore]
@@ -101,6 +96,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
                 Map = new TacticalMap(mapPath);
                 for (int i = 0; i < Map.Roads.Length; i++)
                     Map.Roads[i].Connect(Map.Roads.Where(p => p != Map.Roads[i]).ToArray());
+                if (Distributor is not null)
+                    Distributor.Map = Map;
             }
         }
     }
@@ -143,14 +140,17 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     }
     #endregion
 
+    [XmlIgnore]
+    public Recorder Recorder { get; set; } = new Recorder();
+    public TaskDistributor Distributor { get; set; }
+
     #endregion
 
     public event Action<float> SettingsChanged;
     public event PropertyChangedEventHandler? PropertyChanged;
     public Director() : this(new Size(0, 0)) {
-
     }
-    public Director(System.Windows.Size map_size) {
+    public Director(Size map_size) {
         Scale = 5.0F;
         Map = new TacticalMap() {
             Borders = map_size
@@ -160,7 +160,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
 #endif
         Targets = Array.Empty<Target>();
         Agents = Array.Empty<Agent>();
-        Qualifier = new FuzzyQualifier();
+        Distributor = new TaskDistributor(typeof(FuzzyQualifier));
     }
     [XmlIgnore]
     public Learning Learning { get; set; } = new Learning();
@@ -175,6 +175,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     }
     private Random Rnd { get; set; }
     public void Work(DateTime time) {
+        Distributor.DistributeTask(PropertyChanged);
+
         Time = time;
         if (Meteo != null) {
             Meteo.Time = time;
@@ -188,14 +190,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             do
                 Agents[i].Simulate();
             while (Agents[i].CurrentState == RobotState.Thinking);
-            if (Agents[i].AttachedObj is not null &&
-                DistributionQualifyReadings.ContainsKey(Agents[i].AttachedObj)) {
-                if (Agents[i].CurrentState == RobotState.Working)
-                    DistributionQualifyReadings[Agents[i].AttachedObj].WorkingTime++;
-                else if (Agents[i].CurrentState == RobotState.Going)
-                    DistributionQualifyReadings[Agents[i].AttachedObj].WayTime++;
-                DistributionQualifyReadings[Agents[i].AttachedObj].FuelCost += Agent.FuelDecrease;
-            }
+            if (Agents[i].AttachedObj is not null)
+                Distributor.UpdateDistribution(Agents[i]);
         }
         for (int i = 0; i < Targets.Length; i++)
             if (Targets[i].Finished)
@@ -276,7 +272,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     #region Finalize
     public void Dispose() {
         Serialize("autosave.xml");
-        this.Recorder.Dispose();
+        Recorder.Dispose();
     }
     public void Serialize(string path) {
         using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {

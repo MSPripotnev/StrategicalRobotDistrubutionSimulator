@@ -75,7 +75,7 @@ public class Recorder : IDisposable {
         }
         readings.Add(analyzer);
         var vs = QualifyReadings.ToList();
-        vs.Add(director.DistributionQualifyReadings.Values.ToArray());
+        vs.Add(director.Distributor.DistributionQualifyReadings.Values.ToArray());
         QualifyReadings = vs.ToArray();
         iterations = 0;
     }

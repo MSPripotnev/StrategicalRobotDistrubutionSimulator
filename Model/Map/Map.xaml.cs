@@ -77,7 +77,7 @@ public partial class MapWPF : Window {
     public MapWPF() {
         InitializeComponent();
         refreshTimer = new DispatcherTimer {
-            Interval = new TimeSpan(0, 0, 0, 0, 100)
+            Interval = new TimeSpan(0, 0, 0, 0, 1)
         };
         tester = new Tester();
         tester.ModelSwitched += OnModelSwitched;
@@ -250,9 +250,9 @@ public partial class MapWPF : Window {
         realWorkTime += (DateTime.Now - startTime);
         Director.Recorder.SaveResults(Director, tester.Models[0].Name, realWorkTime, ref iterations);
         Director.Learning.Select(Director.Recorder);
-        if (Director.Qualifier is FuzzyQualifier fq)
+        if (Director.Distributor.Qualifier is FuzzyQualifier fq)
             Director.Learning.Mutate(ref fq.Net);
-        Director.DistributionQualifyReadings = new();
+        Director.Distributor.DistributionQualifyReadings = new();
         tester.ActiveDirector = Director;
         Stop();
     }
@@ -301,7 +301,6 @@ public partial class MapWPF : Window {
     private void Work() {
         try {
             if (Director == null) return;
-            Director.DistributeTask();
             Director.Work(d_time);
 #if !ALWAYS
             if (Director.CheckMission()) {
@@ -638,7 +637,7 @@ public partial class MapWPF : Window {
 
     public void Refresh() {
         if (Director != null) {
-            double quality = Math.Round(Director.DistributionQualifyReadings
+            double quality = Math.Round(Director.Distributor.DistributionQualifyReadings
                 .Sum(p => p.Value.TakedLevel - (p.Value.TakedTarget as Snowdrift).Level));
 
             localTimeL.Content = $"Местное время: {Director.Time.ToShortTimeString()}";
