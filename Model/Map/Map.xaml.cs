@@ -216,7 +216,8 @@ public partial class MapWPF : Window {
             DrawPlaceableObjects();
         } else {
             mapCanvas.Children.Clear();
-            thinkTimeCountL.Content = "";
+            systemQualityL.Content = "";
+            bestQualityL.Content = "";
             wayTimeCountL.Content = "";
             allTimeCountL.Content = "";
         }
@@ -637,15 +638,21 @@ public partial class MapWPF : Window {
 
     public void Refresh() {
         if (Director != null) {
+            double quality = Math.Round(Director.DistributionQualifyReadings
+                .Sum(p => p.Value.TakedLevel - (p.Value.TakedTarget as Snowdrift).Level));
+
             localTimeL.Content = $"Местное время: {Director.Time.ToShortTimeString()}";
-            currentObjsCountL.Content = "Осталось целей: " +
-                (Director.Targets.Length - Director.CollectedTargets.Length).ToString();
-            traversedWayL.Content = $"Пройденный путь: {Math.Round(Director.TraversedWaySum)} px";
+            systemQualityL.Content = $"Q = {quality}        Эпоха: {Director.Recorder.Epoch}";
+            if (Director.Recorder.SystemQuality.Any()) {
+                double best_qualitity = Director.Recorder.SystemQuality.Max();
+                int best_quality_epoch = Director.Recorder.SystemQuality.IndexOf(best_qualitity) + 1;
+
+                bestQualityL.Content = $"Q_best: {Math.Round(best_qualitity, 4)} (эп. {best_quality_epoch})" +
+                    $" Q_{Director.Recorder.SystemQuality.Count}: {Director.Recorder.SystemQuality.Last()}";
+            }
             if (drawCB.IsChecked == true) {
-                thinkTimeCountL.Content = $"Сложность расчёта: {Director.ThinkingIterations} it";
                 if (Director.Agents.Any())
                     wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
-                allTimeCountL.Content = $"Время алгоритма: {Math.Round((DateTime.Now - startTime).TotalSeconds, 3)} s";
             }
         }
     }
