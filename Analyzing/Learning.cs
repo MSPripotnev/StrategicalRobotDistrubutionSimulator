@@ -1,4 +1,6 @@
 ﻿using FuzzyLogic.Inference.Engines.Base;
+using SRDS.Direct.Strategical;
+using SRDS.Model.Targets;
 
 namespace SRDS.Analyzing;
 public class Learning {
@@ -10,7 +12,7 @@ public class Learning {
     public void Mutate(ref object eng) {
         var rs = (eng as FuzzyInferenceEngine).Rulebase.GetAllRules();
         CurrentWeights.Clear();
-        var survived = best.OrderByDescending(p => (p.TakedLevel - (p.TakedTarget as Map.Targets.Snowdrift).Level) / p.SumTime).Take(survivors);
+        var survived = best.OrderByDescending(p => (p.TakedLevel - (p.TakedTarget as Snowdrift).Level) / p.SumTime).Take(survivors);
         for (int i = 0; i < rs.Count; i++) {
             var c = rs[i].Conditions.First();
             if (c.Weight > 0)

@@ -1,7 +1,6 @@
 using SRDS.Direct;
-using SRDS.Map;
-using SRDS.Map.Targets;
-
+using SRDS.Model.Map;
+using SRDS.Model.Targets;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;

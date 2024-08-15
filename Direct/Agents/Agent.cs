@@ -1,8 +1,8 @@
 using SRDS.Direct.Agents.Drones;
-using SRDS.Map;
-using SRDS.Map.Stations;
-using SRDS.Map.Targets;
-
+using SRDS.Direct.Tactical;
+using SRDS.Model;
+using SRDS.Model.Map.Stations;
+using SRDS.Model.Targets;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;

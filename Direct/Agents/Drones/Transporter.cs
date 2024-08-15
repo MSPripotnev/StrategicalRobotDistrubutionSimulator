@@ -5,8 +5,9 @@ using System.Xml.Serialization;
 
 
 namespace SRDS.Direct.Agents.Drones;
-using SRDS.Direct.Agents;
-using SRDS.Map.Targets;
+using Agents;
+using Model.Targets;
+using Tactical;
 
 public class Transporter : Agent {
 

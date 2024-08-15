@@ -4,7 +4,8 @@ using System.Xml.Serialization;
 namespace SRDS.Analyzing;
 using SRDS.Analyzing.Models;
 using SRDS.Direct;
-using SRDS.Direct.Qualifiers;
+using SRDS.Direct.Strategical.Qualifiers;
+
 public class Tester {
     public IModel[] Models { get; set; } = Array.Empty<IModel>();
     string currentFilePath = "";

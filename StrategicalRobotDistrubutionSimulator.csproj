@@ -52,7 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="Map\Map.xaml">
+    <Page Update="Model\Map\Map.xaml">
       <CustomToolNamespace></CustomToolNamespace>
     </Page>
   </ItemGroup>

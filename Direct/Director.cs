@@ -1,8 +1,4 @@
 ﻿using SRDS.Analyzing;
-using SRDS.Environment;
-using SRDS.Map;
-using SRDS.Map.Stations;
-using SRDS.Map.Targets;
 
 using System.ComponentModel;
 using System.IO;
@@ -11,7 +7,16 @@ using System.Xml.Serialization;
 
 namespace SRDS.Direct;
 using Agents;
-using Qualifiers;
+
+using Model;
+using Model.Environment;
+using Model.Map;
+using Model.Map.Stations;
+using Model.Targets;
+
+using Strategical.Qualifiers;
+using Tactical;
+
 public partial class Director : INotifyPropertyChanged, IDisposable {
 
     #region Properties

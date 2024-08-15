@@ -6,6 +6,9 @@ namespace SRDS.Analyzing;
 using Models;
 
 using SRDS.Direct;
+using SRDS.Direct.Strategical;
+using SRDS.Direct.Tactical;
+using SRDS.Model.Targets;
 
 public class Recorder : IDisposable {
     public int Epoch { get => SystemQuality.Count; }
@@ -19,7 +22,7 @@ public class Recorder : IDisposable {
         }
         set {
             qualifyReadings = new List<List<DistributionQualifyReading>>(value.Select(p => p.ToList()));
-            SystemQuality.Add(value.Last().Sum(p => (p.TakedLevel - (p.TakedTarget as SRDS.Map.Targets.Snowdrift).Level)));
+            SystemQuality.Add(value.Last().Sum(p => (p.TakedLevel - (p.TakedTarget as Snowdrift).Level)));
         }
     }
     List<ModelReading> readings = new List<ModelReading>();
@@ -111,7 +114,7 @@ public class Recorder : IDisposable {
                 $"WayTime = {QualifyReadings.Last().Sum(p => p.WayTime)}\n" +
                 $"WorkingTime = {QualifyReadings.Last().Sum(p => p.WorkingTime)}\n" +
                 $"SumLevel = {QualifyReadings.Last().Sum(p => p.TakedLevel)}\n" +
-                $"LeavedLevel = {QualifyReadings.Last().Sum(p => (p.TakedTarget as SRDS.Map.Targets.Snowdrift).Level)}\n");
+                $"LeavedLevel = {QualifyReadings.Last().Sum(p => (p.TakedTarget as Snowdrift).Level)}\n");
         }
     }
 

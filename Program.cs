@@ -10,7 +10,7 @@ namespace SRDS {
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             Application application = new Application();
-            application.Run(new Map.MapWPF());
+            application.Run(new Model.Map.MapWPF());
         }
     }
 }
