@@ -37,6 +37,7 @@ public class GlobalMeteo : INotifyPropertyChanged {
                     Wind.Negate();
             }
 
+            Simulate();
             if (time.Minute % 20 == 0 && time.Second == 0)
                 GenerateClouds();
             GenerateSnowdrifts();
@@ -86,6 +87,26 @@ public class GlobalMeteo : INotifyPropertyChanged {
         Time = new DateTime(0);
     }
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void Simulate() {
+        var clouds_list = Clouds.ToList();
+        clouds_list.RemoveAll(p => p.End < time && p.Finished || p.IsOutside(map));
+        for (int i = 0; i < clouds_list.Count; i++) {
+            var p = clouds_list[i];
+            p.Simulate();
+            p.Velocity = Wind;
+            double mins = (p.End - time).TotalMinutes,
+                   radiusReduceTime = (p.End - p.Start).TotalMinutes / 4,
+                   intensityReduceTime = (p.End - p.Start).TotalMinutes / 2;
+            p.Intensity = mins > intensityReduceTime ?
+                p.MaxIntensity : Math.Max(0, p.MaxIntensity / intensityReduceTime * mins);
+            p.Radius = mins > radiusReduceTime ?
+                p.MaxRadius : Math.Max(0, p.MaxRadius / radiusReduceTime * mins);
+            p.Finished = p.Radius == 0 || p.End < time;
+        }
+        Clouds = clouds_list.ToArray();
+    }
+
     private void GenerateClouds() {
         var clouds_list = Clouds.ToList();
         if (Rnd.NextDouble() > 0.7) {
@@ -106,14 +127,6 @@ public class GlobalMeteo : INotifyPropertyChanged {
 
             clouds_list.Add(new SnowCloud(position, radius, Wind, intensity, start, end));
         }
-        clouds_list.RemoveAll(p => p.End < time && p.Finished || p.IsOutside(map));
-        clouds_list.ForEach(p => {
-            p.Simulate();
-            p.Finished = p.End < time;
-            p.Velocity = Wind;
-            double mins = Math.Abs((p.End - time).TotalMinutes);
-            p.Intensity = mins > 15 ? p.Intensity : p.Intensity - p.Intensity / mins;
-        });
         Clouds = clouds_list.ToArray();
     }
     private void GenerateSnowdrifts() {

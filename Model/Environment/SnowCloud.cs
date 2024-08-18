@@ -7,7 +7,18 @@ using System.Windows.Shapes;
 namespace SRDS.Model.Environment;
 using Map;
 public class SnowCloud : IPlaceable {
-    public double Intensity { get; set; } = 0;
+    public double MaxIntensity { get; init; } = 0;
+    private double intensity = 0;
+    public double Intensity { 
+        get => intensity;
+        set {
+            intensity = value;
+            if (intensity < 0.02)
+                Color = Colors.LightGray;
+            else if (intensity < 0.1)
+                Color = Colors.Gray;
+        }
+    }
     private Point position;
     /// <summary>
     /// Center position
@@ -19,7 +30,8 @@ public class SnowCloud : IPlaceable {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
         }
     }
-    public double Radius { get; init; }
+    public double MaxRadius { get; init; }
+    public double Radius { get; set; }
     public Vector Velocity { get; set; }
     public DateTime Start { get; init; }
     public DateTime End { get; init; }
@@ -28,15 +40,13 @@ public class SnowCloud : IPlaceable {
     public SnowCloud() {
         Color = Colors.Black;
     }
-    public SnowCloud(Point p, double r, Vector v, double intensity, DateTime start, DateTime end) : this() {
+    public SnowCloud(Point p, double r, Vector v, double _intensity, DateTime start, DateTime end) : this() {
         Position = p;
-        Radius = r;
+        Radius = MaxRadius = r;
         Velocity = v;
         Start = start;
         End = end;
-        Intensity = intensity;
-        if (intensity < 0.01)
-            Color = Colors.LightGray;
+        Intensity = MaxIntensity = _intensity;
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -62,8 +72,6 @@ public class SnowCloud : IPlaceable {
 
     public void Simulate() {
         Position += Velocity;
-        if (Intensity < 0.01)
-            Color = Colors.LightGray;
     }
 
     public bool IsOutside(TacticalMap map) {
