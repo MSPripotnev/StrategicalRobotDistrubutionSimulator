@@ -53,10 +53,10 @@ internal class AStarExplorer : IExplorer
         for (int i = 1; i < 9; i += 2, iterations++)
         {
             //выбор направления
-            Point pos = new Point(
-                    currentPoint.Position.X + (i / 3 - 1) * Scale,// * (i % 2 - 1),
+            Point pos = new Point(Math.Round(
+                    currentPoint.Position.X + (i / 3 - 1) * Scale),// * (i % 2 - 1),
                                                                   //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
-                    currentPoint.Position.Y + (i % 3 - 1) * Scale);// * (i % 2 - 1));
+                    Math.Round(currentPoint.Position.Y + (i % 3 - 1) * Scale));// * (i % 2 - 1));
                                                                    //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
             var road = Map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
                 .MinBy(p => p.DistanceToRoad(pos));
