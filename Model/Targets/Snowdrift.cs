@@ -1,4 +1,4 @@
-using SRDS.Model.Environment;
+﻿using SRDS.Model.Environment;
 
 using System.Windows;
 using System.Windows.Data;
@@ -39,6 +39,10 @@ public class Snowdrift : Target {
                 Type = SnowType.LooseSnow;
             Color = SnowColor(Type);
         }
+    }
+    public Snowdrift(Point pos, double level, double mash) : base(pos) {
+        MashPercent = mash;
+        Level = level;
     }
     public Snowdrift(Point pos, double level, Random rnd) : base(pos) {
         MashPercent = rnd.NextDouble() * 100;

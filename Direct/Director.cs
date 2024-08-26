@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -209,6 +209,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         for (int i = 0; i < Targets.Length; i++)
             if (Targets[i].Finished)
                 Remove(Targets[i]);
+        MergeSnowdrifts();
     }
 
     public void RefreshMeteo(object? sender, PropertyChangedEventArgs e) {
@@ -217,6 +218,35 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
                 Add(Meteo.GeneratedSnowdrifts[i]);
             Meteo.GeneratedSnowdrifts.Clear();
         }
+
+    }
+
+    private void MergeSnowdrifts() {
+        var snow = Targets.OfType<Snowdrift>().ToArray();
+        List<Snowdrift> merged = new(), created = new();
+        for (int i = 0; i < snow.Length; i++) {
+            int mergeRadius = (int)Math.Round(Math.Max(0, 20 - snow[i].Level));
+            var nearSnow = snow.Where(p => (snow[i].Position - p.Position).LengthSquared < mergeRadius * mergeRadius).ToArray();
+            if (nearSnow is null || merged.Contains(snow[i]) || nearSnow.Length < 2 || snow[i].Level > 49)
+                continue;
+
+            Point center = new Point(0,0);
+            double level = 0, mash = 0;
+
+            for (int j = 0; j < nearSnow.Length; j++) {
+                center.X += nearSnow[j].Position.X;
+                center.Y += nearSnow[j].Position.Y;
+                level += nearSnow[j].Level;
+                mash += snow[i].MashPercent;
+                merged.Add(nearSnow[j]);
+            }
+            (center.X, center.Y) = (Math.Round(center.X / nearSnow.Length), Math.Round(center.Y / nearSnow.Length));
+            mash /= nearSnow.Length;
+            level = Math.Min(level, 50);
+            merged.Add(snow[i]);
+            created.Add(new Snowdrift(center, level, mash));
+        }
+        Targets = Targets.ToList().Except(merged).Concat(created).ToArray();
     }
 
     public bool CheckMission() {
