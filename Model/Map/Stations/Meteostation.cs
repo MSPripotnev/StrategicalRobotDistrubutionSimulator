@@ -51,9 +51,11 @@ internal class Meteostation : Station, IPlaceableWithArea {
 
         PrecipitationIntensity = 0;
         double cloudness_area = 0;
-        foreach (var o in meteo.Clouds.Where(p => p.Radius + WorkRadius > (p.Position - Position).Length)) {
-            double r1 = o.Radius, r2 = WorkRadius, distance = (o.Position - Position).Length;
-            PrecipitationIntensity += Math.Min(o.Intensity, o.Intensity * Math.Abs(distance - o.Radius) / distance);
+        foreach (var o in meteo.Clouds.Where(p => p.Length + WorkRadius > (p.Position - Position).Length ||
+                p.Width + WorkRadius > (p.Position - Position).Length)) {
+            double r1 = o.Length > o.Width ? o.Length : o.Width, 
+                    r2 = WorkRadius, distance = (o.Position - Position).Length;
+            PrecipitationIntensity += Math.Min(o.Intensity, o.Intensity * Math.Abs(distance - o.Length) / distance);
 
             double f1 = 2 * Math.Acos((r1 * r1 - r2 * r2 + distance * distance) / (2 * r1 * distance)),
                    f2 = 2 * Math.Acos((r2 * r2 - r1 * r1 + distance * distance) / (2 * r2 * distance)),

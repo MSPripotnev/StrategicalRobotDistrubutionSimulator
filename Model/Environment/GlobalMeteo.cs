@@ -38,8 +38,13 @@ public class GlobalMeteo : INotifyPropertyChanged {
             }
 
             Simulate();
-            if (time.Minute % 20 == 0 && time.Second == 0)
-                GenerateClouds();
+            var clouds_list = Clouds.ToList();
+            if (time.Minute % 30 == 0 && time.Second == 0) {
+                if (Rnd.NextDouble() > 0.8)
+                    clouds_list.Add(GenerateCloud());
+
+            }
+            Clouds = clouds_list.ToArray();
             GenerateSnowdrifts();
         }
     }
@@ -91,43 +96,28 @@ public class GlobalMeteo : INotifyPropertyChanged {
     private void Simulate() {
         var clouds_list = Clouds.ToList();
         clouds_list.RemoveAll(p => p.End < time && p.Finished || p.IsOutside(map));
-        for (int i = 0; i < clouds_list.Count; i++) {
-            var p = clouds_list[i];
-            p.Simulate();
-            p.Velocity = Wind;
-            double mins = (p.End - time).TotalMinutes,
-                   radiusReduceTime = (p.End - p.Start).TotalMinutes / 4,
-                   intensityReduceTime = (p.End - p.Start).TotalMinutes / 2;
-            p.Intensity = mins > intensityReduceTime ?
-                p.MaxIntensity : Math.Max(0, p.MaxIntensity / intensityReduceTime * mins);
-            p.Radius = mins > radiusReduceTime ?
-                p.MaxRadius : Math.Max(0, p.MaxRadius / radiusReduceTime * mins);
-            p.Finished = p.Radius == 0 || p.End < time;
-        }
+        for (int i = 0; i < clouds_list.Count; i++)
+            clouds_list[i].Simulate(Wind, time);
         Clouds = clouds_list.ToArray();
     }
+    private SnowCloud GenerateCloud() {
+        const int rMin = 50, rMax = 350;
+        double width = Rnd.Next(rMin, rMax), length = Rnd.Next(rMin, rMax);
+        Point position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
+        int max_attempts = 100;
 
-    private void GenerateClouds() {
-        var clouds_list = Clouds.ToList();
-        if (Rnd.NextDouble() > 0.7) {
-            double radius = Rnd.Next(40, 300);
-            Point position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
-            int max_attempts = 100;
-            while (max_attempts-- > 0) {
-                if (!Clouds.Any(p => p.Radius + radius > (p.Position - position).Length))
-                    break;
-                radius = Rnd.Next(50, 250);
-                position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
-            }
-            DateTime start = time, end = time.AddMinutes(Rnd.Next(60, 300) * 200 / radius);
-
-            double intensity = Rnd.NextDouble() * radius / 50;
-            if (Rnd.NextDouble() < 0.5)
-                intensity = 0;
-
-            clouds_list.Add(new SnowCloud(position, radius, Wind, intensity, start, end));
+        while (max_attempts-- > 0) {
+            if (!Clouds.Any(p => p.PointInside(position)))
+                break;
+            position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
         }
-        Clouds = clouds_list.ToArray();
+        DateTime start = time, end = time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
+
+        double intensity = Rnd.NextDouble() * width * length / rMax / rMin;
+        if (Rnd.NextDouble() < 0.5)
+            intensity = 0;
+        return new SnowCloud(position, width, length, Wind, intensity, start, end);
+    }
     }
     private void GenerateSnowdrifts() {
         if (Rnd.Next(0, 10) < 5)
@@ -138,8 +128,8 @@ public class GlobalMeteo : INotifyPropertyChanged {
             do {
                 double angle = Rnd.NextDouble() * 2 * Math.PI;
 
-                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Radius * Math.Cos(angle),
-                    cloud.Position.Y + Rnd.NextDouble() * cloud.Radius * Math.Sin(angle));
+                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Width * Math.Cos(angle),
+                    cloud.Position.Y + Rnd.NextDouble() * cloud.Length * Math.Sin(angle));
                 iter++;
             } while ((Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter) ||
                 map.PointNearBorders(pos)) && iter < 10000);

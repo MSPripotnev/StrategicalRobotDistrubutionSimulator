@@ -9,7 +9,7 @@ using Map;
 public class SnowCloud : IPlaceable {
     public double MaxIntensity { get; init; } = 0;
     private double intensity = 0;
-    public double Intensity { 
+    public double Intensity {
         get => intensity;
         set {
             intensity = value;
@@ -30,8 +30,10 @@ public class SnowCloud : IPlaceable {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
         }
     }
-    public double MaxRadius { get; init; }
-    public double Radius { get; set; }
+    public double MaxLength { get; set; }
+    public double MaxWidth { get; set; }
+    public double Length { get; set; }
+    public double Width { get; set; }
     public Vector Velocity { get; set; }
     public DateTime Start { get; init; }
     public DateTime End { get; init; }
@@ -40,10 +42,11 @@ public class SnowCloud : IPlaceable {
     public SnowCloud() {
         Color = Colors.Black;
     }
-    public SnowCloud(Point p, double r, Vector v, double _intensity, DateTime start, DateTime end) : this() {
+    public SnowCloud(Point p, double w, double l, Vector v, double _intensity, DateTime start, DateTime end) : this() {
         Position = p;
-        Radius = MaxRadius = r;
         Velocity = v;
+        MaxWidth = Width = w; // X
+        MaxLength = Length = l; // Y
         Start = start;
         End = end;
         Intensity = MaxIntensity = _intensity;
@@ -56,9 +59,9 @@ public class SnowCloud : IPlaceable {
             StrokeThickness = 1,
             StrokeDashOffset = 2,
             StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 }),
-            Margin = new Thickness(-Radius, -Radius, 0, 0),
-            Width = Radius * 2,
-            Height = Radius * 2,
+            Margin = new Thickness(-Width / 2, -Length / 2, 0, 0),
+            Width = this.Width,
+            Height = this.Length,
             Uid = nameof(SnowCloud),
         };
         Binding binding = new Binding(nameof(Position) + ".X");
@@ -70,16 +73,30 @@ public class SnowCloud : IPlaceable {
         return el;
     }
 
-    public void Simulate() {
+    public void Simulate(Vector wind, DateTime time) {
         Position += Velocity;
+        Velocity = wind;
+        double mins = (End - time).TotalMinutes,
+               sizeReduceTime = (End - Start).TotalMinutes / 2,
+               intensityReduceTime = (End - Start).TotalMinutes / 4;
+        Intensity = mins > intensityReduceTime ?
+            MaxIntensity : Math.Max(0, MaxIntensity / intensityReduceTime * mins);
+        if (mins < sizeReduceTime) {
+            Width = Math.Max(0, MaxWidth / sizeReduceTime * mins);
+            Length = Math.Max(0, MaxLength / sizeReduceTime * mins);
+        }
+        Finished = Width < 0.1 || Length < 0.1 || End < time;
     }
+    public bool PointInside(Point p) =>
+        (p.X - Position.X) * (p.X - Position.X) / Length / Length +
+        (p.Y - Position.Y) * (p.Y - Position.Y) / Width / Width <= 1;
 
     public bool IsOutside(TacticalMap map) {
         Point[] cloudBorders = {
-            Position - new Vector(Radius, 0),
-            Position - new Vector(-Radius, 0),
-            Position - new Vector(0, Radius),
-            Position - new Vector(0, -Radius),
+            Position - new Vector(Length, 0),
+            Position - new Vector(-Length, 0),
+            Position - new Vector(0, Width),
+            Position - new Vector(0, -Width),
         };
         return (cloudBorders.All(p => map.PointOutsideBorders(p)));
     }
