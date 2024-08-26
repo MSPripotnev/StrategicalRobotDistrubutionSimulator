@@ -15,7 +15,6 @@ public enum Cloudness {
 public class GlobalMeteo : INotifyPropertyChanged {
     private int t_min, t_max, h_min, h_max, p_min, p_max;
     private Cloudness cloudness = Cloudness.Clear;
-    private Vector wind;
     private readonly TacticalMap map;
     public Random Rnd { private get; set; }
     private DateTime time;
@@ -29,12 +28,11 @@ public class GlobalMeteo : INotifyPropertyChanged {
                 p_min = Rnd.Next(-10, -5); p_max = Rnd.Next(t_min, 10);
             }
 
-            if (time.Minute % 20 == 0 && time.Second == 0) {
-                Wind.Normalize();
-                Wind = wind * DailyModifier(Time.Hour, 0, 6, 0) +
-                    new Vector(Rnd.NextDouble() / 2, Rnd.NextDouble() / 2);
-                if (Rnd.NextDouble() < 0.5)
-                    Wind.Negate();
+            if (time.Minute % 10 == 0 && time.Second == 0) {
+                Wind = Wind / (Wind.Length + 0.00001) * DailyModifier(Time.Hour, 0, 4, 0) +
+                    new Vector((Rnd.NextDouble()-1) / 2, (Rnd.NextDouble()-1) / 2);
+                if (Rnd.NextDouble() < 0.1)
+                    Wind *= -1;
             }
 
             Simulate();
