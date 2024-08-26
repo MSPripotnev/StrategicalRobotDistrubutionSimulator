@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -213,18 +213,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
 
     public void RefreshMeteo(object? sender, PropertyChangedEventArgs e) {
         if (e.PropertyName == nameof(Meteo.GeneratedSnowdrifts)) {
-            for (int i = 0; i < Meteo.GeneratedSnowdrifts.Count; i++) {
-                var g = Meteo.GeneratedSnowdrifts[i];
-                var t = Targets.FirstOrDefault(p => p is Snowdrift s && (p.Position - g.Position).Length < (s.Level + g.Level + 10)) as Snowdrift;
-                if (t is not null) {
-                    if (t.Level > 50)
-                        continue;
-                    t.MashPercent = (t.MashPercent * t.Level + g.MashPercent * g.Level) / (t.Level + g.Level);
-                    t.Level += g.Level;
-                } else {
-                    Add(g);
-                }
-            }
+            for (int i = 0; i < Meteo.GeneratedSnowdrifts.Count; i++)
+                Add(Meteo.GeneratedSnowdrifts[i]);
             Meteo.GeneratedSnowdrifts.Clear();
         }
     }

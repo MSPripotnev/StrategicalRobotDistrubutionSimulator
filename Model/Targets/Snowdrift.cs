@@ -1,4 +1,4 @@
-﻿using SRDS.Model.Environment;
+using SRDS.Model.Environment;
 
 using System.Windows;
 using System.Windows.Data;
@@ -54,6 +54,7 @@ public class Snowdrift : Target {
             Fill = new SolidColorBrush(Color),
             Stroke = Brushes.Black,
             StrokeThickness = 1,
+            Uid = nameof(Snowdrift),
         };
         el.Margin = new Thickness(-el.Width / 2, -el.Height / 2, 0, 0);
         el.RenderTransform = new RotateTransform(rnd.NextDouble() * 2 * Math.PI);

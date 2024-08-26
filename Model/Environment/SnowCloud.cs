@@ -59,7 +59,7 @@ public class SnowCloud : IPlaceable {
             Margin = new Thickness(-Radius, -Radius, 0, 0),
             Width = Radius * 2,
             Height = Radius * 2,
-            Uid = "cloud",
+            Uid = nameof(SnowCloud),
         };
         Binding binding = new Binding(nameof(Position) + ".X");
         binding.Source = this;

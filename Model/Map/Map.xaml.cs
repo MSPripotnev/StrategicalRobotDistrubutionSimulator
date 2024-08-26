@@ -106,13 +106,16 @@ public partial class MapWPF : Window {
         if (drawCB.IsChecked != true)
             return;
         if (e.PropertyName == nameof(Director.Targets) || e.PropertyName == nameof(Director.Meteo.GeneratedSnowdrifts)) {
-            mapCanvas.Children.Clear();
-            DrawPlaceableObjects();
+            for (int i = 0; i < mapCanvas.Children.Count; i++)
+                if (mapCanvas.Children[i].Uid == nameof(Snowdrift))
+                    mapCanvas.Children.Remove(mapCanvas.Children[i]);
+            foreach (Snowdrift s in Director.Targets.OfType<Snowdrift>())
+                mapCanvas.Children.Add(s.Build());
             return;
         }
         if (Director.Meteo != null && e.PropertyName == nameof(Director.Meteo.Clouds)) {
             for (int i = 0; i < mapCanvas.Children.Count; i++)
-                if (mapCanvas.Children[i].Uid == "cloud")
+                if (mapCanvas.Children[i].Uid == nameof(SnowCloud))
                     mapCanvas.Children.Remove(mapCanvas.Children[i]);
             foreach (SnowCloud o in Director.Meteo.Clouds)
                 mapCanvas.Children.Add(o.Build());

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 
 namespace SRDS.Model.Environment;
@@ -148,6 +148,7 @@ public class GlobalMeteo : INotifyPropertyChanged {
                 GeneratedSnowdrifts.Add(s);
             }
         }
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GeneratedSnowdrifts)));
+        if (GeneratedSnowdrifts.Any())
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GeneratedSnowdrifts)));
     }
 }
