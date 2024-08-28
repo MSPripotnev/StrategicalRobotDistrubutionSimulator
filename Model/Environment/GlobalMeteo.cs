@@ -30,8 +30,8 @@ public class GlobalMeteo : INotifyPropertyChanged {
 
             if (time.Minute % 10 == 0 && time.Second == 0) {
                 Wind = Wind / (Wind.Length + 0.00001) * DailyModifier(Time.Hour, 0, 4, 0) +
-                    new Vector((Rnd.NextDouble()-1) / 2, (Rnd.NextDouble()-1) / 2);
-                if (Rnd.NextDouble() < 0.1)
+                    new Vector((Rnd.NextDouble()-1) / 4, (Rnd.NextDouble()-1) / 4);
+                if (Rnd.NextDouble() < 0.01)
                     Wind *= -1;
             }
 
@@ -105,7 +105,9 @@ public class GlobalMeteo : INotifyPropertyChanged {
     private SnowCloud GenerateCloud() {
         const int rMin = 50, rMax = 350;
         double width = Rnd.Next(rMin, rMax), length = Rnd.Next(rMin, rMax);
-        Point position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
+        Point position = new Point(map.Borders.Width / 2, map.Borders.Height / 2) -
+            Wind / Wind.Length / 2 *
+            Math.Sqrt(map.Borders.Width * map.Borders.Width + map.Borders.Height * map.Borders.Height);
         int max_attempts = 100;
 
         while (max_attempts-- > 0) {
