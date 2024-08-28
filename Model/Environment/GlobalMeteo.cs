@@ -40,7 +40,11 @@ public class GlobalMeteo : INotifyPropertyChanged {
             if (time.Minute % 30 == 0 && time.Second == 0) {
                 if (Rnd.NextDouble() > 0.8)
                     clouds_list.Add(GenerateCloud());
-
+                if (Rnd.NextDouble() > 0.4) {
+                    var c = SplitCloud();
+                    if (c != null)
+                        clouds_list.Add(c);
+                }
             }
             Clouds = clouds_list.ToArray();
             GenerateSnowdrifts();
@@ -110,12 +114,34 @@ public class GlobalMeteo : INotifyPropertyChanged {
             position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
         }
         DateTime start = time, end = time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
-
-        double intensity = Rnd.NextDouble() * width * length / rMax / rMin;
+        const double dispersing = 0.8;
+        double intensity = Rnd.NextDouble() * width * length / rMax / rMin * dispersing;
         if (Rnd.NextDouble() < 0.5)
             intensity = 0;
         return new SnowCloud(position, width, length, Wind, intensity, start, end);
     }
+    private SnowCloud? SplitCloud() {
+        if (!Clouds.Any())
+            return null;
+        var bigClouds = Clouds.OrderByDescending(p => p.Width * p.Length).Take(Math.Min(5, Clouds.Length)).ToArray();
+        SnowCloud splited = bigClouds[Rnd.Next(0, bigClouds.Length)];
+        if (splited.Width * splited.Length < 100 * 100)
+            return null;
+        int direction = Rnd.Next(0, 3) * 2 + 1;
+        double width = splited.Width / Rnd.Next(2, 4),
+               length = splited.Length / Rnd.Next(2, 4);
+        splited.MaxWidth *= (1 - width / splited.MaxWidth);
+        splited.MaxLength *= (1 - length / splited.MaxLength);
+        splited.Width *= (1 - width / splited.Width);
+        splited.Length *= (1 - length / splited.Length);
+        Point position = new Point(
+            Math.Round(splited.Position.X + (direction / 3 - 1) * length),
+            Math.Round(splited.Position.Y + (direction % 3 - 1) * width));
+
+        if (Clouds.Any(p => (p.Position - position).Length < 20))
+            return null;
+
+        return new SnowCloud(position, width, length, Wind, splited.Intensity, Time, splited.End.AddMinutes(Rnd.NextDouble() * 60 - 30));
     }
     private void GenerateSnowdrifts() {
         if (Rnd.Next(0, 10) < 5)
