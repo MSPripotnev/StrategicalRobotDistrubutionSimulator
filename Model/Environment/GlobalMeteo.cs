@@ -156,8 +156,8 @@ public class GlobalMeteo : INotifyPropertyChanged {
             do {
                 double angle = Rnd.NextDouble() * 2 * Math.PI;
 
-                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Width * Math.Cos(angle),
-                    cloud.Position.Y + Rnd.NextDouble() * cloud.Length * Math.Sin(angle));
+                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Length * Math.Cos(angle),
+                    cloud.Position.Y + Rnd.NextDouble() * cloud.Width * Math.Sin(angle));
                 iter++;
             } while ((Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter) ||
                 map.PointNearBorders(pos)) && iter < 10000);
