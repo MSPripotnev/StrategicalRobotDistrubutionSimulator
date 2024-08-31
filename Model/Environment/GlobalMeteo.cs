@@ -24,8 +24,8 @@ public class GlobalMeteo : INotifyPropertyChanged {
             time = value;
             if (time.Hour == 0 && time.Minute == 0 && time.Second == 0) {
                 t_min = Rnd.Next(-20, -5); t_max = Rnd.Next(t_min, 5);
-                h_min = Rnd.Next(30, 50); h_max = Rnd.Next(h_max, t_max > 1 ? 90 : 70);
-                p_min = Rnd.Next(-10, -5); p_max = Rnd.Next(t_min, 10);
+                h_min = Rnd.Next(30, 50); h_max = Rnd.Next(h_min, t_max > 1 ? 90 : 70);
+                p_min = Rnd.Next(-10, -5); p_max = Rnd.Next(p_min, 10);
             }
 
             if (time.Minute % 10 == 0 && time.Second == 0) {
