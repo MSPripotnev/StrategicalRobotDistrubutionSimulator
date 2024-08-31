@@ -68,6 +68,12 @@ public partial class MapWPF : Window {
                 if (pauseTime != DateTime.MinValue)
                     tempTime += (pauseTime - startTime);
                 stepB.IsEnabled = true;
+                if (testingCB.IsChecked == true)
+                    meteoCB.IsEnabled = false;
+                pauseTime = startTime;
+                stopB.IsEnabled = true;
+                if (pauseTime > startTime)
+                    tempTime += pauseTime - startTime;
                 Start();
             }
             pause = value;
@@ -396,6 +402,7 @@ public partial class MapWPF : Window {
     #endregion
 
     #region Buttons
+    double lastSpeed = 1;
     private void MenuItem_Click(object sender, RoutedEventArgs e) {
         var button = sender as MenuItem;
         IPlaceable obj = null;
@@ -518,18 +525,10 @@ public partial class MapWPF : Window {
     }
     private void startButton_Click(object sender, RoutedEventArgs e) {
         if (startB.Content.ToString() == "▶️") {
-            if (pauseTime > startTime)
-                tempTime += pauseTime - startTime;
-            Start();
-            pauseTime = startTime;
-            stopB.IsEnabled = true;
-            startB.Content = "||";
-            Pause = false;
-            if (testingCB.IsChecked == true)
-                meteoCB.IsEnabled = false;
+            speedSlider.Value = lastSpeed;
         } else {
-            startB.Content = "▶️";
-            Pause = true;
+            lastSpeed = speedSlider.Value;
+            speedSlider.Value = 0;
         }
     }
     private void stopB_Click(object sender, RoutedEventArgs e) {
@@ -632,6 +631,16 @@ public partial class MapWPF : Window {
     private void meteoCB_Checked(object sender, RoutedEventArgs e) {
         if (Director is not null)
             Director.EnableMeteo = meteoCB.IsChecked.Value;
+    }
+
+    private void speedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
+        const double maxInterval = 500000;
+        if (e.NewValue > 0) {
+            refreshTimer.Interval = new TimeSpan((int)Math.Round(maxInterval / e.NewValue));
+            Pause = false;
+        } else {
+            Pause = true;
+        }
     }
 
     private void testsB_Click(object sender, RoutedEventArgs e) {
