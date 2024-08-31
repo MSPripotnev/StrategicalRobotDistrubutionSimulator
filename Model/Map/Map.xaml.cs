@@ -643,6 +643,13 @@ public partial class MapWPF : Window {
         }
     }
 
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e) {
+        if (e.Key == Key.Space)
+            startButton_Click(sender, null);
+        if (e.Key >= Key.D1 && e.Key <= Key.D5)
+            speedSlider.Value = e.Key - Key.D1 + 1;
+    }
+
     private void testsB_Click(object sender, RoutedEventArgs e) {
         Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
         window.ShowDialog();
