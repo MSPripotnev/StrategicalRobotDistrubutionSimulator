@@ -147,7 +147,7 @@ public class GlobalMeteo : INotifyPropertyChanged {
     }
     private void GenerateSnowdrifts() {
         foreach (var cloud in Clouds.Where(c => c.Intensity > 0)) {
-            if (Rnd.Next(0, (int)Math.Ceiling(cloud.MaxWidth * cloud.MaxLength)) <
+            if (Rnd.Next(0, (int)Math.Ceiling(cloud.MaxWidth * cloud.MaxLength)) >
                     Math.Min(cloud.Width, Math.Abs(cloud.Width - cloud.Position.X)) *
                     Math.Min(cloud.Length, Math.Abs(cloud.Length - cloud.Position.Y)) / 2)
                 continue;
