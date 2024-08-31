@@ -378,10 +378,9 @@ public partial class MapWPF : Window {
             Director = tester.ReloadModel();
             meteoCB.IsEnabled = true;
         }
-        refreshTimer.Stop();
+        speedSlider.Value = 0;
         RefreshTime();
         Refresh();
-        startB.Content = "▶️";
         for (int i = 0; i < menu.Items.Count; i++)
             (menu.Items[i] as UIElement).IsEnabled = true;
         stopB.IsEnabled = false;
@@ -401,8 +400,46 @@ public partial class MapWPF : Window {
     }
     #endregion
 
-    #region Buttons
-    double lastSpeed = 1;
+    private void FileMenuItem_Click(object sender, RoutedEventArgs e) {
+        var button = sender as MenuItem;
+        Microsoft.Win32.FileDialog fd = null;
+        object serialized_object;
+        bool? action_is_open = button.Tag.ToString().Contains("open") ? true
+            : button.Tag.ToString().Contains("save") ? false
+            : null;
+        if (!action_is_open.HasValue) {
+            Director = new Director(mapCanvas.RenderSize);
+            return;
+        }
+        fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
+        if (button.Tag.ToString().Contains("model")) {
+            fd.Filter = "Файлы модели|*.xml|Все файлы|*.*";
+            serialized_object = Director;
+        } else if (button.Tag.ToString().Contains("map")) {
+            fd.Filter = "Файлы разметки|*.xml|Все файлы|*.*";
+            serialized_object = Director.Map;
+        } else return;
+        if (fd.ShowDialog() != true || fd.FileName == "")
+            return;
+        if (serialized_object == Director) {
+            if (action_is_open == true) {
+                Director = Director.Deserialize(fd.FileName);
+                if (tester.Models.Any() && tester.Models[0] is CopyModel cm && cm.Unpack() != Director)
+                    tester.Models[0] = new CopyModel(Director) { Path = fd.FileName };
+                tester.AttemptsN = tester.Models[0].MaxAttempts;
+                DrawPlaceableObjects();
+            } else
+                Director?.Serialize(fd.FileName);
+            return;
+        }
+        if (action_is_open == true && serialized_object == Director.Map)
+            Director.MapPath = fd.FileName;
+        else if (action_is_open == false)
+            Director.Map.Save(fd.FileName);
+        DrawPlaceableObjects();
+    }
+
+    #region Simulation Content Control
     private void MenuItem_Click(object sender, RoutedEventArgs e) {
         var button = sender as MenuItem;
         IPlaceable obj = null;
@@ -523,55 +560,6 @@ public partial class MapWPF : Window {
 
         lastClickPos = new Point(0, 0);
     }
-    private void startButton_Click(object sender, RoutedEventArgs e) {
-        if (startB.Content.ToString() == "▶️") {
-            speedSlider.Value = lastSpeed;
-        } else {
-            lastSpeed = speedSlider.Value;
-            speedSlider.Value = 0;
-        }
-    }
-    private void stopB_Click(object sender, RoutedEventArgs e) {
-        Stop();
-    }
-    private void FileMenuItem_Click(object sender, RoutedEventArgs e) {
-        var button = sender as MenuItem;
-        Microsoft.Win32.FileDialog fd = null;
-        object serialized_object;
-        bool? action_is_open = button.Tag.ToString().Contains("open") ? true
-            : button.Tag.ToString().Contains("save") ? false
-            : null;
-        if (!action_is_open.HasValue) {
-            Director = new Director(mapCanvas.RenderSize);
-            return;
-        }
-        fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
-        if (button.Tag.ToString().Contains("model")) {
-            fd.Filter = "Файлы модели|*.xml|Все файлы|*.*";
-            serialized_object = Director;
-        } else if (button.Tag.ToString().Contains("map")) {
-            fd.Filter = "Файлы разметки|*.xml|Все файлы|*.*";
-            serialized_object = Director.Map;
-        } else return;
-        if (fd.ShowDialog() != true || fd.FileName == "")
-            return;
-        if (serialized_object == Director) {
-            if (action_is_open == true) {
-                Director = Director.Deserialize(fd.FileName);
-                if (tester.Models.Any() && tester.Models[0] is CopyModel cm && cm.Unpack() != Director)
-                    tester.Models[0] = new CopyModel(Director) { Path = fd.FileName };
-                tester.AttemptsN = tester.Models[0].MaxAttempts;
-                DrawPlaceableObjects();
-            } else
-                Director?.Serialize(fd.FileName);
-            return;
-        }
-        if (action_is_open == true && serialized_object == Director.Map)
-            Director.MapPath = fd.FileName;
-        else if (action_is_open == false)
-            Director.Map.Save(fd.FileName);
-        DrawPlaceableObjects();
-    }
     private void deleteObjectB_Click(object sender, RoutedEventArgs e) {
         IPlaceable? obj = null;
         obj = FindObject(lastClickPos);
@@ -612,12 +600,25 @@ public partial class MapWPF : Window {
         (mapCanvas.ContextMenu.Items[1] as MenuItem).IsEnabled = true;
         (mapCanvas.ContextMenu.Items[3] as MenuItem).IsEnabled = false;
     }
+
+    private void meteoCB_Checked(object sender, RoutedEventArgs e) {
+        if (Director is not null)
+            Director.EnableMeteo = meteoCB.IsChecked.Value;
+    }
     #endregion
 
-    private void nextModelB_Click(object sender, RoutedEventArgs e) {
-        tester.NextModel();
+    #region Simulation Flow Control
+    private void startButton_Click(object sender, RoutedEventArgs e) {
+        if (startB.Content.ToString() == "▶️") {
+            speedSlider.Value = lastSpeed;
+        } else {
+            lastSpeed = speedSlider.Value;
+            speedSlider.Value = 0;
+        }
     }
-
+    private void stopB_Click(object sender, RoutedEventArgs e) {
+        Stop();
+    }
     private void stepB_Click(object sender, RoutedEventArgs e) {
         refreshTimer.Stop();
         var dt = DateTime.Now;
@@ -627,12 +628,7 @@ public partial class MapWPF : Window {
         tempTime += DateTime.Now - pauseTime;
         realWayTime += ts;
     }
-
-    private void meteoCB_Checked(object sender, RoutedEventArgs e) {
-        if (Director is not null)
-            Director.EnableMeteo = meteoCB.IsChecked.Value;
-    }
-
+    double lastSpeed = 1;
     private void speedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
         const double maxInterval = 500000;
         if (e.NewValue > 0) {
@@ -642,12 +638,16 @@ public partial class MapWPF : Window {
             Pause = true;
         }
     }
-
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e) {
         if (e.Key == Key.Space)
             startButton_Click(sender, null);
-        if (e.Key >= Key.D1 && e.Key <= Key.D5)
+        else if (e.Key >= Key.D1 && e.Key <= Key.D5)
             speedSlider.Value = e.Key - Key.D1 + 1;
+    }
+    #endregion
+
+    private void nextModelB_Click(object sender, RoutedEventArgs e) {
+        tester.NextModel();
     }
 
     private void testsB_Click(object sender, RoutedEventArgs e) {
