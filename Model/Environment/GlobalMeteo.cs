@@ -148,16 +148,16 @@ public class GlobalMeteo : INotifyPropertyChanged {
     private void GenerateSnowdrifts() {
         foreach (var cloud in Clouds.Where(c => c.Intensity > 0)) {
             if (Rnd.Next(0, (int)Math.Ceiling(cloud.MaxWidth * cloud.MaxLength)) <
-                    Math.Min(cloud.Length, Math.Abs(cloud.Length - cloud.Position.X)) *
-                    Math.Min(cloud.Width, Math.Abs(cloud.Width - cloud.Position.Y)) / 2)
+                    Math.Min(cloud.Width, Math.Abs(cloud.Width - cloud.Position.X)) *
+                    Math.Min(cloud.Length, Math.Abs(cloud.Length - cloud.Position.Y)) / 2)
                 continue;
             Point pos;
             long iter = 0;
             do {
                 double angle = Rnd.NextDouble() * 2 * Math.PI;
 
-                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Length * Math.Cos(angle),
-                    cloud.Position.Y + Rnd.NextDouble() * cloud.Width * Math.Sin(angle));
+                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Width * Math.Cos(angle),
+                    cloud.Position.Y + Rnd.NextDouble() * cloud.Length * Math.Sin(angle));
                 iter++;
             } while ((Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter) ||
                 map.PointNearBorders(pos)) && iter < 10000);

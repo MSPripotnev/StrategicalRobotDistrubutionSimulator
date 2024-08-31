@@ -59,7 +59,7 @@ public class SnowCloud : IPlaceable {
             StrokeThickness = 1,
             StrokeDashOffset = 2,
             StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 }),
-            Margin = new Thickness(-Width / 2, -Length / 2, 0, 0),
+            Margin = new Thickness(-Length / 2, -Width / 2, 0, 0),
             Width = this.Width,
             Height = this.Length,
             Uid = nameof(SnowCloud),
