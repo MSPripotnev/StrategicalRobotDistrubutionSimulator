@@ -39,6 +39,7 @@ public class ParametrRangeGeneratedModel : IModel {
     public string Path { get; set; }
     public string Map { get; set; }
     public int MaxAttempts { get; set; } = Testing.Default.AttemptsMax;
+    public DateTime? AttemptTime { get; set; } = null;
     [XmlArray("Transporters")]
     [XmlArrayItem("TransporterCount")]
     public List<int> TransportersT { get; set; } = new List<int>();

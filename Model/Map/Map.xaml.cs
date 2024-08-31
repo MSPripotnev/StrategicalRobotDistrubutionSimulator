@@ -282,7 +282,7 @@ public partial class MapWPF : Window {
         var dt = DateTime.Now;
         Work();
         realWayTime += (DateTime.Now - dt);
-        if (d_time.Hour == 0 && d_time.Minute == 0) {
+        if (tester.Models[0].AttemptTime is not null && d_time >= tester.Models[0].AttemptTime) {
             if (testingCB.IsChecked == true) {
                 tester.NextAttempt();
                 return;
@@ -653,7 +653,7 @@ public partial class MapWPF : Window {
             double quality = Math.Round(Director.Distributor.DistributionQualifyReadings
                 .Sum(p => p.Value.TakedLevel - (p.Value.TakedTarget as Snowdrift).Level));
 
-            localTimeL.Content = $"Местное время: {Director.Time.ToShortTimeString()}";
+            localTimeL.Content = $"Местное время: {Director.Time.ToShortTimeString()}  {Director.Time.ToLongDateString()}";
             systemQualityL.Content = $"Q = {quality}        Эпоха: {Director.Recorder.Epoch}";
             if (Director.Recorder.SystemQuality.Any()) {
                 double best_qualitity = Director.Recorder.SystemQuality.Max();

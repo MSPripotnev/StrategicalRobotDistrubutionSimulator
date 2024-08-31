@@ -21,6 +21,7 @@ public class CopyModel : IModel {
     }
     public string Name { get; set; }
     public int MaxAttempts { get; set; } = 250;
+    public DateTime? AttemptTime { get; set; }
     private int seed;
     public int Seed {
         get => seed;
