@@ -39,6 +39,7 @@ public class SnowCloud : IPlaceable {
     public DateTime End { get; init; }
     public bool Finished { get; set; }
     public Color Color { get; set; }
+    private readonly double circulazing = 1;
     public SnowCloud() {
         Color = Colors.Black;
     }
@@ -50,18 +51,21 @@ public class SnowCloud : IPlaceable {
         Start = start;
         End = end;
         Intensity = MaxIntensity = _intensity;
+        circulazing = new Random().Next(1, 4);
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public UIElement Build() {
-        Ellipse el = new Ellipse() {
+        Rectangle el = new Rectangle() {
             Stroke = new SolidColorBrush(Color),
-            StrokeThickness = 1,
+            StrokeThickness = 0.5,
             StrokeDashOffset = 2,
             StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 }),
             Margin = new Thickness(-Length / 2, -Width / 2, 0, 0),
             Width = this.Width,
             Height = this.Length,
+            RadiusX = this.Length / circulazing,
+            RadiusY = this.Width / circulazing,
             Uid = nameof(SnowCloud),
         };
         Binding binding = new Binding(nameof(Position) + ".X");
