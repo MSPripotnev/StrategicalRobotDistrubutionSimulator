@@ -226,8 +226,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         List<Snowdrift> merged = new(), created = new();
         for (int i = 0; i < snow.Length; i++) {
             int mergeRadius = (int)Math.Round(Math.Max(0, 20 - snow[i].Level));
-            var nearSnow = snow.Where(p => (snow[i].Position - p.Position).LengthSquared < mergeRadius * mergeRadius).ToArray();
-            if (nearSnow is null || merged.Contains(snow[i]) || nearSnow.Length < 2 || snow[i].Level > 49)
+            var nearSnow = snow.Where(p => (snow[i].Position - p.Position).LengthSquared < mergeRadius * mergeRadius && p.Level < 50).ToArray();
+            if (nearSnow is null || merged.Contains(snow[i]) || nearSnow.Length < 2 || snow[i].Level > 50)
                 continue;
 
             Point center = new Point(0,0);
@@ -242,7 +242,6 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             }
             (center.X, center.Y) = (Math.Round(center.X / nearSnow.Length), Math.Round(center.Y / nearSnow.Length));
             mash /= nearSnow.Length;
-            level = Math.Min(level, 50);
             merged.Add(snow[i]);
             created.Add(new Snowdrift(center, level, mash));
         }
