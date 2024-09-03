@@ -1,9 +1,8 @@
 ﻿using SRDS.Model.Map;
 using System.Windows;
 
-namespace SRDS.Direct.Tactical.Explorers.AStar;
-internal class AStarExplorer : IExplorer
-{
+namespace SRDS.Direct.Executive.Explorers.AStar;
+internal class AStarExplorer : IExplorer {
     protected Point start;
     protected Point end;
     private TacticalMap Map { get; init; }

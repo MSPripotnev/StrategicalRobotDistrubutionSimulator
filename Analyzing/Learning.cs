@@ -1,5 +1,5 @@
 ﻿using FuzzyLogic.Inference.Engines.Base;
-using SRDS.Direct.Strategical;
+using SRDS.Direct.Tactical;
 using SRDS.Model.Targets;
 
 namespace SRDS.Analyzing;

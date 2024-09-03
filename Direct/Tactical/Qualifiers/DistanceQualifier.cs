@@ -1,6 +1,6 @@
-﻿namespace SRDS.Direct.Strategical.Qualifiers;
+﻿namespace SRDS.Direct.Tactical.Qualifiers;
 using Agents;
-using Direct.Tactical;
+using Direct.Executive;
 using Model.Targets;
 
 public class DistanceQualifier : IQualifier

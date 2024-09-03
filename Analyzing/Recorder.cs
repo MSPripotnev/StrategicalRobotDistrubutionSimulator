@@ -3,11 +3,9 @@ using System.Xml;
 using System.Xml.Serialization;
 
 namespace SRDS.Analyzing;
-using Models;
-
 using SRDS.Direct;
-using SRDS.Direct.Strategical;
 using SRDS.Direct.Tactical;
+using SRDS.Direct.Executive;
 using SRDS.Model.Targets;
 
 public class Recorder : IDisposable {

@@ -1,8 +1,3 @@
-using SRDS.Direct.Agents.Drones;
-using SRDS.Direct.Tactical;
-using SRDS.Model;
-using SRDS.Model.Map.Stations;
-using SRDS.Model.Targets;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
@@ -11,6 +6,13 @@ using System.Windows.Shapes;
 using System.Xml.Serialization;
 
 namespace SRDS.Direct.Agents;
+using Drones;
+
+using Direct.Executive;
+
+using Model;
+using Model.Map.Stations;
+using Model.Targets;
 public enum RobotState {
     Disable = -1,
     Ready,

@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 namespace SRDS.Direct;
 using Agents;
 using Analyzing;
+using Executive;
 
 using Model;
 using Model.Environment;
@@ -13,8 +14,8 @@ using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
 
-using Strategical.Qualifiers;
 using Tactical;
+using Tactical.Qualifiers;
 
 public partial class Director : INotifyPropertyChanged, IDisposable {
 

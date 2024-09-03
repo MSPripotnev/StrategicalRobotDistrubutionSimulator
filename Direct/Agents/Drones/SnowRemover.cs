@@ -1,10 +1,11 @@
-using SRDS.Direct.Tactical;
-using SRDS.Model.Targets;
 using System.Windows;
 using System.Windows.Media;
 using System.Xml.Serialization;
 
 namespace SRDS.Direct.Agents.Drones;
+using Direct.Executive;
+
+using Model.Targets;
 
 public enum SnowRemoverType {
     PlowBrush,

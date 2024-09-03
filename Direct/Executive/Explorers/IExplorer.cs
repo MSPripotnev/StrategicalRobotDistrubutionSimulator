@@ -1,6 +1,5 @@
-﻿namespace SRDS.Direct.Tactical.Explorers;
-public interface IExplorer
-{
+﻿namespace SRDS.Direct.Executive.Explorers;
+public interface IExplorer {
     public AnalyzedPoint Result { get; set; }
     public long Iterations { get; set; }
     public List<AnalyzedPoint> OpenedPoints { get; set; }

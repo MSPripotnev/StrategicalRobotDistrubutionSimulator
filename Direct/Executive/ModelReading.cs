@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace SRDS.Direct.Tactical;
+namespace SRDS.Direct.Executive;
 public class ModelReading {
     public string ModelName { get; set; }
     public int TransportersCount { get; set; }

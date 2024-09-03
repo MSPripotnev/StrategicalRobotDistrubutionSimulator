@@ -1,8 +1,7 @@
 ﻿using System.Windows;
 
-namespace SRDS.Direct.Tactical.Explorers;
-public class AnalyzedPoint
-{
+namespace SRDS.Direct.Executive.Explorers;
+public class AnalyzedPoint {
     public Point Position { get; init; }
     public AnalyzedPoint Previous { get; init; }
     public double Distance { get; set; } //пройденный путь до точки
