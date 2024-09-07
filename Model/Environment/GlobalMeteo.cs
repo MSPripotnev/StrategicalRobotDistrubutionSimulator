@@ -137,8 +137,8 @@ public class GlobalMeteo : INotifyPropertyChanged {
         splited.Width *= (1 - width / splited.Width);
         splited.Length *= (1 - length / splited.Length);
         Point position = new Point(
-            Math.Round(splited.Position.X + (direction / 3 - 1) * length),
-            Math.Round(splited.Position.Y + (direction % 3 - 1) * width));
+            Math.Round(splited.Position.X + (direction / 3 - 1) * width),
+            Math.Round(splited.Position.Y + (direction % 3 - 1) * length));
 
         if (Clouds.Any(p => (p.Position - position).Length < 20))
             return null;

@@ -61,11 +61,11 @@ public class SnowCloud : IPlaceable {
             StrokeThickness = 0.5,
             StrokeDashOffset = 2,
             StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 }),
-            Margin = new Thickness(-Length / 2, -Width / 2, 0, 0),
+            Margin = new Thickness(-Width / 2, -Length / 2, 0, 0),
             Width = this.Width,
             Height = this.Length,
-            RadiusX = this.Length / circulazing,
-            RadiusY = this.Width / circulazing,
+            RadiusX = this.Width / circulazing,
+            RadiusY = this.Length / circulazing,
             Uid = nameof(SnowCloud),
         };
         Binding binding = new Binding(nameof(Position) + ".X");
@@ -92,8 +92,8 @@ public class SnowCloud : IPlaceable {
         Finished = Width < 0.1 || Length < 0.1 || End < time;
     }
     public bool PointInside(Point p) =>
-        (p.X - Position.X) * (p.X - Position.X) / Length / Length +
-        (p.Y - Position.Y) * (p.Y - Position.Y) / Width / Width <= 1;
+        (p.X - Position.X) * (p.X - Position.X) / Width / Width +
+        (p.Y - Position.Y) * (p.Y - Position.Y) / Length / Length <= 1;
 
     public bool IsOutside(TacticalMap map) {
         Point[] cloudBorders = {
