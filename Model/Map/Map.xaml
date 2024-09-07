@@ -19,7 +19,7 @@
             <RowDefinition Height="25*"/>
         </Grid.RowDefinitions>
         <Button Grid.ColumnSpan="1" Grid.RowSpan="3" Grid.Column="0"/>
-        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" >
+        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" MouseMove="mapCanvas_MouseMove" MouseLeave="mapCanvas_MouseLeave" >
             <Canvas.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Добавить">

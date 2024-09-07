@@ -650,6 +650,22 @@ public partial class MapWPF : Window {
         tester.NextModel();
     }
 
+    private void mapCanvas_MouseMove(object sender, MouseEventArgs e) {
+        var p = e.GetPosition(mapCanvas);
+        if (mapCanvas.ToolTip is ToolTip t) {
+            t.IsOpen = false;
+            t.Content = $"({Math.Round(p.X)}; {Math.Round(p.Y)})";
+            t.IsOpen = true;
+        } else {
+            mapCanvas.ToolTip = new ToolTip();
+        }
+    }
+
+    private void mapCanvas_MouseLeave(object sender, MouseEventArgs e) {
+        if (mapCanvas.ToolTip is ToolTip t)
+            t.IsOpen = false;
+    }
+
     private void testsB_Click(object sender, RoutedEventArgs e) {
         Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
         window.ShowDialog();
