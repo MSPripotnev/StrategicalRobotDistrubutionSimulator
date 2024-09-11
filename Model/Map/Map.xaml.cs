@@ -134,7 +134,8 @@ public partial class MapWPF : Window {
         for (int i = 0; i < objs.Length; i++) {
             IPlaceable obj = objs[i];
             var UIObj = obj.Build();
-            mapCanvas.Children.Add(UIObj);
+            if (!mapCanvas.Children.Contains(UIObj))
+                mapCanvas.Children.Add(UIObj);
 
             if (obj is IPlaceableWithArea obja)
                 mapCanvas.Children.Add(obja.BuildArea());

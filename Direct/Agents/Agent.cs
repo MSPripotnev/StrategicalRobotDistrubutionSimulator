@@ -208,26 +208,34 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     #endregion
 
     #endregion
-
+    private UIElement? ui = null;
     #region Drawing
     public virtual UIElement Build() {
-        Ellipse el = new Ellipse();
-        el.Width = 20;
-        el.Height = 20;
-        el.Fill = new SolidColorBrush(Color);
-        el.Stroke = Brushes.Black;
-        el.StrokeThickness = 2;
-        el.Margin = new Thickness(-10, -10, 0, 0);
-        System.Windows.Controls.Panel.SetZIndex(el, 3);
+        if (ui is not null)
+            return ui;
+
+        var r = new RectangleGeometry(new Rect(0, 0, 20, 20), 15, 5);
+        var t = new RectangleGeometry(new Rect(8, 2, 5, 5));
+        GeometryGroup group = new GeometryGroup();
+        group.Children.Add(r);
+        group.Children.Add(t);
+        group.FillRule = FillRule.Nonzero;
+
+        Path p = new Path() {
+            Data = group,
+            Stroke = Brushes.Black,
+            StrokeThickness = 2,
+            Fill = new SolidColorBrush(Color),
+        };
 
         Binding binding = new Binding(nameof(Position) + ".X");
         binding.Source = this;
-        el.SetBinding(System.Windows.Controls.Canvas.LeftProperty, binding);
+        p.SetBinding(System.Windows.Controls.Canvas.LeftProperty, binding);
         binding = new Binding(nameof(Position) + ".Y");
         binding.Source = this;
-        el.SetBinding(System.Windows.Controls.Canvas.TopProperty, binding);
+        p.SetBinding(System.Windows.Controls.Canvas.TopProperty, binding);
 
-        return el;
+        return ui = p;
     }
     public virtual UIElement BuildTrajectory() {
         Polyline polyline = new Polyline();
@@ -320,8 +328,13 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         if (V.Length > 0)
             V.Normalize();
         V *= Speed / Pathfinder.GetPointHardness(nextPoint);
-        //новое значение
         Position = new Point(Position.X + V.X, Position.Y + V.Y);
+
+        var angle = Vector.AngleBetween(V, new Vector(0, -1));
+        angle = angle < 180 && angle > -180 ? -angle : angle;
+        if (ui is not null)
+            ui.RenderTransform = new RotateTransform(angle, 10, 10);
+
         WayIterations++;
     }
     public override string ToString() {
