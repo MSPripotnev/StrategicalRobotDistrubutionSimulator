@@ -8,7 +8,7 @@ namespace SRDS.Model.Map.Stations;
 using SRDS.Model;
 using SRDS.Model.Environment;
 
-internal class Meteostation : Station, IPlaceableWithArea {
+internal class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     private Stack<double> temperatures = new Stack<double>(),
                           humidities = new Stack<double>(),
                           pressures = new Stack<double>();
@@ -32,12 +32,15 @@ internal class Meteostation : Station, IPlaceableWithArea {
     public Meteostation(Point pos) : this() {
         Position = pos;
     }
-    public void Simulate(GlobalMeteo meteo) {
+    public void Simulate(object? sender, DateTime time) {
+        if (sender is not GlobalMeteo meteo)
+            return;
+
         Temperature = Math.Round(meteo.Temperature + rnd.NextDouble() * 2 - 1, 1);
         Humidity = Math.Round(meteo.Humidity + rnd.NextDouble() * 2 - 1);
         Pressure = Math.Round(meteo.Pressure + rnd.Next(0, 1));
 
-        if (meteo.Time.AddMinutes(1).Hour > meteo.Time.Hour && temperatures.Any()) {
+        if (time.AddMinutes(1).Hour > time.Hour && temperatures.Any()) {
             TemperatureChange = Temperature - temperatures.Average();
             HumidityChange = Humidity - humidities.Average();
             PressureChange = Pressure - pressures.Average();
@@ -53,8 +56,8 @@ internal class Meteostation : Station, IPlaceableWithArea {
         double cloudness_area = 0;
         foreach (var o in meteo.Clouds.Where(p => p.Length + WorkRadius > (p.Position - Position).Length ||
                 p.Width + WorkRadius > (p.Position - Position).Length)) {
-            double r1 = o.Length > o.Width ? o.Length : o.Width, 
-                    r2 = WorkRadius, distance = (o.Position - Position).Length;
+            double r1 = o.Length > o.Width ? o.Length : o.Width,
+                   r2 = WorkRadius, distance = (o.Position - Position).Length;
             PrecipitationIntensity += Math.Min(o.Intensity, o.Intensity * Math.Abs(distance - o.Length) / distance);
 
             double f1 = 2 * Math.Acos((r1 * r1 - r2 * r2 + distance * distance) / (2 * r1 * distance)),

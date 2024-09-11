@@ -33,7 +33,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     }
 
     #region Actors
-    private Agent[] agents;
+    private Agent[] agents = Array.Empty<Agent>();
     [XmlArray("Agents")]
     [XmlArrayItem("Agent")]
     public Agent[] Agents {
@@ -69,7 +69,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     #endregion
 
     #region Map
-    private Target[] targets;
+    private Target[] targets = Array.Empty<Target>();
     [XmlArray("Targets")]
     [XmlArrayItem("Target")]
     public Target[] Targets {
@@ -109,8 +109,13 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         get { return map; }
         private set {
             map = value;
+            TimeChanged = null;
             if (EnableMeteo)
                 Meteo = new GlobalMeteo(map, seed);
+
+            foreach (IPlaceable obj in AllObjectsOnMap)
+                if (obj is ITimeSimulatable its)
+                    TimeChanged += its.Simulate;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
         }
     }
@@ -130,8 +135,11 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     public GlobalMeteo Meteo {
         get { return meteomap; }
         private set {
+            if (meteomap is not null)
+                TimeChanged -= meteomap.Simulate;
             meteomap = value;
             Meteo.PropertyChanged += RefreshMeteo;
+            TimeChanged += Meteo.Simulate;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Meteo)));
         }
     }
@@ -188,18 +196,14 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             seed = value;
         }
     }
+    public event EventHandler<DateTime> TimeChanged;
     public void Work(DateTime time) {
         Distributor.DistributeTask(PropertyChanged);
 
         Time = time;
-        if (Meteo != null) {
-            Meteo.Time = time;
-            foreach (var s in Map.Stations)
-                if (s is Meteostation m)
-                    m.Simulate(Meteo);
-            foreach (var r in Map.Roads)
-                r.Simulate(Meteo);
-        }
+        TimeChanged?.Invoke(this, time);
+        TimeChanged?.Invoke(Meteo, time);
+
         for (int i = 0; i < Agents.Length; i++) {
             do
                 Agents[i].Simulate();
@@ -277,6 +281,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             ls.Add(r);
             Map.Roads = ls.ToArray();
         }
+        if (obj is ITimeSimulatable its)
+            TimeChanged += its.Simulate;
     }
     public void Remove(IPlaceable obj) {
         if (obj is Agent t) {
@@ -300,6 +306,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             ls.Remove(r);
             Map.Roads = ls.ToArray();
         }
+        if (obj is ITimeSimulatable its && TimeChanged.GetInvocationList().Any(p => p.Target == obj))
+            TimeChanged -= its.Simulate;
     }
     #endregion
 

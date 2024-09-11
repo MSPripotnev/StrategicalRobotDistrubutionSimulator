@@ -77,9 +77,12 @@ public class SnowCloud : IPlaceable {
         return el;
     }
 
-    public void Simulate(Vector wind, DateTime time) {
+    public void Simulate(object? sender, DateTime time) {
+        if (sender is not GlobalMeteo meteo)
+            return;
+
         Position += Velocity;
-        Velocity = wind;
+        Velocity = meteo.Wind;
         double mins = (End - time).TotalMinutes,
                sizeReduceTime = (End - Start).TotalMinutes / 2,
                intensityReduceTime = (End - Start).TotalMinutes / 4;

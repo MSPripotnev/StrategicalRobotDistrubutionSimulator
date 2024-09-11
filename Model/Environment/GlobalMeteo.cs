@@ -3,6 +3,9 @@ using System.Windows;
 
 namespace SRDS.Model.Environment;
 using Map;
+
+using SRDS.Direct;
+
 using Targets;
 public enum WindDirectionType {
     N, NE, E, SE, S, SW, W, NW, Calm
@@ -12,62 +15,21 @@ public enum Cloudness {
     PartyCloudy,
     Clear
 }
-public class GlobalMeteo : INotifyPropertyChanged {
+public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     private int t_min, t_max, h_min, h_max, p_min, p_max;
     private Cloudness cloudness = Cloudness.Clear;
     private readonly TacticalMap map;
     public Random Rnd { private get; set; }
-    private DateTime time;
-    public DateTime Time {
-        get => time;
-        set {
-            time = value;
-            if (time.Hour == 0 && time.Minute == 0 && time.Second == 0) {
-                t_min = Rnd.Next(-20, -5); t_max = Rnd.Next(t_min, 5);
-                h_min = Rnd.Next(30, 50); h_max = Rnd.Next(h_min, t_max > 1 ? 90 : 70);
-                p_min = Rnd.Next(-10, -5); p_max = Rnd.Next(p_min, 10);
-            }
+    private DateTime _time;
 
-            if (time.Minute % 10 == 0 && time.Second == 0) {
-                Wind = Wind / (Wind.Length + 0.00001) * DailyModifier(Time.Hour, 0, 4, 0) +
-                    new Vector((Rnd.NextDouble()-1) / 4, (Rnd.NextDouble()-1) / 4);
-                if (Rnd.NextDouble() < 0.01)
-                    Wind *= -1;
-            }
-
-            Simulate();
-            var clouds_list = Clouds.ToList();
-            if (time.Minute % 30 == 0 && time.Second == 0) {
-                if (Rnd.NextDouble() > 0.8)
-                    clouds_list.Add(GenerateCloud());
-                if (Rnd.NextDouble() > 0.4) {
-                    var c = SplitCloud();
-                    if (c != null)
-                        clouds_list.Add(c);
-                }
-            }
-            Clouds = clouds_list.ToArray();
-            GenerateSnowdrifts();
-        }
-    }
-
-    #region GlobalWeather
+    #region Weather
     public Vector Wind { get; set; }
-    public double Temperature { get => DailyModifier(Time.Hour, t_min, t_max, 0); }
-    public double Humidity { get => Math.Max(Math.Min(h_max, DailyModifier(Time.Hour, h_min, h_max, -Math.PI)), h_min); }
-    public double Pressure { get => 760 + DailyModifier(Time.Hour, p_min, p_max, -Math.PI); }
+    public double Temperature { get => DailyModifier(_time.Hour, t_min, t_max, 0); }
+    public double Humidity { get => Math.Max(Math.Min(h_max, DailyModifier(_time.Hour, h_min, h_max, -Math.PI)), h_min); }
+    public double Pressure { get => 760 + DailyModifier(_time.Hour, p_min, p_max, -Math.PI); }
     public Cloudness Cloudness { get => cloudness; }
-    #endregion
 
-    private SnowCloud[] clouds;
-    public SnowCloud[] Clouds {
-        get => clouds;
-        set {
-            clouds = value;
-            PropertyChanged?.Invoke(Clouds, new PropertyChangedEventArgs(nameof(Clouds)));
-        }
-    }
-    public List<Snowdrift> GeneratedSnowdrifts { get; private set; } = new();
+    #region Modifiers
     private double DailyModifier(int hour, int min, int max, double phase) {
         double mt = (max + Math.Abs(min)) / 2,
                mt2 = (max - Math.Abs(min)) / 2;
@@ -87,20 +49,105 @@ public class GlobalMeteo : INotifyPropertyChanged {
             _ => WindDirectionType.N,
         };
     }
+    #endregion
+
+    #region Simulation
+    private void WindChange() {
+        if (_time.Minute % 10 == 0 && _time.Second == 0) {
+            Wind = Wind / (Wind.Length + 0.00001) * DailyModifier(_time.Hour, 0, 4, 0) +
+                new Vector((Rnd.NextDouble() - 1) / 4, (Rnd.NextDouble() - 1) / 4);
+            if (Rnd.NextDouble() < 0.01)
+                Wind *= -1;
+        }
+    }
+    private void DailyMeteoChange() {
+        if (_time.Hour == 0 && _time.Minute == 0 && _time.Second == 0) {
+            t_min = Rnd.Next(-20, -5); t_max = Rnd.Next(t_min, 5);
+            h_min = Rnd.Next(30, 50); h_max = Rnd.Next(h_min, t_max > 1 ? 90 : 70);
+            p_min = Rnd.Next(-10, -5); p_max = Rnd.Next(p_min, 10);
+        }
+    }
+    public void Simulate(object? sender, DateTime time) {
+        if (sender is not Director director)
+            return;
+        _time = time;
+        DailyMeteoChange();
+        WindChange();
+        CloudsBehaviour(director);
+        GenerateSnowdrifts();
+    }
+    #endregion
+
+    #endregion
+
     public GlobalMeteo(TacticalMap map, int seed) {
         Rnd = new Random(seed);
         this.map = map;
         Clouds = Array.Empty<SnowCloud>();
-        Time = new DateTime(0);
+        _time = new DateTime(0);
+        Simulate(this, _time);
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private void Simulate() {
+    public List<Snowdrift> GeneratedSnowdrifts { get; private set; } = new();
+    private void GenerateSnowdrifts() {
+        foreach (var cloud in Clouds.Where(c => c.Intensity > 0)) {
+            if (Rnd.Next(0, (int)Math.Ceiling(cloud.MaxWidth * cloud.MaxLength)) >
+                    Math.Min(cloud.Width, Math.Abs(cloud.Width - cloud.Position.X)) *
+                    Math.Min(cloud.Length, Math.Abs(cloud.Length - cloud.Position.Y)) / 2)
+                continue;
+            Point pos;
+            long iter = 0;
+            do {
+                double angle = Rnd.NextDouble() * 2 * Math.PI;
+
+                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Width / 2 * Math.Cos(angle),
+                    cloud.Position.Y + Rnd.NextDouble() * cloud.Length / 2 * Math.Sin(angle));
+                iter++;
+            } while ((Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter) ||
+                map.PointNearBorders(pos)) && iter < 10000);
+            if (iter < 10000) {
+                Snowdrift s = new Snowdrift(pos, cloud.Intensity, Rnd);
+                GeneratedSnowdrifts.Add(s);
+            }
+        }
+        if (GeneratedSnowdrifts.Any())
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GeneratedSnowdrifts)));
+    }
+
+    #region Clouds
+    private void CloudsBehaviour(Director director) {
         var clouds_list = Clouds.ToList();
-        clouds_list.RemoveAll(p => p.End < time && p.Finished || p.IsOutside(map));
-        for (int i = 0; i < clouds_list.Count; i++)
-            clouds_list[i].Simulate(Wind, time);
+        if (_time.Minute % 30 == 0 && _time.Second == 0) {
+            if (Rnd.NextDouble() > 0.8) {
+                var c = GenerateCloud();
+                clouds_list.Add(c);
+                director.TimeChanged += c.Simulate;
+            }
+            if (Rnd.NextDouble() > 0.4) {
+                var c = SplitCloud();
+                if (c != null) {
+                    clouds_list.Add(c);
+                    director.TimeChanged += c.Simulate;
+                }
+            }
+        }
+
+        var removed_list = Clouds.Where(p => p.End < _time && p.Finished || p.IsOutside(map)).ToList();
+        for (int i = 0; i < removed_list.Count; i++) {
+            director.TimeChanged -= removed_list[i].Simulate;
+            clouds_list.Remove(removed_list[i]);
+        }
+
         Clouds = clouds_list.ToArray();
+    }
+    private SnowCloud[] clouds;
+    public SnowCloud[] Clouds {
+        get => clouds;
+        set {
+            clouds = value;
+            PropertyChanged?.Invoke(Clouds, new PropertyChangedEventArgs(nameof(Clouds)));
+        }
     }
     private SnowCloud GenerateCloud() {
         const int rMin = 50, rMax = 350;
@@ -115,7 +162,7 @@ public class GlobalMeteo : INotifyPropertyChanged {
                 break;
             position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
         }
-        DateTime start = time, end = time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
+        DateTime start = _time, end = _time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
         const double dispersing = 0.8;
         double intensity = Rnd.NextDouble() * width * length / rMax / rMin * dispersing;
         if (Rnd.NextDouble() < 0.5)
@@ -143,30 +190,7 @@ public class GlobalMeteo : INotifyPropertyChanged {
         if (Clouds.Any(p => (p.Position - position).Length < 20))
             return null;
 
-        return new SnowCloud(position, width, length, Wind, splited.Intensity, Time, splited.End.AddMinutes(Rnd.NextDouble() * 60 - 30));
+        return new SnowCloud(position, width, length, Wind, splited.Intensity, _time, splited.End.AddMinutes(Rnd.NextDouble() * 60 - 30));
     }
-    private void GenerateSnowdrifts() {
-        foreach (var cloud in Clouds.Where(c => c.Intensity > 0)) {
-            if (Rnd.Next(0, (int)Math.Ceiling(cloud.MaxWidth * cloud.MaxLength)) >
-                    Math.Min(cloud.Width, Math.Abs(cloud.Width - cloud.Position.X)) *
-                    Math.Min(cloud.Length, Math.Abs(cloud.Length - cloud.Position.Y)) / 2)
-                continue;
-            Point pos;
-            long iter = 0;
-            do {
-                double angle = Rnd.NextDouble() * 2 * Math.PI;
-
-                pos = new Point(cloud.Position.X + Rnd.NextDouble() * cloud.Width / 2 * Math.Cos(angle),
-                    cloud.Position.Y + Rnd.NextDouble() * cloud.Length / 2 * Math.Sin(angle));
-                iter++;
-            } while ((Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter) ||
-                map.PointNearBorders(pos)) && iter < 10000);
-            if (iter < 10000) {
-                Snowdrift s = new Snowdrift(pos, cloud.Intensity, Rnd);
-                GeneratedSnowdrifts.Add(s);
-            }
-        }
-        if (GeneratedSnowdrifts.Any())
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GeneratedSnowdrifts)));
-    }
+    #endregion
 }

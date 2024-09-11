@@ -148,13 +148,6 @@ public class Road : IPlaceable {
         }
         return h;
     }
-    public void Simulate(GlobalMeteo meteo) {
-        if (Snowness < 0.01)
-            Snowness -= 0.00001;
-        if (meteo.Temperature > 0)
-            Snowness -= 0.002;
-        Snowness = Math.Max(0, Math.Min(Snowness, Height * Length / 100));
-    }
     /// <summary>
     /// ����������� �����
     /// </summary>
