@@ -100,10 +100,10 @@ public class SnowCloud : IPlaceable {
 
     public bool IsOutside(TacticalMap map) {
         Point[] cloudBorders = {
-            Position - new Vector(2*Length, 0),
-            Position - new Vector(-2*Length, 0),
-            Position - new Vector(0, 2*Width),
-            Position - new Vector(0, -2*Width),
+            Position - new Vector(0.5*Length, 0),
+            Position - new Vector(-0.5*Length, 0),
+            Position - new Vector(0, 0.5*Width),
+            Position - new Vector(0, -0.5*Width),
         };
         return (cloudBorders.All(p => map.PointOutsideBorders(p)));
     }
