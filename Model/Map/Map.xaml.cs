@@ -642,8 +642,8 @@ public partial class MapWPF : Window {
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e) {
         if (e.Key == Key.Space)
             startButton_Click(sender, null);
-        else if (e.Key >= Key.D1 && e.Key <= Key.D5)
-            speedSlider.Value = e.Key - Key.D1 + 1;
+        else if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad5)
+            speedSlider.Value = e.Key - Key.NumPad1 + 1;
     }
     #endregion
 
@@ -668,8 +668,8 @@ public partial class MapWPF : Window {
     }
 
     private void testsB_Click(object sender, RoutedEventArgs e) {
-        Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
-        window.ShowDialog();
+        // Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
+        // window.ShowDialog();
         tester.LoadModels();
         if (File.Exists(tester.Models[0].Path)) {
             tester.LoadModel(tester.Models[0].Path);
