@@ -5,25 +5,34 @@ using System.Windows.Shapes;
 
 namespace SRDS.Model.Map.Stations;
 
+using System.Xml.Serialization;
+
 using SRDS.Model;
 using SRDS.Model.Environment;
 
-internal class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
+public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     private Stack<double> temperatures = new Stack<double>(),
                           humidities = new Stack<double>(),
                           pressures = new Stack<double>();
     public const double WorkRadius = 150.0;
-    public double Temperature { get; private set; }
+    public double Temperature { get; set; }
+    [XmlIgnore]
     public double TemperatureChange { get; private set; }
-    public double Humidity { get; private set; }
+    public double Humidity { get; set; }
+    [XmlIgnore]
     public double HumidityChange { get; private set; }
-    public double Pressure { get; private set; }
+    [XmlIgnore]
+    public double Pressure { get; set; }
+    [XmlIgnore]
     public double PressureChange { get; private set; }
+    [XmlIgnore]
     public double WindSpeed { get; private set; }
+    [XmlIgnore]
     public WindDirectionType WindDirection { get; private set; }
-    public double PrecipitationIntensity { get; private set; }
+    public double PrecipitationIntensity { get; set; }
+    [XmlIgnore]
     public bool PrecipitationTypeIsRain { get => PrecipitationIntensity > 0 && Temperature >= 0 && Humidity > 60; }
-    public Cloudness CloudnessType { get; private set; }
+    public Cloudness CloudnessType { get; set; }
     private Random rnd;
     public Meteostation() {
         rnd = new Random((int)DateTime.Now.Ticks);

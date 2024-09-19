@@ -9,6 +9,7 @@ namespace SRDS.Model.Map.Stations;
 [XmlInclude(typeof(AgentStation))]
 [XmlInclude(typeof(GasStation))]
 [XmlInclude(typeof(AntiIceStation))]
+[XmlInclude(typeof(Meteostation))]
 public abstract class Station : IPlaceable {
     private Point position;
     [XmlElement(nameof(Point), ElementName = "Position")]

@@ -15,11 +15,15 @@ public class TaskDistributor
 {
 
     #region Properties
+    [XmlIgnore]
     public Agent[]? Agents { private get; set; }
+    [XmlIgnore]
     public Target[]? Targets { private get; set; }
+    [XmlIgnore]
     public TacticalMap Map { private get; set; }
     [XmlIgnore]
     public IQualifier Qualifier { get; set; }
+    [XmlIgnore]
     public Agent[] NonAssignedAgents
     {
         get => Agents is not null ? Agents.Where(p => p.Home == null).ToArray() : Array.Empty<Agent>();
@@ -29,6 +33,7 @@ public class TaskDistributor
     {
         get => Agents is not null ? Agents.Where(x => x.CurrentState == RobotState.Ready).ToArray() : Array.Empty<Agent>();
     }
+    [XmlIgnore]
     public Target[] FreeTargets
     {
         get => Targets is not null ? Targets.Where(x => x.ReservedAgent == null && !x.Finished).ToArray() : Array.Empty<Target>();
