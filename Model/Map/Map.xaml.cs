@@ -111,20 +111,21 @@ public partial class MapWPF : Window {
     private void RefreshMeteo(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
         if (drawCB.IsChecked != true)
             return;
-        if (e.PropertyName == nameof(Director.Targets) || e.PropertyName == nameof(Director.Meteo.GeneratedSnowdrifts)) {
-            for (int i = 0; i < mapCanvas.Children.Count; i++)
-                if (mapCanvas.Children[i].Uid == nameof(Snowdrift))
-                    mapCanvas.Children.Remove(mapCanvas.Children[i]);
-            foreach (Snowdrift s in Director.Targets.OfType<Snowdrift>())
-                mapCanvas.Children.Add(s.Build());
-            return;
-        }
-        if (Director.Meteo != null && e.PropertyName == nameof(Director.Meteo.Clouds)) {
-            for (int i = 0; i < mapCanvas.Children.Count; i++)
-                if (mapCanvas.Children[i].Uid == nameof(SnowCloud))
-                    mapCanvas.Children.Remove(mapCanvas.Children[i]);
-            foreach (SnowCloud o in Director.Meteo.Clouds)
-                mapCanvas.Children.Add(o.Build());
+        if (Director?.Meteo != null && Director.Map.Borders.Width > 0) {
+            if (e.PropertyName == nameof(Director.Meteo.Clouds)) {
+                for (int i = 0; i < mapCanvas.Children.Count; i++)
+                    if (mapCanvas.Children[i].Uid == nameof(SnowCloud))
+                        mapCanvas.Children.Remove(mapCanvas.Children[i]);
+                foreach (SnowCloud o in Director.Meteo.Clouds)
+                    mapCanvas.Children.Add(o.Build());
+            }
+            for (int i = 0; i < Director.Meteo.IntensityMapUI.Length; i++) {
+                for (int j = 0; j < Director.Meteo.IntensityMapUI[0].Length; j++) {
+                    var b = Director.Meteo.IntensityMapUI[i][j];
+                    if (b is not null && !mapCanvas.Children.Contains(b))
+                        mapCanvas.Children.Add(b);
+                }
+            }
         }
     }
     private void DrawPlaceableObjects() {
