@@ -150,12 +150,12 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         }
     }
     private SnowCloud GenerateCloud() {
-        const int rMin = 50, rMax = 350;
+        const int rMin = 900, rMax = 1200;
         double width = Rnd.Next(rMin, rMax), length = Rnd.Next(rMin, rMax);
         Point position = new Point(map.Borders.Width / 2, map.Borders.Height / 2) -
             Wind / Wind.Length / 2 *
             Math.Sqrt(map.Borders.Width * map.Borders.Width + map.Borders.Height * map.Borders.Height);
-        int max_attempts = 100;
+        int max_attempts = 1000;
 
         while (max_attempts-- > 0) {
             if (!Clouds.Any(p => p.PointInside(position)))
@@ -163,9 +163,9 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
         }
         DateTime start = _time, end = _time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
-        const double dispersing = 0.8;
+        const double dispersing = 10;
         double intensity = Rnd.NextDouble() * width * length / rMax / rMin * dispersing;
-        if (Rnd.NextDouble() < 0.5)
+        if (Rnd.NextDouble() < 0.3)
             intensity = 0;
         return new SnowCloud(position, width, length, Wind, intensity, start, end);
     }
