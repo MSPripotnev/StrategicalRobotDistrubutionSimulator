@@ -226,8 +226,10 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         set {
             clouds = value;
             PropertyChanged?.Invoke(Clouds, new PropertyChangedEventArgs(nameof(Clouds)));
+            PropertyChanged?.Invoke(Clouds, new PropertyChangedEventArgs(nameof(CloudsUI)));
         }
     }
+    public UIElement[] CloudsUI { get => clouds.Select(p => p.Build()).ToArray(); }
     private SnowCloud GenerateCloud() {
         const int rMin = 900, rMax = 1200;
         double width = Rnd.Next(rMin, rMax), length = Rnd.Next(rMin, rMax);

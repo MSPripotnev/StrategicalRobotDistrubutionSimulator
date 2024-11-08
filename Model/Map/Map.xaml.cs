@@ -113,18 +113,26 @@ public partial class MapWPF : Window {
             return;
         if (Director?.Meteo != null && Director.Map.Borders.Width > 0) {
             if (e.PropertyName == nameof(Director.Meteo.Clouds)) {
-                for (int i = 0; i < mapCanvas.Children.Count; i++)
-                    if (mapCanvas.Children[i].Uid == nameof(SnowCloud))
+                for (int i = 0; i < mapCanvas.Children.Count; i++) {
+                    if (mapCanvas.Children[i].Uid != nameof(SnowCloud)) continue;
+                    if (!Director.Meteo.CloudsUI.Contains(mapCanvas.Children[i]))
                         mapCanvas.Children.Remove(mapCanvas.Children[i]);
-                foreach (SnowCloud o in Director.Meteo.Clouds)
-                    mapCanvas.Children.Add(o.Build());
-            }
-            for (int i = 0; i < Director.Meteo.IntensityMapUI.Length; i++) {
-                for (int j = 0; j < Director.Meteo.IntensityMapUI[0].Length; j++) {
-                    var b = Director.Meteo.IntensityMapUI[i][j];
-                    if (b is not null && !mapCanvas.Children.Contains(b))
-                        mapCanvas.Children.Add(b);
                 }
+                foreach (var c in Director.Meteo.CloudsUI.Where(p => p is not null && !mapCanvas.Children.Contains(p)))
+                    mapCanvas.Children.Add(c);
+            }
+            DrawMeteoIntensityMap(true);
+        }
+    }
+    private void DrawMeteoIntensityMap(bool draw) {
+        for (int i = 0; i < Director.Meteo.IntensityMapUI.Length; i++) {
+            for (int j = 0; j < Director.Meteo.IntensityMapUI[0].Length; j++) {
+                var b = Director.Meteo.IntensityMapUI[i][j];
+                if (b is null) continue;
+                if (draw && !mapCanvas.Children.Contains(b))
+                    mapCanvas.Children.Add(b);
+                else if (!draw && mapCanvas.Children.Contains(b))
+                    mapCanvas.Children.Remove(b);
             }
         }
     }

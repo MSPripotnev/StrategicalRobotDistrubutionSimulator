@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -28,17 +29,38 @@ public class SnowCloud : IPlaceable {
         set {
             position = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UIPosition)));
         }
+    }
+    /// <summary>
+    /// Draw start position offset
+    /// </summary>
+    public Point UIPosition {
+        get => position - new Vector(Width / 2, Length / 2);
     }
     public double MaxLength { get; set; }
     public double MaxWidth { get; set; }
-    public double Length { get; set; }
-    public double Width { get; set; }
+    private double length, width;
+    public double Length {
+        get => length;
+        set {
+            length = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Length)));
+        }
+    }
+    public double Width {
+        get => width;
+        set {
+            width = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Width)));
+        }
+    }
     public Vector Velocity { get; set; }
     public DateTime Start { get; init; }
     public DateTime End { get; init; }
     public bool Finished { get; set; }
     public Color Color { get; set; }
+    public UIElement? UI { get; private set; } = null;
     public SnowCloud() {
         Color = Colors.Black;
     }
@@ -54,23 +76,30 @@ public class SnowCloud : IPlaceable {
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public UIElement Build() {
+        if (UI is not null)
+            return UI;
         Ellipse el = new Ellipse() {
             Stroke = new SolidColorBrush(Color),
             StrokeThickness = 1,
             StrokeDashOffset = 2,
             StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 }),
-            Margin = new Thickness(-Width / 2, -Length / 2, 0, 0),
             Width = this.Width,
             Height = this.Length,
             Uid = nameof(SnowCloud),
         };
-        Binding binding = new Binding(nameof(Position) + ".X");
+        Binding binding = new Binding(nameof(UIPosition) + ".X");
         binding.Source = this;
         el.SetBinding(System.Windows.Controls.Canvas.LeftProperty, binding);
-        binding = new Binding(nameof(Position) + ".Y");
+        binding = new Binding(nameof(UIPosition) + ".Y");
         binding.Source = this;
         el.SetBinding(System.Windows.Controls.Canvas.TopProperty, binding);
-        return el;
+        binding = new Binding(nameof(Width));
+        binding.Source = this;
+        el.SetBinding(Canvas.WidthProperty, binding);
+        binding = new Binding(nameof(Length));
+        binding.Source = this;
+        el.SetBinding(Canvas.HeightProperty, binding);
+        return UI = el;
     }
 
     public void Simulate(object? sender, DateTime time) {
