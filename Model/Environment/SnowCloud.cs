@@ -106,10 +106,11 @@ public class SnowCloud : IPlaceable {
         if (sender is not GlobalMeteo meteo)
             return;
 
+        Vector rndWind = new Vector((new Random().NextDouble() - 0.5) / 8, (new Random().NextDouble() - 0.5) / 8);
+        Velocity = meteo.Wind + rndWind;
         Position += Velocity;
-        Velocity = meteo.Wind;
         double mins = (End - time).TotalMinutes,
-               sizeReduceTime = (End - Start).TotalMinutes / 2,
+               sizeReduceTime = (End - Start).TotalMinutes / 1.2,
                intensityReduceTime = (End - Start).TotalMinutes / 4;
         Intensity = mins > intensityReduceTime ?
             MaxIntensity : Math.Max(0, MaxIntensity / intensityReduceTime * mins);
