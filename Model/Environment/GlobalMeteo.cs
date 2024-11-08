@@ -52,12 +52,12 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     public double Pressure { get => 760 + DailyModifier(_time.Hour, p_min, p_max, -Math.PI); }
     public Cloudness Cloudness { get => cloudness; }
     public double[][] IntensityMap { get; set; }
-    const int intensityMapScale = 20;
+    public const int IntensityMapScale = 20;
     private UIElement[][] intensityMapUI;
     public UIElement[][] IntensityMapUI {
         get {
             if (intensityMapUI is null || intensityMapUI[0] is null) {
-                int wsize = (int)Math.Ceiling(map.Borders.Width / intensityMapScale), hsize = (int)Math.Ceiling(map.Borders.Height / intensityMapScale);
+                int wsize = (int)Math.Ceiling(map.Borders.Width / IntensityMapScale), hsize = (int)Math.Ceiling(map.Borders.Height / IntensityMapScale);
                 IntensityMap = new double[wsize][];
                 intensityMapUI = new UIElement[wsize][];
                 for (int i = 0; i < wsize; i++) {
@@ -66,12 +66,12 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
                     for (int j = 0; j < hsize; j++) {
                         var converter = new IntensityMapConverter();
                         Rectangle el = new Rectangle() {
-                            Width = intensityMapScale,
-                            Height = intensityMapScale,
-                            RadiusX = intensityMapScale / 8,
-                            RadiusY = intensityMapScale / 8,
+                            Width = IntensityMapScale,
+                            Height = IntensityMapScale,
+                            RadiusX = IntensityMapScale / 8,
+                            RadiusY = IntensityMapScale / 8,
                             Opacity = 0.5,
-                            Margin = new Thickness(i * intensityMapScale, j * intensityMapScale, 0, 0),
+                            Margin = new Thickness(i * IntensityMapScale, j * IntensityMapScale, 0, 0),
                             Fill = (Brush)converter.Convert(IntensityMap[i][j], typeof(Color), null, CultureInfo.CurrentCulture),
                             Uid = $"{nameof(IntensityMap)}[{i}][{j}]",
                         };
@@ -157,7 +157,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
                 continue;
             for (int i = 0; i < IntensityMap.Length; i++) {
                 for (int j = 0; j < IntensityMap[i].Length; j++) {
-                    Point pos = new Point(i * intensityMapScale, j * intensityMapScale);
+                    Point pos = new Point(i * IntensityMapScale, j * IntensityMapScale);
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
                     if (Math.Abs(p.X) < cloud.Width && Math.Abs(p.Y) < cloud.Length &&

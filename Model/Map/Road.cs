@@ -7,6 +7,7 @@ using System.Xml.Serialization;
 namespace SRDS.Model.Map;
 
 using SRDS.Direct.Agents;
+using SRDS.Direct.Executive;
 using SRDS.Model;
 using SRDS.Model.Environment;
 
@@ -54,7 +55,7 @@ public class Crossroad : IPlaceable {
     }
 }
 
-public class Road : IPlaceable {
+public class Road : IPlaceable, ITimeSimulatable {
     public RoadType Type { get; set; }
     private Point position;
     [XmlElement(nameof(Point), ElementName = "Position")]
@@ -62,6 +63,7 @@ public class Road : IPlaceable {
         get { return position; }
         set {
             position = value;
+            CalculateIntensityCells();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
         }
     }
@@ -71,6 +73,7 @@ public class Road : IPlaceable {
         get { return endPosition; }
         set {
             endPosition = value;
+            CalculateIntensityCells();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EndPosition)));
         }
     }
@@ -182,4 +185,40 @@ public class Road : IPlaceable {
         RoadType.Gravel => 1.5,
         RoadType.Asphalt => 1.0
     };
+    List<(int i, int j)> intensityCells;
+    private void CalculateIntensityCells() {
+        intensityCells = new List<(int i, int j)>();
+        Vector dl = endPosition - position;
+        for (dl *= GlobalMeteo.IntensityMapScale / 2 / dl.Length;
+                PathFinder.Distance(position + dl, endPosition) > GlobalMeteo.IntensityMapScale;
+                dl += dl / dl.Length * GlobalMeteo.IntensityMapScale) {
+#if MULTI_CELL_QUALITY
+            for (int i = -2; i <= 2; i++) {
+                var v = new Vector(i % 2, i / 2) * GlobalMeteo.IntensityMapScale / 2;
+                var p = position + dl + v;
+                if (p.X < 0 || p.Y < 0)
+                    continue;
+                int pi = (int)Math.Round(p.X / GlobalMeteo.IntensityMapScale),
+                    pj = (int)Math.Round(p.Y / GlobalMeteo.IntensityMapScale);
+                if (!intensityCells.Contains((pi, pj)))
+                    intensityCells.Add((pi, pj)); 
+           }
+#else
+            var p = position + dl;
+            int pi = (int)Math.Round(p.X / GlobalMeteo.IntensityMapScale),
+                pj = (int)Math.Round(p.Y / GlobalMeteo.IntensityMapScale);
+            if (!intensityCells.Contains((pi, pj)))
+                intensityCells.Add((pi, pj));
+#endif
+        }
+    }
+    public void Simulate(object? sender, DateTime time) {
+        if (sender is not GlobalMeteo meteo)
+            return;
+        if (!intensityCells.Any())
+            CalculateIntensityCells();
+
+        Snowness = intensityCells.Sum(p => meteo.IntensityMap[p.i][p.j] / 
+                DistanceToRoad(new Point(p.i  * GlobalMeteo.IntensityMapScale, p.j * GlobalMeteo.IntensityMapScale)) + 1);
+    }
 }

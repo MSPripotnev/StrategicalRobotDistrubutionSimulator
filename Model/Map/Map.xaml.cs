@@ -664,7 +664,10 @@ public partial class MapWPF : Window {
         var p = e.GetPosition(mapCanvas);
         if (mapCanvas.ToolTip is ToolTip t) {
             t.IsOpen = false;
-            t.Content = $"({Math.Round(p.X)}; {Math.Round(p.Y)})";
+            int x = (int)Math.Round(p.X), y = (int)Math.Round(p.Y);
+            t.Content = $"({x}; {y})";
+            if (Director?.Meteo?.IntensityMap?.Length > x / GlobalMeteo.IntensityMapScale && Director.Meteo.IntensityMap.Length > y / GlobalMeteo.IntensityMapScale)
+                t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityMap[x / GlobalMeteo.IntensityMapScale][y / GlobalMeteo.IntensityMapScale], 4)}";
             t.IsOpen = true;
         } else {
             mapCanvas.ToolTip = new ToolTip();

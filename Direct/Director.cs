@@ -113,7 +113,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             if (EnableMeteo)
                 Meteo = new GlobalMeteo(map, seed);
 
-            foreach (IPlaceable obj in AllObjectsOnMap)
+            foreach (IPlaceable obj in AllObjectsOnMap.Concat(map.Roads))
                 if (obj is ITimeSimulatable its)
                     TimeChanged += its.Simulate;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
