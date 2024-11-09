@@ -160,9 +160,9 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
                     Point pos = new Point(i * IntensityMapScale, j * IntensityMapScale);
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
-                    if (Math.Abs(p.X) < cloud.Width && Math.Abs(p.Y) < cloud.Length &&
+                    if (Math.Abs(p.X) < cloud.Width / 2 && Math.Abs(p.Y) < cloud.Length / 2 &&
                         !Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter))
-                        IntensityMap[i][j] += cloud.Intensity / p.Length * Math.Sqrt(cloud.Width * cloud.Length);
+                        IntensityMap[i][j] += cloud.Intensity / p.Length / p.Length * cloud.Width * cloud.Length;
                 }
             }
         }
@@ -234,18 +234,19 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         const int rMin = 900, rMax = 1200;
         double width = Rnd.Next(rMin, rMax), length = Rnd.Next(rMin, rMax);
         Point position = new Point(map.Borders.Width / 2, map.Borders.Height / 2) -
-            Wind / Wind.Length / 2 *
-            Math.Sqrt(map.Borders.Width * map.Borders.Width + map.Borders.Height * map.Borders.Height);
-        int max_attempts = 1000;
+            Wind / Wind.Length / 4 * (Math.Sqrt(width * width + length * length) + 1.4142*Math.Min(map.Borders.Width, map.Borders.Height));
+        position.X = Math.Floor(position.X);
+        position.Y = Math.Floor(position.Y);
+        if (Rnd.Next(0, 10) < 5)
+            position.X += Rnd.Next(-(int)map.Borders.Width/2, (int)map.Borders.Width/2);
+        else
+            position.Y += Rnd.Next(-(int)map.Borders.Height / 2, (int)map.Borders.Height / 2);
 
-        while (max_attempts-- > 0) {
-            if (!Clouds.Any(p => p.PointInside(position)))
-                break;
-            position = new Point(Rnd.Next(0, (int)map.Borders.Width), Rnd.Next(0, (int)map.Borders.Height));
-        }
-        DateTime start = _time, end = _time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
+
+            DateTime start = _time, end = _time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
         const double dispersing = 10;
         double intensity = Rnd.NextDouble() * width * length / rMax / rMin * dispersing;
+
         if (Rnd.NextDouble() < 0.3)
             intensity = 0;
         return new SnowCloud(position, width, length, Wind, intensity, start, end);

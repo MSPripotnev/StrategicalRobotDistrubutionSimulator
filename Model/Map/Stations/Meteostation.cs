@@ -63,11 +63,11 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
 
         PrecipitationIntensity = 0;
         double cloudness_area = 0;
-        foreach (var o in meteo.Clouds.Where(p => p.Length + WorkRadius > (p.Position - Position).Length ||
-                p.Width + WorkRadius > (p.Position - Position).Length)) {
-            double r1 = o.Length > o.Width ? o.Length : o.Width,
+        foreach (var o in meteo.Clouds.Where(p => p.Length/2 + WorkRadius > (p.Position - Position).Length ||
+                p.Width/2 + WorkRadius > (p.Position - Position).Length)) {
+            double r1 = o.Length > o.Width ? o.Length / 2 : o.Width / 2,
                    r2 = WorkRadius, distance = (o.Position - Position).Length;
-            PrecipitationIntensity += Math.Min(o.Intensity, o.Intensity * Math.Abs(distance - o.Length) / distance);
+            PrecipitationIntensity += Math.Min(o.Intensity, o.Intensity * Math.Abs(distance - r1) / distance);
 
             double f1 = 2 * Math.Acos((r1 * r1 - r2 * r2 + distance * distance) / (2 * r1 * distance)),
                    f2 = 2 * Math.Acos((r2 * r2 - r1 * r1 + distance * distance) / (2 * r2 * distance)),

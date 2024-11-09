@@ -110,7 +110,7 @@ public class SnowCloud : IPlaceable {
         Velocity = meteo.Wind + rndWind;
         Position += Velocity;
         double mins = (End - time).TotalMinutes,
-               sizeReduceTime = (End - Start).TotalMinutes / 1.2,
+               sizeReduceTime = (End - Start).TotalMinutes / 2,
                intensityReduceTime = (End - Start).TotalMinutes / 4;
         Intensity = mins > intensityReduceTime ?
             MaxIntensity : Math.Max(0, MaxIntensity / intensityReduceTime * mins);
@@ -126,10 +126,10 @@ public class SnowCloud : IPlaceable {
 
     public bool IsOutside(TacticalMap map) {
         Point[] cloudBorders = {
-            Position - new Vector(0.5*Length, 0),
-            Position - new Vector(-0.5*Length, 0),
-            Position - new Vector(0, 0.5*Width),
-            Position - new Vector(0, -0.5*Width),
+            UIPosition,
+            UIPosition + new Vector(Width, 0),
+            UIPosition + new Vector(0, Length),
+            UIPosition + new Vector(Width, Length),
         };
         return (cloudBorders.All(p => map.PointOutsideBorders(p)));
     }
