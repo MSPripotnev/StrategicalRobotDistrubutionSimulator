@@ -242,14 +242,13 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         else
             position.Y += Rnd.Next(-(int)map.Borders.Height / 2, (int)map.Borders.Height / 2);
 
-
-            DateTime start = _time, end = _time.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
+        DateTime start = _time.AddMinutes(Rnd.Next(60, 300)), end = start.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
         const double dispersing = 10;
         double intensity = Rnd.NextDouble() * width * length / rMax / rMin * dispersing;
 
         if (Rnd.NextDouble() < 0.3)
             intensity = 0;
-        return new SnowCloud(position, width, length, Wind, intensity, start, end);
+        return new SnowCloud(position, width, length, Wind, intensity, this._time, start, end);
     }
     private SnowCloud? SplitCloud() {
         if (!Clouds.Any())
@@ -272,7 +271,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         if (Clouds.Any(p => (p.Position - position).Length < 20))
             return null;
 
-        return new SnowCloud(position, width, length, Wind, splited.Intensity, _time, splited.End.AddMinutes(Rnd.NextDouble() * 60 - 30));
+        return new SnowCloud(position, width, length, Wind, splited.Intensity, _time.AddMinutes(30), _time.AddMinutes(30), splited.End.AddMinutes(Rnd.NextDouble() * 60 - 30));
     }
     #endregion
 }

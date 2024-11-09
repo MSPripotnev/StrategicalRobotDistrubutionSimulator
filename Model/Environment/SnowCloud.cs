@@ -58,17 +58,20 @@ public class SnowCloud : IPlaceable {
     public Vector Velocity { get; set; }
     public DateTime Start { get; init; }
     public DateTime End { get; init; }
+    private DateTime creationTime;
     public bool Finished { get; set; }
     public Color Color { get; set; }
     public UIElement? UI { get; private set; } = null;
     public SnowCloud() {
         Color = Colors.Black;
     }
-    public SnowCloud(Point p, double w, double l, Vector v, double _intensity, DateTime start, DateTime end) : this() {
+    public SnowCloud(Point p, double w, double l, Vector v, double _intensity, DateTime create, DateTime start, DateTime end) : this() {
         Position = p;
         Velocity = v;
-        MaxWidth = Width = w; // X
-        MaxLength = Length = l; // Y
+        MaxWidth = w; // X
+        MaxLength = l; // Y
+        Width = Length = 0;
+        creationTime = create;
         Start = start;
         End = end;
         Intensity = MaxIntensity = _intensity;
@@ -109,9 +112,16 @@ public class SnowCloud : IPlaceable {
         Vector rndWind = new Vector((new Random().NextDouble() - 0.5) / 8, (new Random().NextDouble() - 0.5) / 8);
         Velocity = meteo.Wind + rndWind;
         Position += Velocity;
-        double mins = (End - time).TotalMinutes,
-               sizeReduceTime = (End - Start).TotalMinutes / 2,
-               intensityReduceTime = (End - Start).TotalMinutes / 4;
+        double mins, sizeReduceTime, intensityReduceTime;
+        if (time > Start) {
+            mins = (End - time).TotalMinutes;
+            sizeReduceTime = (End - Start).TotalMinutes / 2;
+            intensityReduceTime = (End - Start).TotalMinutes / 4;
+        } else {
+            mins = (time - creationTime).TotalMinutes;
+            sizeReduceTime = (Start - creationTime).TotalMinutes / 2;
+            intensityReduceTime = (Start - creationTime).TotalMinutes / 4;
+        }
         Intensity = mins > intensityReduceTime ?
             MaxIntensity : Math.Max(0, MaxIntensity / intensityReduceTime * mins);
         if (mins < sizeReduceTime) {
