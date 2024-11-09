@@ -121,11 +121,12 @@ public partial class MapWPF : Window {
                 foreach (var c in Director.Meteo.CloudsUI.Where(p => p is not null && !mapCanvas.Children.Contains(p)))
                     mapCanvas.Children.Add(c);
             }
-            DrawMeteoIntensityMap(true);
+            if (intensityMapCB.IsChecked == true)
+                DrawMeteoIntensityMap(true);
         }
     }
     private void DrawMeteoIntensityMap(bool draw) {
-        for (int i = 0; i < Director.Meteo.IntensityMapUI.Length; i++) {
+        for (int i = 0; i < Director?.Meteo?.IntensityMapUI.Length; i++) {
             for (int j = 0; j < Director.Meteo.IntensityMapUI[0].Length; j++) {
                 var b = Director.Meteo.IntensityMapUI[i][j];
                 if (b is null) continue;
@@ -157,6 +158,9 @@ public partial class MapWPF : Window {
 #endif
             }
         }
+    }
+    private void intensityMapCB_Checked(object sender, RoutedEventArgs e) {
+        DrawMeteoIntensityMap(intensityMapCB.IsChecked ?? false);
     }
     Point lastClickPos = new(0, 0);
     Point prevLastClickPos = new(0, 0);
@@ -256,6 +260,9 @@ public partial class MapWPF : Window {
 #endif
     private double iterations = 0;
     TimeSpan realWorkTime = TimeSpan.Zero, realWayTime = TimeSpan.Zero;
+    private void nextModelB_Click(object sender, RoutedEventArgs e) {
+        tester.NextModel();
+    }
     private void OnAttemptStarted(object? sender, EventArgs e) {
         Director = tester.ReloadModel();
 
@@ -407,6 +414,9 @@ public partial class MapWPF : Window {
     private void trajectoryScale_TextChanged(object sender, TextChangedEventArgs e) {
         if (Director != null && float.TryParse((sender as TextBox).Text.Replace('.', ','), out float scale))
             Director.Scale = scale;
+    }
+    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
+        Director.Dispose();
     }
     #endregion
 
@@ -612,8 +622,11 @@ public partial class MapWPF : Window {
     }
 
     private void meteoCB_Checked(object sender, RoutedEventArgs e) {
-        if (Director is not null)
+        if (Director is not null) {
             Director.EnableMeteo = meteoCB.IsChecked.Value;
+            intensityMapCB.IsChecked = false;
+            intensityMapCB.IsEnabled = meteoCB.IsChecked.Value;
+        }
     }
     #endregion
 
@@ -656,10 +669,17 @@ public partial class MapWPF : Window {
     }
     #endregion
 
-    private void nextModelB_Click(object sender, RoutedEventArgs e) {
-        tester.NextModel();
+    private void testsB_Click(object sender, RoutedEventArgs e) {
+        // Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
+        // window.ShowDialog();
+        tester.LoadModels();
+        if (File.Exists(tester.Models[0].Path)) {
+            tester.LoadModel(tester.Models[0].Path);
+            Director = tester.ActiveDirector;
+        }
     }
 
+    #region Simulation Info
     private void mapCanvas_MouseMove(object sender, MouseEventArgs e) {
         var p = e.GetPosition(mapCanvas);
         if (mapCanvas.ToolTip is ToolTip t) {
@@ -678,21 +698,6 @@ public partial class MapWPF : Window {
         if (mapCanvas.ToolTip is ToolTip t)
             t.IsOpen = false;
     }
-
-    private void testsB_Click(object sender, RoutedEventArgs e) {
-        // Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
-        // window.ShowDialog();
-        tester.LoadModels();
-        if (File.Exists(tester.Models[0].Path)) {
-            tester.LoadModel(tester.Models[0].Path);
-            Director = tester.ActiveDirector;
-        }
-    }
-
-    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
-        Director.Dispose();
-    }
-
     public void Refresh() {
         if (Director != null) {
             double quality = Math.Round(Director.Distributor.DistributionQualifyReadings
@@ -713,4 +718,5 @@ public partial class MapWPF : Window {
             }
         }
     }
+    #endregion
 }

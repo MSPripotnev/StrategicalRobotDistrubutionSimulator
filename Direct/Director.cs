@@ -130,16 +130,18 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             enableMeteo = value;
         }
     }
-    private GlobalMeteo meteomap;
+    private GlobalMeteo meteo;
     [XmlIgnore]
     public GlobalMeteo Meteo {
-        get { return meteomap; }
+        get { return meteo; }
         private set {
-            if (meteomap is not null)
-                TimeChanged -= meteomap.Simulate;
-            meteomap = value;
-            Meteo.PropertyChanged += RefreshMeteo;
-            TimeChanged += Meteo.Simulate;
+            if (meteo is not null)
+                TimeChanged -= meteo.Simulate;
+            meteo = value;
+            if (value is not null) {
+                Meteo.PropertyChanged += RefreshMeteo;
+                TimeChanged += Meteo.Simulate;
+            }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Meteo)));
         }
     }
