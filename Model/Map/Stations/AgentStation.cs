@@ -1,4 +1,4 @@
-﻿using SRDS.Direct.Agents;
+using SRDS.Direct.Agents;
 
 using System.Windows.Media;
 using System.Xml.Serialization;
@@ -16,7 +16,9 @@ public class AgentStation : Station, ITimeSimulatable {
     public AgentStation() : base() {
         Color = Colors.SandyBrown;
     }
-    public AgentStation(System.Windows.Point pos) : base(pos) { }
+    public AgentStation(System.Windows.Point pos) : base(pos) {
+        Color = Colors.SandyBrown;
+    }
     public void Simulate(object? sender, DateTime time) {
         for (int i = 0; i < AssignedAgents.Length; i++)
             do
