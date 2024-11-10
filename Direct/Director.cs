@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -98,8 +98,6 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
                 Map = new TacticalMap(mapPath);
                 for (int i = 0; i < Map.Roads.Length; i++)
                     Map.Roads[i].Connect(Map.Roads.Where(p => p != Map.Roads[i]).ToArray());
-                if (Distributor is not null)
-                    Distributor.Map = Map;
             }
         }
     }
@@ -112,6 +110,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             TimeChanged = null;
             if (EnableMeteo)
                 Meteo = new GlobalMeteo(map, seed);
+            if (Distributor is not null)
+                Distributor.Map = Map;
 
             foreach (IPlaceable obj in AllObjectsOnMap.Concat(map.Roads))
                 if (obj is ITimeSimulatable its)
@@ -179,12 +179,12 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     public Director(Size mapSize) {
         Scale = 5.0F;
         EnableMeteo = true;
+        Distributor = new TaskDistributor(typeof(FuzzyQualifier));
         Map = new TacticalMap() {
             Borders = mapSize
         };
         Targets = Array.Empty<Target>();
         Agents = Array.Empty<Agent>();
-        Distributor = new TaskDistributor(typeof(FuzzyQualifier));
     }
     [XmlIgnore]
     public Learning Learning { get; set; } = new Learning();
