@@ -52,23 +52,22 @@ public class SnowRemover : Agent {
     public SnowRemover() : base() {
         InteractDistance = 8;
     }
-    public override void Simulate() {
+    public override void Simulate(object? sender, DateTime time) {
         Fuel -= FuelDecrease;
+        TimeSpan timeFlow = time - _time;
+        _time = time;
+        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
         switch (CurrentState) {
             case RobotState.Broken:
             case RobotState.Ready:
-            base.Simulate();
+            case RobotState.Thinking:
+               base.Simulate(sender, time);
             break;
             case RobotState.Going:
-            //есть куда двигаться
             if (Trajectory.Count > 0) {
-                //двигаемся
                 Move();
-                //дошли до нужной точки
                 if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance) {
-                    //цель = объект
                     if (AttachedObj != null)
-                        //захватываем объект
                         CurrentState = RobotState.Working;
                     else
                         CurrentState = RobotState.Ready;
@@ -88,9 +87,6 @@ public class SnowRemover : Agent {
                     CurrentState = RobotState.Ready;
                 break;
             }
-            case RobotState.Thinking:
-            base.Simulate();
-            break;
         }
     }
 }

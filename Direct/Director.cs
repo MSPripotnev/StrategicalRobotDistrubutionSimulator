@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -205,13 +205,12 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         Time = time;
         TimeChanged?.Invoke(this, time);
         TimeChanged?.Invoke(Meteo, time);
-
-        for (int i = 0; i < Agents.Length; i++) {
+        for (int i = 0; i < Distributor.NonAssignedAgents.Length; i++) {
             do
-                Agents[i].Simulate();
+                Distributor.NonAssignedAgents[i].Simulate(this, time);
             while (Agents[i].CurrentState == RobotState.Thinking);
-            if (Agents[i].AttachedObj is not null)
-                Distributor.UpdateDistribution(Agents[i]);
+            if (Distributor.NonAssignedAgents[i].AttachedObj is not null)
+                Distributor.UpdateDistribution(Distributor.NonAssignedAgents[i]);
         }
         for (int i = 0; i < Targets.Length; i++)
             if (Targets[i].Finished)

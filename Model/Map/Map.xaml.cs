@@ -301,7 +301,10 @@ public partial class MapWPF : Window {
     }
     private void RefreshTimer_Tick(object? sender, EventArgs e) {
         refreshTimer.Stop();
-        d_time = d_time.AddMinutes(1);
+        if (d_time.AddMinutes(speedSlider.Value).Minute < speedSlider.Value)
+            d_time = d_time.AddMinutes(speedSlider.Value - d_time.AddMinutes(speedSlider.Value).Minute);
+        else
+            d_time = d_time.AddMinutes(speedSlider.Value);
         var dt = DateTime.Now;
         Work();
         realWayTime += (DateTime.Now - dt);
@@ -653,9 +656,9 @@ public partial class MapWPF : Window {
     }
     double lastSpeed = 1;
     private void speedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-        const double maxInterval = 500000;
+        const double maxInterval = 100;
         if (e.NewValue > 0) {
-            refreshTimer.Interval = new TimeSpan((int)Math.Round(maxInterval / e.NewValue));
+            refreshTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)(maxInterval / e.NewValue));
             Pause = false;
         } else {
             Pause = true;

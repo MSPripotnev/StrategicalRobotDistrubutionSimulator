@@ -63,8 +63,6 @@ public class Transporter : Agent {
         }
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
-
     #endregion
 
     #region Constructors
@@ -92,14 +90,17 @@ public class Transporter : Agent {
         Pathfinder.IsCompleted = false;
         Pathfinder.Result = new List<Point>();
     }
-    public override void Simulate() {
+    public override void Simulate(object? sender, DateTime time) {
         Fuel -= FuelDecrease;
+        TimeSpan timeFlow = time - _time;
+        _time = time;
+        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
         switch (CurrentState) {
             case RobotState.Disable:
             return;
             case RobotState.Broken:
             case RobotState.Ready:
-            base.Simulate();
+            base.Simulate(sender, time);
             break;
             case RobotState.Thinking:
             if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {

@@ -51,6 +51,8 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     public double Speed { get; set; }
     [XmlIgnore]
+    public double ActualSpeed { get; set; }
+    [XmlIgnore]
     public List<Point> OpenedPoints {
         get {
             var vs = new List<Point>();
@@ -77,7 +79,14 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
         }
     }
-    public AgentStation Home { get; set; }
+    private AgentStation home;
+    public AgentStation Home { 
+        get => home; 
+        set {
+            home = value;
+            home.Assign(this);
+        }
+    }
     #endregion
 
     #region Brain
@@ -285,8 +294,12 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     }
     #endregion
 
-    public virtual void Simulate() {
+    protected DateTime _time;
+    public virtual void Simulate(object? sender, DateTime time) {
         Fuel -= FuelDecrease;
+        TimeSpan timeFlow = time - _time;
+        _time = time;
+        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
         switch (CurrentState) {
             case RobotState.Ready:
             if (Home != null && (Home.Position - Position).Length > 10 && AttachedObj == null && (TargetPosition - Home.Position).Length > InteractDistance)
@@ -327,7 +340,7 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         Vector V = nextPoint - Position;
         if (V.Length > 0)
             V.Normalize();
-        V *= Speed / Pathfinder.GetPointHardness(nextPoint);
+        V *= ActualSpeed / Pathfinder.GetPointHardness(nextPoint);
         Position = new Point(Position.X + V.X, Position.Y + V.Y);
 
         var angle = Vector.AngleBetween(V, new Vector(0, -1));

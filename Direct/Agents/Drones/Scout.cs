@@ -8,8 +8,6 @@ public class Scout : Agent {
 
     public const int ViewingRange = 50;
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public Scout() { }
     public Scout(Point point) {
         Position = point;
@@ -17,7 +15,7 @@ public class Scout : Agent {
     }
     public Scout(int x, int y) { }
 
-    public override void Simulate() {
+    public override void Simulate(object? sender, DateTime time) {
 
     }
 

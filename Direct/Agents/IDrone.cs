@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using SRDS.Model;
+using System.Windows;
 
 namespace SRDS.Direct.Agents;
 public interface IDrone : IMoveable {
@@ -7,7 +8,7 @@ public interface IDrone : IMoveable {
     public RobotState CurrentState { get; set; }
 }
 
-public interface IMoveable {
+public interface IMoveable : ITimeSimulatable {
     public double Speed { get; set; }
     public List<Point> Trajectory { get; set; }
     public Point TargetPosition { get; set; }
