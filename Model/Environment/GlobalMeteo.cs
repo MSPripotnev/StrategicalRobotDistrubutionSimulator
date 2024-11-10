@@ -253,25 +253,12 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     private SnowCloud? SplitCloud() {
         if (!Clouds.Any())
             return null;
-        var bigClouds = Clouds.OrderByDescending(p => p.Width * p.Length).Take(Math.Min(5, Clouds.Length)).ToArray();
-        SnowCloud splited = bigClouds[Rnd.Next(0, bigClouds.Length)];
-        if (splited.Width * splited.Length < 100 * 100)
-            return null;
-        int direction = Rnd.Next(0, 3) * 2 + 1;
-        double width = splited.Width / Rnd.Next(2, 4),
-               length = splited.Length / Rnd.Next(2, 4);
-        splited.MaxWidth *= (1 - width / splited.MaxWidth);
-        splited.MaxLength *= (1 - length / splited.MaxLength);
-        splited.Width *= (1 - width / splited.Width);
-        splited.Length *= (1 - length / splited.Length);
-        Point position = new Point(
-            Math.Round(splited.Position.X + (direction / 3 - 1) * width),
-            Math.Round(splited.Position.Y + (direction % 3 - 1) * length));
+        var bigClouds = Clouds.Where(p => _time >= p.Start && p.Width * p.Length < 100 * 100)
+                              .OrderByDescending(p => p.Width * p.Length)
+                              .Take(Math.Min(5, Clouds.Length)).ToArray();
+        if (!bigClouds.Any()) return null;
 
-        if (Clouds.Any(p => (p.Position - position).Length < 20))
-            return null;
-
-        return new SnowCloud(position, width, length, Wind, splited.Intensity, _time.AddMinutes(30), _time.AddMinutes(30), splited.End.AddMinutes(Rnd.NextDouble() * 60 - 30));
+        return bigClouds[Rnd.Next(0, bigClouds.Length)].Split(Rnd, _time);
     }
     #endregion
 }
