@@ -7,9 +7,7 @@ using System.Xml.Serialization;
 
 namespace SRDS.Direct.Agents;
 using Drones;
-
 using Direct.Executive;
-
 using Model;
 using Model.Map.Stations;
 using Model.Targets;
@@ -25,71 +23,17 @@ public enum RobotState {
 [XmlInclude(typeof(Transporter))]
 public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
 
-    #region Properties
-    public double MaxStraightRange { get; init; }
+    #region Control
     [XmlIgnore]
     public const double FuelDecrease = 0.01;
-
     private double fuel = 100;
     public double Fuel {
         get => fuel;
         set => fuel = Math.Min(100, Math.Max(0, value));
     }
 
-    #region Map
-    private Point position;
-    public Point Position {
-        get => position;
-        set {
-            position = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
-        }
-    }
-    [XmlIgnore]
-    [PropertyTools.DataAnnotations.Browsable(false)]
-    public Color Color { get; set; } = Colors.Red;
-    [XmlIgnore]
-    public double Speed { get; set; }
-    [XmlIgnore]
-    public double ActualSpeed { get; set; }
-    [XmlIgnore]
-    public List<Point> OpenedPoints {
-        get {
-            var vs = new List<Point>();
-            if (Pathfinder.ActiveExplorer == null) return vs;
-            for (int i = 0; i < Pathfinder.ActiveExplorer.OpenedPoints.Count; i++)
-                vs.Add(Pathfinder.ActiveExplorer.OpenedPoints[i].Position);
-            return vs;
-        }
-        set {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OpenedPoints)));
-        }
-    }
-    [PropertyTools.DataAnnotations.Browsable(false)]
-    [XmlIgnore]
-    public List<Point> ClosedPoints {
-        get {
-            var vs = new List<Point>();
-            if (Pathfinder.ActiveExplorer == null) return vs;
-            for (int i = 0; i < Pathfinder.ActiveExplorer.ClosedPoints.Count; i++)
-                vs.Add(Pathfinder.ActiveExplorer.ClosedPoints[i].Position);
-            return vs;
-        }
-        set {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
-        }
-    }
-    private AgentStation home;
-    public AgentStation Home { 
-        get => home; 
-        set {
-            home = value;
-            home.Assign(this);
-        }
-    }
-    #endregion
-
-    #region Brain
+    #region State Machine
+    protected DateTime _time;
     [XmlIgnore]
     private RobotState state;
     [XmlIgnore]
@@ -99,13 +43,13 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         }
         set {
             switch (value) {
-                case RobotState.Disable:
+            case RobotState.Disable:
                 break;
-                case RobotState.Broken:
+            case RobotState.Broken:
                 if (Home != null && (TargetPosition - Home.Position).Length > InteractDistance)
                     TargetPosition = Home.Position;
                 break;
-                case RobotState.Ready:
+            case RobotState.Ready:
                 if (Home != null && (Position - Home.Position).Length < 10)
                     Fuel = 100;
                 //объект взят
@@ -122,35 +66,83 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
                     BlockedTargets.Clear();
                 }
                 break;
-                //нужно рассчитать траекторию
-                case RobotState.Thinking:
+            //нужно рассчитать траекторию
+            case RobotState.Thinking:
                 //инициализация модуля прокладывания пути
-                Pathfinder.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : Speed);
+                Pathfinder?.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : Speed);
                 break;
-                case RobotState.Going:
+            case RobotState.Going:
                 if (CurrentState == RobotState.Thinking && AttachedObj != null) {
 
                 }
                 var vs = new List<Point>(Trajectory); vs.Reverse();
                 BackTrajectory = vs.ToArray();
                 break;
-                case RobotState.Working:
+            case RobotState.Working:
                 if (CurrentState == RobotState.Thinking)
                     Trajectory.Add(Trajectory[^1]);
                 break;
-                default:
+            default:
                 break;
             }
             state = value;
         }
     }
 
-    #region Trajectory
+    public virtual void Simulate(object? sender, DateTime time) {
+        Fuel -= FuelDecrease;
+        TimeSpan timeFlow = time - _time;
+        _time = time;
+        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
+        switch (CurrentState) {
+        case RobotState.Ready:
+            if (Home != null && (Home.Position - Position).Length > 10 && AttachedObj == null && (TargetPosition - Home.Position).Length > InteractDistance)
+                TargetPosition = Home.Position;
+            else if (Home != null && (Position - Home.Position).Length < 10)
+                Fuel = 100;
+            else if (Home != null && (TargetPosition - Home.Position).Length <= InteractDistance && Trajectory.Count > 2)
+                Move();
+            break;
+        case RobotState.Thinking:
+            if (Pathfinder is null || Pathfinder.Result is null)
+                return;
+            Trajectory = Pathfinder.Result;
+            //ошибка при расчётах
+            if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
+                if (AttachedObj != null)
+                    BlockedTargets.Add(AttachedObj);
+                AttachedObj = null;
+            } else if (Pathfinder.IsCompleted) {
+                //путь найден
+                Pathfinder.IsCompleted = false;
+                CurrentState = RobotState.Going;
+                ThinkingIterations += Pathfinder.Iterations;
+            } else
+                Pathfinder.NextStep(); //продолжение расчёта
+            break;
+        }
+    }
+    #endregion
+
+    #region Pathfinder
+    private Point position;
+    public Point Position {
+        get => position;
+        set {
+            position = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
+        }
+    }
+    public double MaxStraightRange { get; init; }
+    [XmlIgnore]
+    public double Speed { get; set; }
+    [XmlIgnore]
+    public double ActualSpeed { get; set; }
     [XmlIgnore]
     private List<Point> trajectory = new List<Point>();
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
-    public PathFinder Pathfinder { get; set; }
+    public PathFinder? Pathfinder { get; set; }
     [PropertyTools.DataAnnotations.Browsable(false)]
     [XmlIgnore]
     public Point[] BackTrajectory { get; set; }
@@ -174,9 +166,44 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
             CurrentState = RobotState.Thinking;
         }
     }
+
+    protected virtual void Move() {
+        Point nextPoint = Trajectory[0];
+
+        if (PathFinder.Distance(Position, nextPoint) < MaxStraightRange) {
+            List<Point> pc = new(Trajectory.Skip(1));
+            if (pc.Any()) {
+                TraversedWay += PathFinder.Distance(nextPoint, pc[0]) * (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint) : 1);
+                nextPoint = pc[0];
+            }
+            Trajectory = pc;
+        }
+        Vector V = nextPoint - Position;
+        if (V.Length > 0)
+            V.Normalize();
+        V *= ActualSpeed / (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint) : 1);
+        Position = new Point(Position.X + V.X, Position.Y + V.Y);
+
+        var angle = Vector.AngleBetween(V, new Vector(0, -1));
+        angle = angle < 180 && angle > -180 ? -angle : angle;
+        if (ui is not null)
+            ui.RenderTransform = new RotateTransform(angle, 10, 10);
+
+        WayIterations++;
+    }
+    #endregion
+
     #endregion
 
     #region Interact
+    private AgentStation? home;
+    public AgentStation? Home {
+        get => home;
+        set {
+            home = value;
+            home?.Assign(this);
+        }
+    }
     [XmlIgnore]
     public int InteractDistance { get; init; } = 30;
     [XmlIgnore]
@@ -191,6 +218,33 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     #endregion
 
     #region Debug Info
+    [XmlIgnore]
+    public List<Point> OpenedPoints {
+        get {
+            var vs = new List<Point>();
+            if (Pathfinder?.ActiveExplorer == null) return vs;
+            for (int i = 0; i < Pathfinder.ActiveExplorer.OpenedPoints.Count; i++)
+                vs.Add(Pathfinder.ActiveExplorer.OpenedPoints[i].Position);
+            return vs;
+        }
+        set {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OpenedPoints)));
+        }
+    }
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    [XmlIgnore]
+    public List<Point> ClosedPoints {
+        get {
+            var vs = new List<Point>();
+            if (Pathfinder?.ActiveExplorer == null) return vs;
+            for (int i = 0; i < Pathfinder.ActiveExplorer.ClosedPoints.Count; i++)
+                vs.Add(Pathfinder.ActiveExplorer.ClosedPoints[i].Position);
+            return vs;
+        }
+        set {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
+        }
+    }
     [XmlIgnore]
     public long ThinkingIterations { get; protected set; } = 0;
     [XmlIgnore]
@@ -212,13 +266,11 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     }
     #endregion
 
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    #endregion
-
-    #endregion
-    private UIElement? ui = null;
     #region Drawing
+    private UIElement? ui = null;
+    [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    public Color Color { get; set; } = Colors.Red;
     public virtual UIElement Build() {
         if (ui is not null)
             return ui;
@@ -291,65 +343,12 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         InteractDistance = 30;
         BlockedTargets = new List<Target>();
         MaxStraightRange = 2 * Speed;
+        BackTrajectory = Array.Empty<Point>();
     }
     #endregion
 
-    protected DateTime _time;
-    public virtual void Simulate(object? sender, DateTime time) {
-        Fuel -= FuelDecrease;
-        TimeSpan timeFlow = time - _time;
-        _time = time;
-        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
-        switch (CurrentState) {
-            case RobotState.Ready:
-            if (Home != null && (Home.Position - Position).Length > 10 && AttachedObj == null && (TargetPosition - Home.Position).Length > InteractDistance)
-                TargetPosition = Home.Position;
-            else if (Home != null && (Position - Home.Position).Length < 10)
-                Fuel = 100;
-            else if ((TargetPosition - Home.Position).Length <= InteractDistance && Trajectory.Count > 2)
-                Move();
-            break;
-            case RobotState.Thinking:
-            Trajectory = Pathfinder.Result;
-            //ошибка при расчётах
-            if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
-                if (AttachedObj != null)
-                    BlockedTargets.Add(AttachedObj);
-                AttachedObj = null;
-            } else if (Pathfinder.IsCompleted) {
-                //путь найден
-                Pathfinder.IsCompleted = false;
-                CurrentState = RobotState.Going;
-                ThinkingIterations += Pathfinder.Iterations;
-            } else
-                Pathfinder.NextStep(); //продолжение расчёта
-            break;
-        }
-    }
-    protected virtual void Move() {
-        Point nextPoint = Trajectory[0];
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-        if (PathFinder.Distance(Position, nextPoint) < MaxStraightRange) {
-            List<Point> pc = new(Trajectory.Skip(1));
-            if (pc.Any()) {
-                TraversedWay += PathFinder.Distance(nextPoint, pc[0]) * Pathfinder.GetPointHardness(nextPoint);
-                nextPoint = pc[0];
-            }
-            Trajectory = pc;
-        }
-        Vector V = nextPoint - Position;
-        if (V.Length > 0)
-            V.Normalize();
-        V *= ActualSpeed / Pathfinder.GetPointHardness(nextPoint);
-        Position = new Point(Position.X + V.X, Position.Y + V.Y);
-
-        var angle = Vector.AngleBetween(V, new Vector(0, -1));
-        angle = angle < 180 && angle > -180 ? -angle : angle;
-        if (ui is not null)
-            ui.RenderTransform = new RotateTransform(angle, 10, 10);
-
-        WayIterations++;
-    }
     public override string ToString() {
         return Enum.GetName(typeof(RobotState), state) + "_" +
             new Point(Math.Round(position.X, 2), Math.Round(position.Y, 2)).ToString();

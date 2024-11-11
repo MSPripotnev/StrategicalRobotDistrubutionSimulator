@@ -1,6 +1,7 @@
 using SRDS.Direct;
 using SRDS.Model.Map;
 using SRDS.Model.Targets;
+
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -11,7 +12,7 @@ using System.Xml.Serialization;
 namespace SRDS.Analyzing.Models;
 public class ParametrRange {
     public bool IsConst { get; init; }
-    private List<double> Values;
+    private readonly List<double> Values;
 
     public ParametrRange((double start, double end, double step) range) {
         if (IsConst = range.step == 0) {
@@ -53,6 +54,7 @@ public class ParametrRangeGeneratedModel : IModel {
         TransportersT = new List<int>();
         ScalesT = new List<float>();
         TargetsT = new List<Target>();
+        Path = Name = Map = "";
     }
     public ParametrRangeGeneratedModel(string name, string map, int targetsCount, (int, int, int) transporterRange, (float, float, float) scaleRange) {
         Name = name;
@@ -72,29 +74,27 @@ public class ParametrRangeGeneratedModel : IModel {
             ScalesT = new ParametrRange(scaleRange);
         }
         Path = System.IO.Path.Combine(Paths.Default.Tests, "Complete", $"{Name}.xml");
-        using (FileStream fs = new FileStream(Path, FileMode.Create)) {
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
-            XmlWriterSettings settings = new XmlWriterSettings() {
-                Indent = true,
-                CloseOutput = true,
-            };
-            xmlSerializer.Serialize(fs, this);
-        }
+        using FileStream fs = new FileStream(Path, FileMode.Create);
+        XmlSerializer xmlSerializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
+        XmlWriterSettings settings = new XmlWriterSettings() {
+            Indent = true,
+            CloseOutput = true,
+        };
+        xmlSerializer.Serialize(fs, this);
     }
     public ParametrRangeGeneratedModel(string path) {
-        path = System.IO.Path.Combine(Paths.Default.Tests, path);
-        if (File.Exists(path))
-            using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                XmlSerializer xmlSerializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
-                ParametrRangeGeneratedModel m = (ParametrRangeGeneratedModel)xmlSerializer.Deserialize(fs);
-                Map = m.Map;
-                TransportersT = m.TransportersT;
-                TargetsT = m.TargetsT;
-                ScalesT = m.ScalesT;
-                Name = m.Name;
-                Path = path;
-            }
-        else MessageBox.Show("�� ������� ����� ����: " + path);
+        Path = path = System.IO.Path.Combine(Paths.Default.Tests, path);
+        if (!File.Exists(path))
+            throw new FileFormatException("Failed to load model: " + path);
+        using FileStream fs = new FileStream(path, FileMode.Open);
+        XmlSerializer xmlSerializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
+        ParametrRangeGeneratedModel m = (ParametrRangeGeneratedModel?)xmlSerializer.Deserialize(fs) ?? throw new FileFormatException();
+        Map = m.Map;
+        TransportersT = m.TransportersT;
+        TargetsT = m.TargetsT;
+        ScalesT = m.ScalesT;
+        Name = m.Name;
+        Path = path;
     }
     public Director Unpack() {
         var res = new Director() {
@@ -113,11 +113,11 @@ public class ParametrRangeGeneratedModel : IModel {
         return res;
     }
 
-    private List<Target> FillTargetsTByPerimetr(int targetsCount, Obstacle[] obstacles) {
+    private static List<Target> FillTargetsTByPerimetr(int targetsCount, Obstacle[] obstacles) {
         List<Target> targets = new List<Target>();
         int targetsPerField = targetsCount / obstacles.Length; //recalc foreach by perimetr
         int remainTargetsPerField = targetsCount % obstacles.Length;
-        if (targetsPerField < 0) return null;
+        if (targetsPerField < 0) return new();
         for (int fi = 0; fi < obstacles.Length; fi++) {
             Polygon polygon = obstacles[fi].Polygon;
             Point centerP = new Point((polygon.Points.MaxBy(p => p.X).X + polygon.Points.MinBy(p => p.X).X) / 2,

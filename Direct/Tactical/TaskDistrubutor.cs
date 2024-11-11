@@ -10,9 +10,9 @@ using Model.Map.Stations;
 using Model.Targets;
 using SRDS.Direct.Tactical.Qualifiers;
 using SRDS.Direct.Executive;
+using System.Drawing;
 
-public class TaskDistributor
-{
+public class TaskDistributor {
 
     #region Properties
     [XmlIgnore]
@@ -24,59 +24,51 @@ public class TaskDistributor
     [XmlIgnore]
     public IQualifier Qualifier { get; set; }
     [XmlIgnore]
-    public Agent[] NonAssignedAgents
-    {
+    public Agent[] NonAssignedAgents {
         get => Agents is not null ? Agents.Where(p => p.Home == null).ToArray() : Array.Empty<Agent>();
     }
     [XmlIgnore]
-    public Agent[] FreeAgents
-    {
+    public Agent[] FreeAgents {
         get => Agents is not null ? Agents.Where(x => x.CurrentState == RobotState.Ready).ToArray() : Array.Empty<Agent>();
     }
     [XmlIgnore]
-    public Target[] FreeTargets
-    {
+    public Target[] FreeTargets {
         get => Targets is not null ? Targets.Where(x => x.ReservedAgent == null && !x.Finished).ToArray() : Array.Empty<Target>();
     }
     [XmlIgnore]
     public Dictionary<Target, DistributionQualifyReading> DistributionQualifyReadings { get; set; } = new();
     #endregion
 
-    public TaskDistributor() : this(null) { }
-    public TaskDistributor(Type? qualifyType)
-    {
+    public TaskDistributor() : this(null, new TacticalMap()) { }
+    public TaskDistributor(Type? qualifyType, TacticalMap map) {
         if (qualifyType == null)
             qualifyType = typeof(DistanceQualifier);
         if (qualifyType?.GetConstructor(Type.EmptyTypes)?.Invoke(null) is IQualifier q)
             Qualifier = q;
         else throw new Exception($"Could not find constructor for type '{qualifyType?.FullName}'");
+        Map = map;
     }
 
     #region Distribution
 
     #region General
-    public void DistributeTask(PropertyChangedEventHandler? propertyChanged)
-    {
+    public void DistributeTask(PropertyChangedEventHandler? propertyChanged) {
         DistributeTaskForFreeAgents(propertyChanged);
         DistributeTaskForWorkingTransporters();
     }
 
-    private void DistributeTaskForFreeAgents(PropertyChangedEventHandler? propertyChanged)
-    {
+    private void DistributeTaskForFreeAgents(PropertyChangedEventHandler? propertyChanged) {
         var freeAgents = new List<Agent>(FreeAgents).Where(p => p.AttachedObj == null).ToArray();
-        if (freeAgents.Length > 0)
-        {
+        if (freeAgents.Length > 0) {
             CalculateTrajectoryForFreeAgents(ref freeAgents);
             FindNearestAgentWithTrajectoryForTarget();
         }
         propertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FreeTargets)));
         propertyChanged?.Invoke(this, new PropertyChangedEventArgs("CollectedTargets"));
     }
-    private void CalculateTrajectoryForFreeAgents(ref Agent[] freeAgents)
-    {
+    private void CalculateTrajectoryForFreeAgents(ref Agent[] freeAgents) {
         //распределение ближайших целей по роботам
-        for (int i = 0; i < freeAgents.Length; i++)
-        {
+        for (int i = 0; i < freeAgents.Length; i++) {
             Agent agent = freeAgents[i];
             Target? targetPos = Qualifier.RecommendTargetForAgent(agent, FreeTargets.Where(p => !agent.BlockedTargets.Contains(p)));
             if (targetPos == null)
@@ -84,27 +76,22 @@ public class TaskDistributor
 
             LinkTargetToAgent(agent, targetPos);
 
-            if (!agent.Trajectory.Any())
-            {
+            if (!agent.Trajectory.Any()) {
                 agent.AttachedObj = null;
                 agent.BlockedTargets.Add(targetPos);
             }
         }
     }
-    private void FindNearestAgentWithTrajectoryForTarget()
-    {
-        for (int i = 0; i < FreeTargets.Length; i++)
-        {
+    private void FindNearestAgentWithTrajectoryForTarget() {
+        for (int i = 0; i < FreeTargets.Length; i++) {
             Target t = FreeTargets[i];
             var AttachedAgents = Agents?.Where(p => p.AttachedObj == t &&
                     (p.CurrentState == RobotState.Ready || p.CurrentState == RobotState.Thinking))
                 .ToArray();
 
-            if (AttachedAgents?.Length > 0)
-            {
+            if (AttachedAgents?.Length > 0) {
                 t.ReservedAgent = AttachedAgents.MaxBy(p => Qualifier.Qualify(p, t));
-                for (int j = 0; j < AttachedAgents.Length; j++)
-                {
+                for (int j = 0; j < AttachedAgents.Length; j++) {
                     if (AttachedAgents[j] != t.ReservedAgent)
                         UnlinkTargetFromAgent(AttachedAgents[j]);
                 }
@@ -115,39 +102,33 @@ public class TaskDistributor
     #endregion
 
     #region Specific
-    private void DistributeTaskForWorkingTransporters()
-    {
+    private void DistributeTaskForWorkingTransporters() {
         var WorkingTransporters = Agents?.Where(
             p => p is Transporter && p.CurrentState == RobotState.Working && Map.Stations
             .Where(p => p is CollectingStation)
             .All(b => PathFinder.Distance(b.Position, p.TargetPosition) > p.InteractDistance))
             .ToList();
 
-        if (WorkingTransporters?.Count > 0)
-        {
-            for (int i = 0; i < WorkingTransporters.Count; i++)
-            {
+        if (WorkingTransporters?.Count > 0) {
+            for (int i = 0; i < WorkingTransporters.Count; i++) {
                 Transporter transporter = (Transporter)WorkingTransporters[i];
                 CollectingStation? nearBase = (CollectingStation?)Map.Stations.Where(p => p is CollectingStation).MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
 
                 if (nearBase == null)
                     return;
 
-                if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance / 2)
-                {
+                if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance / 2) {
                     transporter.Trajectory = transporter.BackTrajectory.ToList();
                     if (transporter.Trajectory[^1] != nearBase.Position)
                         transporter.Trajectory[^1] = nearBase.Position;
-                    transporter.BackTrajectory = null;
-                    transporter.AttachedObj.ReservedAgent = transporter;
-                }
-                else if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance)
-                {
+                    transporter.BackTrajectory = Array.Empty<System.Windows.Point>();
+                    if (transporter.AttachedObj is not null)
+                        transporter.AttachedObj.ReservedAgent = transporter;
+                } else if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
                     transporter.TargetPosition = nearBase.Position;
-                    transporter.AttachedObj.ReservedAgent = transporter;
-                }
-                else
-                {
+                    if (transporter.AttachedObj is not null)
+                        transporter.AttachedObj.ReservedAgent = transporter;
+                } else {
                     transporter.CurrentState = RobotState.Ready;
                 }
             }
@@ -156,15 +137,13 @@ public class TaskDistributor
     #endregion
 
     #region Links
-    private static void LinkTargetToAgent(Agent agent, Target target)
-    {
+    private static void LinkTargetToAgent(Agent agent, Target target) {
         if (target == null)
             return;
         agent.AttachedObj = target;
         agent.TargetPosition = target.Position;
     }
-    private static void UnlinkTargetFromAgent(Agent agent)
-    {
+    private static void UnlinkTargetFromAgent(Agent agent) {
         agent.AttachedObj = null;
         agent.Trajectory.Clear();
         agent.CurrentState = RobotState.Ready;
@@ -174,24 +153,20 @@ public class TaskDistributor
     #endregion
 
     #region Record
-    public void RecordDistribution(Target t, string mapPath)
-    {
-        if (Qualifier is FuzzyQualifier f)
-        {
+    public void RecordDistribution(Target t, string mapPath) {
+        if (Qualifier is FuzzyQualifier f) {
+            if (t.ReservedAgent is null) return;
             f.Qualify(t.ReservedAgent, t, out var rs);
-            DistributionQualifyReadings.Add(t, new()
-            {
+            DistributionQualifyReadings.Add(t, new() {
                 ModelName = mapPath,
                 Rules = rs,
                 TakedTarget = t,
                 AgentPosition = t.ReservedAgent.Position,
                 TakedLevel = t is Snowdrift s ? s.Level : 0,
             });
-        }
-        else
-        {
-            DistributionQualifyReadings.Add(t, new()
-            {
+        } else {
+            if (t.ReservedAgent is null) return;
+            DistributionQualifyReadings.Add(t, new() {
                 ModelName = mapPath,
                 TakedTarget = t,
                 AgentPosition = t.ReservedAgent.Position,
@@ -200,9 +175,8 @@ public class TaskDistributor
         }
     }
 
-    public void UpdateDistribution(Agent agent)
-    {
-        if (!DistributionQualifyReadings.ContainsKey(agent.AttachedObj))
+    public void UpdateDistribution(Agent agent) {
+        if (agent.AttachedObj is null || !DistributionQualifyReadings.ContainsKey(agent.AttachedObj))
             return;
         if (agent.CurrentState == RobotState.Working)
             DistributionQualifyReadings[agent.AttachedObj].WorkingTime++;

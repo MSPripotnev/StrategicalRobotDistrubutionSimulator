@@ -19,7 +19,7 @@
             <RowDefinition Height="25*"/>
         </Grid.RowDefinitions>
         <Button Grid.ColumnSpan="1" Grid.RowSpan="3" Grid.Column="0"/>
-        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" MouseMove="mapCanvas_MouseMove" MouseLeave="mapCanvas_MouseLeave" >
+        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" MouseMove="MapCanvas_MouseMove" MouseLeave="MapCanvas_MouseLeave" >
             <Canvas.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Добавить">
@@ -42,9 +42,9 @@
                         <MenuItem Header="Препятствие" Click="MenuItem_Click" Tag="4"/>
                         <MenuItem Header="Дорога" Click="MenuItem_Click" Tag="5"/>
                     </MenuItem>
-                    <MenuItem Header="Удалить" x:Name="deleteObjectB" Click="deleteObjectB_Click"/>
-                    <MenuItem Header="Отмена" x:Name="undoB" Click="undoB_Click"/>
-                    <MenuItem Header="Завершить" x:Name="finishObjectB" Click="finishObjectB_Click" IsEnabled="False"/>
+                    <MenuItem Header="Удалить" x:Name="deleteObjectB" Click="DeleteObjectB_Click"/>
+                    <MenuItem Header="Отмена" x:Name="undoB" Click="UndoB_Click"/>
+                    <MenuItem Header="Завершить" x:Name="finishObjectB" Click="FinishObjectB_Click" IsEnabled="False"/>
                 </ContextMenu>
             </Canvas.ContextMenu>
         </Canvas>
@@ -53,16 +53,15 @@
         <Label Grid.Row="2" Grid.Column="1" MaxHeight="50" Content="Тестирование: " VerticalAlignment="Top" HorizontalAlignment="Center" Margin="50,0,20,0"/>
         <CheckBox x:Name="testingCB" Grid.Column="2" Grid.Row="2" MaxHeight="50" Margin="135,5,5,0" VerticalAlignment="Top" HorizontalAlignment="Center" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked"/>
         <Label Grid.Row="2" Grid.Column="1" MaxHeight="50" Content="Отрисовка: " VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,0,20,0"/>
-        <CheckBox x:Name="drawCB" Grid.Column="2" Grid.Row="2" MaxHeight="50" Margin="0,5,5,0" VerticalAlignment="Top" HorizontalAlignment="Right" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" IsChecked="True"/>
-        <TextBox x:Name="trajectoryScaleTB" Text="5.0" Grid.Column="1" Grid.Row="2" MaxHeight="30" MaxLength="100" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="110,5,219,0" TextChanged="trajectoryScale_TextChanged"/>
+        <TextBox x:Name="trajectoryScaleTB" Text="5.0" Grid.Column="1" Grid.Row="2" MaxHeight="30" MaxLength="100" HorizontalAlignment="Left" VerticalAlignment="Top" TextAlignment="Center" Margin="110,5,219,0" TextChanged="TrajectoryScale_TextChanged"/>
         <Button x:Name="startB" Grid.Column="1" Content="▶️" HorizontalAlignment="Center" IsEnabled="False"
-                Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="startButton_Click" Margin="0,35,65,0"/>
+                Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="StartButton_Click" Margin="0,35,65,0"/>
         <Button x:Name="stopB" Grid.Column="1" Content="■" HorizontalAlignment="Center" IsEnabled="False"
-            Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="stopB_Click" Margin="0,35,0,0"/>
+            Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="StopB_Click" Margin="0,35,0,0"/>
         <Button x:Name="stepB" Grid.Column="1" Content="▶️|" HorizontalAlignment="Center" IsEnabled="False"
-            Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="stepB_Click" Margin="65,35,0,0"/>
+            Width="25" Height="20" Grid.Row="2" VerticalAlignment="Top" Click="StepB_Click" Margin="65,35,0,0"/>
         <Button x:Name="nextModelB" Grid.Column="1" Content="След. модель" HorizontalAlignment="Center" IsEnabled="True"
-            Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="nextModelB_Click" Margin="0, 0, 0, -60"/>
+            Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="NextModelB_Click" Margin="0, 0, 0, -60"/>
         <WrapPanel Grid.Column="1" Grid.Row="0" Panel.ZIndex="0" Background="#FFCFC0B0"/>
         <Label x:Name="localTimeL" Grid.Column="1" Grid.Row="0" MaxHeight="50" Margin="0,20,50,0" VerticalAlignment="Top"/>
         <Label x:Name="attemptsCountL" Grid.Column="1" Grid.Row="0" MaxHeight="80" Margin="0,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Right"/>
@@ -88,9 +87,10 @@
                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                          Name="propertyGrid" Panel.ZIndex="0"
                          ></pt:PropertyGrid>
-        <Button x:Name="testsB" Grid.Column="1" Content="Модели" HorizontalAlignment="Right" Margin="0,75,10,0" Grid.Row="2" VerticalAlignment="Top" Height="30" Width="69" Click="testsB_Click"/>
-        <CheckBox x:Name="meteoCB" Grid.Column="1" Content="Погода" HorizontalAlignment="Left" Margin="10,37,0,0" Grid.Row="2" VerticalAlignment="Top" IsChecked="True" Checked="meteoCB_Checked" Unchecked="meteoCB_Checked"/>
-        <Slider x:Name="speedSlider" Grid.Column="1" HorizontalAlignment="Right" Margin="243,36,0,0" Grid.Row="2" VerticalAlignment="Top" Width="123" Height="18" Maximum="5" SmallChange="1" ValueChanged="speedSlider_ValueChanged" TickPlacement="TopLeft"/>
-        <CheckBox x:Name="intensityMapCB" Grid.Column="1" Content="Карта осадков" HorizontalAlignment="Left" Margin="10,57,0,0" Grid.Row="2" VerticalAlignment="Top" IsChecked="False" Checked="intensityMapCB_Checked" Unchecked="intensityMapCB_Checked"/>
+        <Button x:Name="testsB" Grid.Column="1" Content="Модели" HorizontalAlignment="Right" Margin="0,75,10,0" Grid.Row="2" VerticalAlignment="Top" Height="30" Width="69" Click="TestsB_Click"/>
+        <CheckBox x:Name="drawCB" Grid.Column="2" Grid.Row="2" MaxHeight="50" Margin="0,5,5,0" VerticalAlignment="Top" HorizontalAlignment="Right" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" IsChecked="True"/>
+        <CheckBox x:Name="meteoCB" Grid.Column="1" Content="Погода" HorizontalAlignment="Left" Margin="10,37,0,0" Grid.Row="2" VerticalAlignment="Top" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked"/>
+        <CheckBox x:Name="intensityMapCB" Grid.Column="1" Content="Карта осадков" HorizontalAlignment="Left" Margin="10,57,0,0" Grid.Row="2" VerticalAlignment="Top" IsChecked="False" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked"/>
+        <Slider x:Name="speedSlider" Grid.Column="1" HorizontalAlignment="Right" Margin="243,36,0,0" Grid.Row="2" VerticalAlignment="Top" Width="123" Height="18" Maximum="5" SmallChange="1" ValueChanged="SpeedSlider_ValueChanged" TickPlacement="TopLeft"/>
     </Grid>
 </Window>

@@ -8,18 +8,24 @@ using System.Windows.Shapes;
 namespace SRDS.Model.Environment;
 using Map;
 public class SnowCloud : IPlaceable {
-    public double MaxIntensity { get; private set; } = 0;
-    private double intensity = 0;
-    public double Intensity {
-        get => intensity;
-        set {
-            intensity = value;
-            if (intensity < 0.02)
-                Color = Colors.LightGray;
-            else if (intensity < 0.1)
-                Color = Colors.Gray;
-        }
+
+    public SnowCloud() {
+        Color = Colors.Black;
     }
+    public SnowCloud(Point p, double w, double l, Vector v, double _intensity, DateTime create, DateTime start, DateTime end) : this() {
+        Position = p;
+        Velocity = v;
+        MaxWidth = w; // X
+        MaxLength = l; // Y
+        Width = Length = 0;
+        creationTime = create;
+        Start = start;
+        End = end;
+        Intensity = MaxIntensity = _intensity;
+    }
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    #region Drawing
     private Point position;
     /// <summary>
     /// Center position
@@ -55,29 +61,8 @@ public class SnowCloud : IPlaceable {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Width)));
         }
     }
-    public Vector Velocity { get; set; }
-    public DateTime Start { get; private set; }
-    public DateTime End { get; init; }
-    private DateTime creationTime;
-    public bool Finished { get; set; }
     public Color Color { get; set; }
     public UIElement? UI { get; private set; } = null;
-    public SnowCloud() {
-        Color = Colors.Black;
-    }
-    public SnowCloud(Point p, double w, double l, Vector v, double _intensity, DateTime create, DateTime start, DateTime end) : this() {
-        Position = p;
-        Velocity = v;
-        MaxWidth = w; // X
-        MaxLength = l; // Y
-        Width = Length = 0;
-        creationTime = create;
-        Start = start;
-        End = end;
-        Intensity = MaxIntensity = _intensity;
-    }
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public UIElement Build() {
         if (UI is not null)
             return UI;
@@ -102,6 +87,29 @@ public class SnowCloud : IPlaceable {
         el.SetBinding(Canvas.HeightProperty, binding);
         return UI = el;
     }
+    #endregion
+
+    #region Behaviour
+
+    #region Properties
+    public double MaxIntensity { get; private set; } = 0;
+    private double intensity = 0;
+    public double Intensity {
+        get => intensity;
+        set {
+            intensity = value;
+            if (intensity < 0.02)
+                Color = Colors.LightGray;
+            else if (intensity < 0.1)
+                Color = Colors.Gray;
+        }
+    }
+    public Vector Velocity { get; set; }
+    public DateTime Start { get; private set; }
+    public DateTime End { get; init; }
+    private DateTime creationTime;
+    public bool Finished { get; set; }
+    #endregion
 
     public void Simulate(object? sender, DateTime time) {
         if (sender is not GlobalMeteo meteo)
@@ -139,19 +147,6 @@ public class SnowCloud : IPlaceable {
         }
         Finished = Width < 0.1 || Length < 0.1 || End < time;
     }
-    public bool PointInside(Point p) =>
-        (p.X - Position.X) * (p.X - Position.X) / Width / Width +
-        (p.Y - Position.Y) * (p.Y - Position.Y) / Length / Length <= 1;
-
-    public bool IsOutside(TacticalMap map) {
-        Point[] cloudBorders = {
-            UIPosition,
-            UIPosition + new Vector(Width, 0),
-            UIPosition + new Vector(0, Length),
-            UIPosition + new Vector(Width, Length),
-        };
-        return (cloudBorders.All(p => map.PointOutsideBorders(p)));
-    }
     public SnowCloud Split(Random rnd, DateTime _time) {
         int direction = rnd.Next(0, 3) * 2 + 1;
         double width = this.Width / rnd.Next(2, 4),
@@ -168,4 +163,21 @@ public class SnowCloud : IPlaceable {
 
         return new SnowCloud(position, width, length, Velocity, this.MaxIntensity, creationTime, Start, this.End.AddMinutes(rnd.NextDouble() * 60 - 30));
     }
+    public bool IsOutside(TacticalMap map) {
+        Point[] cloudBorders = {
+            UIPosition,
+            UIPosition + new Vector(Width, 0),
+            UIPosition + new Vector(0, Length),
+            UIPosition + new Vector(Width, Length),
+        };
+        return (cloudBorders.All(p => map.PointOutsideBorders(p)));
+    }
+    #endregion
+
+    #region Misc
+    public bool PointInside(Point p) =>
+        (p.X - Position.X) * (p.X - Position.X) / Width / Width +
+        (p.Y - Position.Y) * (p.Y - Position.Y) / Length / Length <= 1;
+    #endregion
+
 }

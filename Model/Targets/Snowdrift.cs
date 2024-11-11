@@ -7,12 +7,13 @@ using System.Windows.Shapes;
 
 namespace SRDS.Model.Targets;
 public class Snowdrift : Target {
-    private Color SnowColor(SnowType type) => type switch {
+    private static Color SnowColor(SnowType type) => type switch {
         SnowType.LooseSnow => Colors.Snow,
         SnowType.Snowfall => Colors.PeachPuff,
         SnowType.IceSlick => Colors.AliceBlue,
         SnowType.BlackIce => Colors.DarkGray,
-        SnowType.Icy => Colors.LightSkyBlue
+        SnowType.Icy => Colors.LightSkyBlue,
+        _ => throw new NotImplementedException()
     };
     public SnowType Type { get; set; }
     private double level;

@@ -29,10 +29,10 @@ public class Obstacle : IPlaceable {
     [XmlIgnore]
     public Color Color { get; set; } = Colors.Gray;
     public Obstacle(Point[] obstacleBorders) {
-        Borders = obstacleBorders;
+        borders = Borders = obstacleBorders;
         Position = Borders[0];
     }
-    public Obstacle() { }
+    public Obstacle() : this(Array.Empty<Point>()) { }
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public bool PointOnObstacle(Point testPoint) {
@@ -68,8 +68,8 @@ public class Obstacle : IPlaceable {
         return false;
     }
 
-    public UIElement Build() {
-        UIElement res = null;
+    public UIElement? Build() {
+        UIElement? res;
         if (Borders.Length > 0) {
             var polygon = new Polygon();
             polygon.Points = new PointCollection(Borders);

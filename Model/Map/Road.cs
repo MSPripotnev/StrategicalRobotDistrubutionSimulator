@@ -36,7 +36,7 @@ public class Crossroad : IPlaceable {
         Position = position;
         Roads = new Road[] { r1, r2 };
     }
-    public UIElement Build() {
+    public UIElement? Build() {
         if (!Roads.Any()) return null;
         Rectangle el = new Rectangle();
         el.Width = el.Height = 10;
@@ -47,12 +47,9 @@ public class Crossroad : IPlaceable {
     public static bool operator ==(Crossroad left, Crossroad right) {
         return left is not null && right is not null && Math.Abs(left.Position.X - right.Position.X) < 10.0 && Math.Abs(left.Position.Y - right.Position.Y) < 10.0;
     }
-    public static bool operator !=(Crossroad left, Crossroad right) {
-        return !(left == right);
-    }
-    public override bool Equals(object? obj) {
-        return obj is Crossroad c && this == c;
-    }
+    public static bool operator !=(Crossroad left, Crossroad right) => !(left == right);
+    public override bool Equals(object? obj) => obj is Crossroad c && this == c;
+    public override int GetHashCode() => base.GetHashCode();
 }
 
 public class Road : IPlaceable, ITimeSimulatable {
@@ -102,13 +99,15 @@ public class Road : IPlaceable, ITimeSimulatable {
     public IDrone[] GetAgentsOnRoad(IPlaceable[] agents) {
         return (IDrone[])agents.Where(a => a is IDrone && DistanceToRoad(a.Position) < Height).ToArray();
     }
-    public Road(Point start, Point end, int category, Road[] roads) {
+    public Road(Point start, Point end, int category, Road[] roads) : this() {
         Position = start;
         EndPosition = end;
         Category = category;
         Connect(roads);
     }
-    public Road() { }
+    public Road() {
+        intensityCells = new();
+    }
     public UIElement Build() {
         Vector v = EndPosition - Position;
         v.Normalize(); v *= Height * 2;
@@ -183,7 +182,8 @@ public class Road : IPlaceable, ITimeSimulatable {
     public static double DistanceHardness(RoadType type) => type switch {
         RoadType.Dirt => 3.0,
         RoadType.Gravel => 1.5,
-        RoadType.Asphalt => 1.0
+        RoadType.Asphalt => 1.0,
+        _ => throw new NotImplementedException()
     };
     List<(int i, int j)> intensityCells;
     private void CalculateIntensityCells() {
@@ -201,7 +201,7 @@ public class Road : IPlaceable, ITimeSimulatable {
                 int pi = (int)Math.Round(p.X / GlobalMeteo.IntensityMapScale),
                     pj = (int)Math.Round(p.Y / GlobalMeteo.IntensityMapScale);
                 if (!intensityCells.Contains((pi, pj)))
-                    intensityCells.Add((pi, pj)); 
+                    intensityCells.Add((pi, pj));
            }
 #else
             var p = position + dl;
@@ -218,7 +218,12 @@ public class Road : IPlaceable, ITimeSimulatable {
         if (!intensityCells.Any())
             CalculateIntensityCells();
 
-        Snowness = intensityCells.Sum(p => meteo.IntensityMap[p.i][p.j] / 
+        if (meteo.IntensityMap is null || !meteo.IntensityMap.Any())
+            return;
+        Snowness = intensityCells.Sum(p => meteo.IntensityMap[p.i][p.j] /
                 DistanceToRoad(new Point(p.i  * GlobalMeteo.IntensityMapScale, p.j * GlobalMeteo.IntensityMapScale)) + 1);
     }
+
+    public override bool Equals(object? obj) => obj is Road r && r == this;
+    public override int GetHashCode() => base.GetHashCode();
 }

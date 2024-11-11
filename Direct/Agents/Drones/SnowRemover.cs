@@ -51,6 +51,7 @@ public class SnowRemover : Agent {
     }
     public SnowRemover() : base() {
         InteractDistance = 8;
+        devices = Array.Empty<SnowRemoverType>();
     }
     public override void Simulate(object? sender, DateTime time) {
         Fuel -= FuelDecrease;
@@ -58,35 +59,35 @@ public class SnowRemover : Agent {
         _time = time;
         ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
         switch (CurrentState) {
-            case RobotState.Broken:
-            case RobotState.Ready:
-            case RobotState.Thinking:
-               base.Simulate(sender, time);
+        case RobotState.Broken:
+        case RobotState.Ready:
+        case RobotState.Thinking:
+            base.Simulate(sender, time);
             break;
-            case RobotState.Going:
+        case RobotState.Going:
             if (Trajectory.Count > 0) {
                 Move();
                 if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance) {
-                    if (AttachedObj != null)
+                    if (AttachedObj is Snowdrift)
                         CurrentState = RobotState.Working;
                     else
                         CurrentState = RobotState.Ready;
                 }
             }
-            if (AttachedObj != null && (AttachedObj.Position - Position).Length < InteractDistance)
+            if (AttachedObj is Snowdrift && (AttachedObj.Position - Position).Length < InteractDistance)
                 CurrentState = RobotState.Working;
             break;
-            case RobotState.Working: {
-                if (Fuel < (Position - Home.Position).Length / Speed * FuelDecrease)
-                    CurrentState = RobotState.Broken;
-                Snowdrift s = AttachedObj as Snowdrift;
-                s.Level -= RemoveSpeed * s.MashPercent * s.MashPercent / 10000.0;
-                s.MashPercent += MashSpeed;
+        case RobotState.Working: {
+            if (Home is not null && Fuel < (Position - Home.Position).Length / Speed * FuelDecrease)
+                CurrentState = RobotState.Broken;
+            if (AttachedObj is not Snowdrift s) return;
+            s.Level -= RemoveSpeed * s.MashPercent * s.MashPercent / 10000.0;
+            s.MashPercent += MashSpeed;
 
-                if (s.Level <= 0)
-                    CurrentState = RobotState.Ready;
-                break;
-            }
+            if (s.Level <= 0)
+                CurrentState = RobotState.Ready;
+            break;
+        }
         }
     }
 }

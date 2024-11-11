@@ -1,4 +1,5 @@
 ﻿using SRDS.Model.Map;
+
 using System.Windows;
 
 namespace SRDS.Direct.Executive.Explorers.AStar;
@@ -12,10 +13,9 @@ internal class AStarExplorer : IExplorer {
     public AnalyzedPoint Result { get; set; }
     public List<AnalyzedPoint> OpenedPoints { get; set; } = new List<AnalyzedPoint>(); //открытый список
     public List<AnalyzedPoint> ClosedPoints { get; set; } = new List<AnalyzedPoint>(); //закрытый список
-    public event EventHandler<AnalyzedPoint> PathCompleted;
-    public event EventHandler PathFailed;
-    public AStarExplorer(Point _start, Point _end, double scale, TacticalMap map, double interactDistance)
-    {
+    public event EventHandler<AnalyzedPoint>? PathCompleted;
+    public event EventHandler? PathFailed;
+    public AStarExplorer(Point _start, Point _end, double scale, TacticalMap map, double interactDistance) {
         start = _start;
         end = _end;
         Scale = scale;
@@ -25,38 +25,37 @@ internal class AStarExplorer : IExplorer {
         ClosedPoints.Add(new AnalyzedPoint(null, start, 0, double.MaxValue));
         Result = ClosedPoints[0];
     }
-    public void NextStep()
-    {
+    public void NextStep() {
         OpenPoints(Result);
-        SelectNextPoint();
+        if (!SelectNextPoint())
+            PathFailed?.Invoke(this, new EventArgs());
         Check();
     }
-    public void PrevStep() { }
-    private void Check()
-    {
+    public static void PrevStep() { }
+    private void Check() {
         if (Result.Heuristic < InteractDistance)
             PathCompleted?.Invoke(this, Result);
         else if (!OpenedPoints.Any())
-            PathFailed(this, EventArgs.Empty);
+            PathFailed?.Invoke(this, EventArgs.Empty);
     }
-    protected virtual void SelectNextPoint()
-    {
-        Result = OpenedPoints.MinBy(p => p.Heuristic + p.Distance);
+    protected virtual bool SelectNextPoint() {
+        var v = OpenedPoints.MinBy(p => p.Heuristic + p.Distance);
+        if (v is null) return false;
+        Result = v;
         ClosedPoints.Add(Result);
         OpenedPoints.Remove(Result);
+        return true;
     }
-    private void OpenPoints(AnalyzedPoint currentPoint)
-    {
+    private void OpenPoints(AnalyzedPoint currentPoint) {
         long iterations = 0;
         List<Point> result = new List<Point>();
-        for (int i = 1; i < 9; i += 2, iterations++)
-        {
+        for (int i = 1; i < 9; i += 2, iterations++) {
             //выбор направления
             Point pos = new Point(Math.Round(
                     currentPoint.Position.X + (i / 3 - 1) * Scale),// * (i % 2 - 1),
-                                                                  //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
+                                                                   //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
                     Math.Round(currentPoint.Position.Y + (i % 3 - 1) * Scale));// * (i % 2 - 1));
-                                                                   //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
+                                                                               //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
             var road = Map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
                 .MinBy(p => p.DistanceToRoad(pos));
             double hardness;
@@ -79,8 +78,7 @@ internal class AStarExplorer : IExplorer {
             }
             if (!OpenedPoints.Contains(interimP))
                 OpenedPoints.Add(interimP);
-            else
-            {
+            else {
                 int p = OpenedPoints.IndexOf(interimP);
                 if (OpenedPoints[p].Distance > interimP.Distance)
                     OpenedPoints[p] = interimP;
@@ -89,8 +87,7 @@ internal class AStarExplorer : IExplorer {
         Iterations += iterations;
     }
 
-    public static double Distance(Point p1, Point p2)
-    {
+    public static double Distance(Point p1, Point p2) {
         double dx = p2.X - p1.X;
         double dy = p2.Y - p1.Y;
         return Math.Sqrt(dx * dx + dy * dy);

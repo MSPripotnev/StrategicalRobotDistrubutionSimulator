@@ -12,14 +12,10 @@ public class TacticalMap : INotifyPropertyChanged {
     private Station[] stations;
     private Road[] roads;
     private Size borders;
-    private string path;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    [XmlAttribute(AttributeName = "name")]
-    public string Name { get; set; }
-    [XmlIgnore]
-    public string Path { get; set; }
+    #region Roads
     [XmlArray("Obstacles")]
     [XmlArrayItem("Obstacle")]
     public Obstacle[] Obstacles {
@@ -56,6 +52,8 @@ public class TacticalMap : INotifyPropertyChanged {
     }
     [XmlIgnore]
     public Crossroad[] Crossroads { get; private set; }
+    #endregion
+
     [XmlArray("Stations")]
     [XmlArrayItem("Station")]
     public Station[] Stations {
@@ -65,6 +63,8 @@ public class TacticalMap : INotifyPropertyChanged {
             PropertyChanged?.Invoke(Stations, new PropertyChangedEventArgs(nameof(Stations)));
         }
     }
+
+    #region Misc
     public Size Borders {
         get => borders;
         set {
@@ -72,13 +72,13 @@ public class TacticalMap : INotifyPropertyChanged {
             PropertyChanged?.Invoke(Borders, new PropertyChangedEventArgs(nameof(Borders)));
         }
     }
-    public void Save() => Save(path);
+    [XmlAttribute(AttributeName = "name")]
+    public string Name { get; set; }
+    [XmlIgnore]
+    public string Path { get; set; }
+    public void Save() => Save(Path);
     public void Save(string path) {
         XmlSerializer xmlSerializer = new XmlSerializer(typeof(TacticalMap));
-        XmlWriterSettings settings = new XmlWriterSettings() {
-            Indent = true,
-            IndentChars = "\t",
-        };
         using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
             xmlSerializer.Serialize(fs, this);
             fs.Close();
@@ -94,35 +94,38 @@ public class TacticalMap : INotifyPropertyChanged {
         return point.X > borders.Width - 20 || point.Y > borders.Height - 20
                 || point.X < 20 || point.Y < 20;
     }
-    public TacticalMap() {
-        Obstacles = Array.Empty<Obstacle>();
-        Stations = Array.Empty<CollectingStation>();
-        Roads = Array.Empty<Road>();
-        Crossroads = Array.Empty<Crossroad>();
-        Borders = new Size(0, 0);
-    }
+    #endregion
+
+    #region Constructors
+    public TacticalMap() : this(Array.Empty<Obstacle>(), Array.Empty<Station>(), Array.Empty<Road>(), new Size(0,0)) { }
     public TacticalMap(Obstacle[] _obstacles, Station[] _bases, Road[] _roads, Size _borders) {
-        Obstacles = _obstacles;
-        Stations = _bases;
-        Roads = _roads;
-        Borders = _borders;
+        obstacles = Obstacles = _obstacles;
+        stations = Stations = _bases;
+        Crossroads = Array.Empty<Crossroad>();
+        roads = Roads = _roads;
+        borders = Borders = _borders;
+        Path = System.IO.Path.Combine(Directory.GetCurrentDirectory(), $"{nameof(TacticalMap)}.xml");
+        Name = "Map";
     }
 
     public TacticalMap(string path) {
-        if (File.Exists(path)) {
-            TacticalMap newMap;
-            using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                XmlSerializer xmlSerializer = new XmlSerializer(typeof(TacticalMap));
-                newMap = (TacticalMap)xmlSerializer.Deserialize(fs);
-                fs.Close();
-            }
-            Obstacles = newMap.Obstacles;
-            Stations = newMap.Stations;
-            Roads = newMap.Roads;
-            Borders = newMap.Borders;
-            Name = newMap.Name;
-        } else
+        if (!File.Exists(path))
             throw new FileNotFoundException();
+
+        TacticalMap? newMap;
+        using (FileStream fs = new FileStream(path, FileMode.Open)) {
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(TacticalMap));
+            newMap = (TacticalMap?)xmlSerializer.Deserialize(fs);
+            fs.Close();
+        }
+        if (newMap is null) throw new NullReferenceException();
+        obstacles = Obstacles = newMap.Obstacles;
+        stations = Stations = newMap.Stations;
+        Crossroads = Array.Empty<Crossroad>();
+        roads = Roads = newMap.Roads;
+        borders = Borders = newMap.Borders;
+        Name = newMap.Name;
         Path = path;
     }
+    #endregion
 }

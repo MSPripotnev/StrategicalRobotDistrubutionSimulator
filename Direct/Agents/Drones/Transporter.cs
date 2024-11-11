@@ -22,17 +22,20 @@ public class Transporter : Agent {
         }
         set {
             switch (value) {
-                case RobotState.Disable:
+            case RobotState.Disable:
                 break;
-                case RobotState.Broken:
+            case RobotState.Broken:
                 break;
-                case RobotState.Ready:
+            case RobotState.Ready:
                 //объект взят
                 if (CurrentState == RobotState.Working) {
-                    AttachedObj.Finished = true;
-                    AttachedObj.ReservedAgent = null;
+                    if (AttachedObj is Snowdrift) {
+                        AttachedObj.Finished = true;
+                        AttachedObj.ReservedAgent = null;
+                    }
                     AttachedObj = null;
-                    TargetPosition = Home.Position;
+                    if (Home is not null)
+                        TargetPosition = Home.Position;
                 } else if (CurrentState == RobotState.Thinking) {
                     ResetTarget();
                 } else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
@@ -40,23 +43,23 @@ public class Transporter : Agent {
                     BlockedTargets.Clear();
                 }
                 break;
-                //нужно рассчитать траекторию
-                case RobotState.Thinking:
+            //нужно рассчитать траекторию
+            case RobotState.Thinking:
                 //инициализация модуля прокладывания пути
-                Pathfinder.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : Speed);
+                Pathfinder?.SelectExplorer(TargetPosition, Position, CurrentState == RobotState.Ready ? InteractDistance : Speed);
                 break;
-                case RobotState.Going:
+            case RobotState.Going:
                 if (CurrentState == RobotState.Thinking && AttachedObj != null) {
                     AttachedObj.ReservedAgent = this;
                 }
                 var vs = new List<Point>(Trajectory); vs.Reverse();
                 BackTrajectory = vs.ToArray();
                 break;
-                case RobotState.Working:
+            case RobotState.Working:
                 if (CurrentState == RobotState.Thinking)
                     Trajectory.Add(Trajectory[^1]);
                 break;
-                default:
+            default:
                 break;
             }
             state = value;
@@ -87,6 +90,7 @@ public class Transporter : Agent {
         Trajectory.Clear();
         Trajectory = Trajectory;
         BackTrajectory = Array.Empty<Point>();
+        if (Pathfinder is null) return;
         Pathfinder.IsCompleted = false;
         Pathfinder.Result = new List<Point>();
     }
@@ -96,21 +100,24 @@ public class Transporter : Agent {
         _time = time;
         ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
         switch (CurrentState) {
-            case RobotState.Disable:
+        case RobotState.Disable:
             return;
-            case RobotState.Broken:
-            case RobotState.Ready:
+        case RobotState.Broken:
+        case RobotState.Ready:
             base.Simulate(sender, time);
             break;
-            case RobotState.Thinking:
+        case RobotState.Thinking:
             if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
                 CurrentState = RobotState.Ready;
                 break;
             }
-            Trajectory = Pathfinder.Result;
+            if (Pathfinder is null) throw new Exception();
+            if (Pathfinder.Result != null)
+                Trajectory = Pathfinder.Result;
             //ошибка при расчётах
             if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
-                BlockedTargets.Add(AttachedObj);
+                if (AttachedObj is not null)
+                    BlockedTargets.Add(AttachedObj);
                 AttachedObj = null;
             } else if (Pathfinder.IsCompleted) {
                 //путь найден
@@ -119,7 +126,7 @@ public class Transporter : Agent {
                 if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedAgent != this)
                     CurrentState = RobotState.Going;
                 //робот доставляет объект
-                else if (AttachedObj.ReservedAgent == this) {
+                else if (AttachedObj?.ReservedAgent == this) {
                     CurrentState = RobotState.Working;
                 }
                 //переключение на другую задачу
@@ -129,7 +136,7 @@ public class Transporter : Agent {
             } else
                 Pathfinder.NextStep(); //продолжение расчёта
             break;
-            case RobotState.Going:
+        case RobotState.Going:
 #if !DEBUG
                 TraversedWay += DistanceToTarget;
                 Position = Trajectory[^1];
@@ -153,7 +160,7 @@ public class Transporter : Agent {
             }
 #endif
             break;
-            case RobotState.Working:
+        case RobotState.Working:
 #if !DEBUG
                 TraversedWay += DistanceToTarget;
                 Position = Trajectory[^1];
@@ -161,16 +168,16 @@ public class Transporter : Agent {
                 Trajectory.Clear();
 #endif
             if (Trajectory.Any()) { //есть куда ехать
-                if (Trajectory.Count == 1)
+                if (Trajectory.Count == 1 && AttachedObj is not null)
                     AttachedObj.Position = Trajectory[^1];
                 Move(); //ехать
             }
             if (!Trajectory.Any()) //доехал
                 CurrentState = RobotState.Ready; //сброс состояния на стандартное
-            else
+            else if (AttachedObj is not null)
                 AttachedObj.Position = new Point(Position.X, Position.Y); //переместить захваченный объект)
             break;
-            default:
+        default:
             break;
         }
     }

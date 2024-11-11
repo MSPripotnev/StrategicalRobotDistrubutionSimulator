@@ -10,20 +10,16 @@ using FuzzyLogic.MembershipFunctions;
 
 using Model.Targets;
 
-public class FuzzyQualifier : IQualifier
-{
+public class FuzzyQualifier : IQualifier {
     private readonly FuzzyLogic.BinaryOperations.ITriangularNorm TNorm
         = new FuzzyLogic.BinaryOperations.EinsteinProduct();
     private readonly FuzzyLogic.BinaryOperations.ITriangularConorm TConorm
         = new FuzzyLogic.BinaryOperations.BoundedSum();
-    public enum Values
-    {
+    public enum Values {
         Low, High
     }
-    static LinguisticVariable Quality
-    {
-        get
-        {
+    static LinguisticVariable Quality {
+        get {
             double start = 0.1, end = 0.8;
             FuzzySet[] fs = new FuzzySet[] {
                 new FuzzySet(Values.Low, TrapezoidalFunction.CreateWithLeftEdge(start, end)),
@@ -34,8 +30,7 @@ public class FuzzyQualifier : IQualifier
     }
     public object Net;
     public FuzzyLogic.Inference.Engines.Base.FuzzyInferenceEngine Engine;
-    public FuzzyQualifier()
-    {
+    public FuzzyQualifier() {
         SnowRemover r;
         Snowdrift s;
         Dictionary<string, (double min, double max)> values = new Dictionary<string, (double min, double max)>() {
@@ -51,8 +46,7 @@ public class FuzzyQualifier : IQualifier
             new FuzzyLogic.Defuzzification.CentroidDefuzzifier());
         Net = Engine;
         List<LinguisticVariable> lvs = new List<LinguisticVariable>();
-        foreach (var value in values)
-        {
+        foreach (var value in values) {
             double sz = value.Value.max - value.Value.min,
                     le = value.Value.min + sz / 8.0,
                     re = value.Value.min + 7.0 / 8.0 * sz;
@@ -63,8 +57,7 @@ public class FuzzyQualifier : IQualifier
             Engine.Database.AddVariable(FuzzyLogic.Label.Create(value.Key));
         }
         var premises = FormPremises(lvs.Count);
-        for (int i = 0; i < 1 << lvs.Count; i++)
-        {
+        for (int i = 0; i < 1 << lvs.Count; i++) {
             List<Premise> pr = new List<Premise>();
             for (int j = 0; j < lvs.Count; j++)
                 pr.Add(new Premise(j == 0 ? new If() : new And(), lvs[j], new Is(), lvs[j].GetMembers().ToArray()[premises[i, j] ? 1 : 0]));
@@ -76,21 +69,18 @@ public class FuzzyQualifier : IQualifier
             Engine.Rulebase.AddRule(new FuzzyRule(nameof(Quality) + "Rule" + i, c, cs));
         }
     }
-    public Target? RecommendTargetForAgent(Agent agent, IEnumerable<Target> targets)
-    {
+    public Target? RecommendTargetForAgent(Agent agent, IEnumerable<Target> targets) {
         Dictionary<Target, double> targetsDict = targets.ToDictionary(p => p, i => Qualify(agent, i));
         var rs = targetsDict.OrderByDescending(x => x.Value).ToArray();
         return targetsDict.Any() ? rs[0].Key : null;
     }
-    public double Qualify(Agent agent, Target target)
-    {
+    public double Qualify(Agent agent, Target target) {
         return Qualify(agent, target, out var _);
     }
-    public double Qualify(Agent agent, Target target, out Dictionary<string, double> activatedRules)
-    {
-        activatedRules = null;
-        if (target is not Snowdrift s) return 0;
-        if (agent is not SnowRemover r) return 0;
+    public double Qualify(Agent agent, Target target, out Dictionary<string, double> activatedRules) {
+        activatedRules = new();
+        if (target is not Snowdrift s) return -1;
+        if (agent is not SnowRemover r) return -1;
         return Qualify(new Dictionary<string, double>() {
             { "DistanceToTarget", (agent.Position-target.Position).Length },
             { nameof(agent.Fuel), agent.Fuel },
@@ -100,8 +90,7 @@ public class FuzzyQualifier : IQualifier
             { nameof(r.MashSpeed), r.MashSpeed},
         }, out activatedRules);
     }
-    private double Qualify(Dictionary<string, double> input, out Dictionary<string, double> activatedRules)
-    {
+    private double Qualify(Dictionary<string, double> input, out Dictionary<string, double> activatedRules) {
         if (input.Count < Engine.Database.VariableCount)
             throw new ArgumentException("");
         foreach (var v in input)
@@ -114,15 +103,12 @@ public class FuzzyQualifier : IQualifier
         return activatedRules.Sum(p => p.Value);
     }
 
-    private static bool[,] FormPremises(int n)
-    {
+    private static bool[,] FormPremises(int n) {
         bool[,] arr = new bool[1 << n, n];
-        for (int i = 0; i < n; i++)
-        {
+        for (int i = 0; i < n; i++) {
             bool curr = false;
             int freq = 1 << i;
-            for (int j = 0; j < 1 << n;)
-            {
+            for (int j = 0; j < 1 << n;) {
                 for (int k = 0; k < freq; k++, j++)
                     arr[j, i] = curr;
                 curr = !curr;

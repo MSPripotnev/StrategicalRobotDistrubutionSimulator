@@ -44,13 +44,15 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             if (Agents != null) {
                 for (int i = 0; i < Agents.Length; i++) {
                     if (Agents[i].Pathfinder == null) {
-                        Agents[i].Pathfinder = new PathFinder(Map, Scale);
-                        PropertyChanged += Agents[i].Pathfinder.Refresh;
-                        SettingsChanged += Agents[i].Pathfinder.Refresh;
-                        if (Agents[i].Home is null)
-                            Agents[i].Home = Map.Stations.Where(p => p is AgentStation).MinBy(p => (p.Position - Agents[i].Position).Length) as AgentStation;
-                        if (Agents[i].CurrentState == RobotState.Ready && (Agents[i].Position - Agents[i].Home.Position).Length > 5)
-                            Agents[i].TargetPosition = Agents[i].Home.Position;
+                        var p = new PathFinder(Map, Scale);
+                        if (p is null) continue;
+                        Agents[i].Pathfinder = p;
+                        PropertyChanged += p.Refresh;
+                        SettingsChanged += p.Refresh;
+                        AgentStation? home = Agents[i].Home;
+                        home ??= Agents[i].Home = Map.Stations.Where(p => p is AgentStation).MinBy(p => (p.Position - Agents[i].Position).Length) as AgentStation;
+                        if (home is not null && Agents[i].CurrentState == RobotState.Ready && (Agents[i].Position - home.Position).Length > 5)
+                            Agents[i].TargetPosition = home.Position;
                     }
                     Agents[i].OtherAgents = Agents.Except(new Agent[] { Agents[i] }).ToList();
                 }
@@ -130,17 +132,17 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             enableMeteo = value;
         }
     }
-    private GlobalMeteo meteo;
+    private GlobalMeteo? meteo;
     [XmlIgnore]
-    public GlobalMeteo Meteo {
+    public GlobalMeteo? Meteo {
         get { return meteo; }
         private set {
             if (meteo is not null)
                 TimeChanged -= meteo.Simulate;
             meteo = value;
-            if (value is not null) {
-                Meteo.PropertyChanged += RefreshMeteo;
-                TimeChanged += Meteo.Simulate;
+            if (meteo is not null) {
+                meteo.PropertyChanged += RefreshMeteo;
+                TimeChanged += meteo.Simulate;
             }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Meteo)));
         }
@@ -172,17 +174,18 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
 
     #endregion
 
-    public event Action<float> SettingsChanged;
+    public event Action<float>? SettingsChanged;
     public event PropertyChangedEventHandler? PropertyChanged;
     public Director() : this(new Size(0, 0)) {
     }
     public Director(Size mapSize) {
         Scale = 5.0F;
         EnableMeteo = true;
-        Distributor = new TaskDistributor(typeof(FuzzyQualifier));
-        Map = new TacticalMap() {
+        map = Map = new TacticalMap() {
             Borders = mapSize
         };
+        mapPath = "";
+        Distributor = new TaskDistributor(typeof(FuzzyQualifier), Map);
         Targets = Array.Empty<Target>();
         Agents = Array.Empty<Agent>();
     }
@@ -198,7 +201,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             seed = value;
         }
     }
-    public event EventHandler<DateTime> TimeChanged;
+    public event EventHandler<DateTime>? TimeChanged;
     public void Work(DateTime time) {
         Distributor.DistributeTask(PropertyChanged);
 
@@ -219,7 +222,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     }
 
     public void RefreshMeteo(object? sender, PropertyChangedEventArgs e) {
-        if (e.PropertyName == nameof(Meteo.GeneratedSnowdrifts)) {
+        if (Meteo is not null && e.PropertyName == nameof(Meteo.GeneratedSnowdrifts)) {
             for (int i = 0; i < Meteo.GeneratedSnowdrifts.Count; i++)
                 Add(Meteo.GeneratedSnowdrifts[i]);
             Meteo.GeneratedSnowdrifts.Clear();
@@ -254,7 +257,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         Targets = Targets.ToList().Except(merged).Concat(created).ToArray();
     }
 
-    public bool CheckMission() {
+    public static bool CheckMission() {
         return false;
     }
 
@@ -307,7 +310,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             ls.Remove(r);
             Map.Roads = ls.ToArray();
         }
-        if (obj is ITimeSimulatable its && TimeChanged.GetInvocationList().Any(p => p.Target == obj))
+        if (obj is ITimeSimulatable its && TimeChanged is not null && TimeChanged.GetInvocationList().Any(p => p.Target == obj))
             TimeChanged -= its.Simulate;
     }
     #endregion
@@ -318,16 +321,15 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         Recorder.Dispose();
     }
     public void Serialize(string path) {
-        using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
-            XmlSerializer xmlWriter = new XmlSerializer(typeof(Director));
-            xmlWriter.Serialize(fs, this);
-        }
+        using FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
+        XmlSerializer xmlWriter = new XmlSerializer(typeof(Director));
+        xmlWriter.Serialize(fs, this);
     }
-    public static Director Deserialize(string path) {
-        Director director;
+    public static Director? Deserialize(string path) {
+        Director? director;
         using (FileStream fs = new FileStream(path, FileMode.Open)) {
             XmlSerializer xmlReader = new XmlSerializer(typeof(Director));
-            director = (Director)xmlReader.Deserialize(fs);
+            director = (Director?)xmlReader.Deserialize(fs);
             fs.Close();
         }
         return director;

@@ -8,15 +8,13 @@ using SRDS.Direct;
 public class Tester {
     public IModel[] Models { get; set; } = Array.Empty<IModel>();
     string currentFilePath = "";
-    public Director ActiveDirector { get; set; }
+    public Director? ActiveDirector { get; set; }
     public int AttemptsN { get; set; } = 0;
-    public event EventHandler AttemptStarted;
-    public event EventHandler AttemptCompleted;
-    public event EventHandler AttemptFailed;
-    public event EventHandler ModelSwitched;
+    public event EventHandler? AttemptStarted;
+    public event EventHandler? AttemptCompleted;
+    public event EventHandler? AttemptFailed;
+    public event EventHandler? ModelSwitched;
     public Tester() {
-        List<ParametrRangeGeneratedModel> models = new List<ParametrRangeGeneratedModel> {
-        };
         if (Directory.Exists(Path.Combine(Paths.Default.Tests, "Complete"))) {
             foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Complete")))
                 Directory.Move(fileName, fileName.Replace("Complete", "Active"));
@@ -40,7 +38,7 @@ public class Tester {
         }
     }
     public void NextAttempt() {
-        AttemptCompleted(this, new());
+        AttemptCompleted?.Invoke(this, new());
         if (--AttemptsN < 1) {
             if (Models[0] is ParametrRangeGeneratedModel pm) {
                 pm.TransportersT = pm.TransportersT.SkipLast(1).ToList();
@@ -49,7 +47,7 @@ public class Tester {
                 if (!pm.TransportersT.Any()) {
                     NextModel();
                 }
-            } else if (Models[0] is CopyModel cm) {
+            } else if (Models[0] is CopyModel) {
                 NextModel();
             }
             if (Models.Any()) {
@@ -57,7 +55,7 @@ public class Tester {
             }
         }
         if (Models.Any())
-            AttemptStarted(this, new());
+            AttemptStarted?.Invoke(this, new());
     }
     public void NextModel() {
         Directory.Move(Models[0].Path,
@@ -65,12 +63,12 @@ public class Tester {
             Models[0].Path[(Array.LastIndexOf(Models[0].Path.ToCharArray(), '\\') + 1)..Models[0].Path.Length]));
         Models = Models.Skip(1).ToArray();
         if (Models.Any())
-            ModelSwitched(Models[0], new());
-        else ModelSwitched(null, new());
+            ModelSwitched?.Invoke(Models[0], new());
+        else ModelSwitched?.Invoke(null, new());
         return;
     }
     public void StopAttempt() {
-        AttemptFailed(this, new());
+        AttemptFailed?.Invoke(this, new());
     }
     public Director ReloadModel() {
         Recorder r = new Recorder();
@@ -84,7 +82,7 @@ public class Tester {
         ActiveDirector = Models[0].Unpack();
         ActiveDirector.Recorder = r;
         ActiveDirector.Learning = l;
-        ActiveDirector.Distributor = new(q);
+        ActiveDirector.Distributor = new(q, ActiveDirector.Map);
         return ActiveDirector;
     }
     public void LoadModel(string path) {
@@ -95,14 +93,13 @@ public class Tester {
             serializer = new XmlSerializer(typeof(CopyModel));
         else return;
 
-        using (FileStream fs = new FileStream(path, FileMode.Open)) {
-            if (serializer.Deserialize(fs) is not IModel model)
-                return;
-            ActiveDirector = model.Unpack();
+        using FileStream fs = new FileStream(path, FileMode.Open);
+        if (serializer.Deserialize(fs) is not IModel model)
+            return;
+        ActiveDirector = model.Unpack();
 
-            if (currentFilePath != path)
-                currentFilePath = path;
-            fs.Close();
-        }
+        if (currentFilePath != path)
+            currentFilePath = path;
+        fs.Close();
     }
 }

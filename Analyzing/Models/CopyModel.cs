@@ -15,7 +15,7 @@ public class CopyModel : IModel {
     public string ModelPath {
         get => modelPath;
         set {
-            model = Director.Deserialize(value);
+            model = Director.Deserialize(value) ?? throw new FileFormatException(value);
             modelPath = value;
         }
     }
@@ -29,10 +29,12 @@ public class CopyModel : IModel {
     }
     public CopyModel() {
         model = new Director();
+        Name = "Default copy model";
+        modelPath = Path = model.MapPath.Replace(".xml", $"-{nameof(CopyModel)}.xml");
     }
     public CopyModel(Director director) : this() {
-        model.Agents = director.Agents.Clone() as Agent[];
-        model.Targets = director.Targets.Clone() as Target[];
+        model.Agents = director.Agents.Clone() as Agent[] ?? throw new Exception();
+        model.Targets = director.Targets.Clone() as Target[] ?? throw new Exception();
         for (int i = 0; i < director.Agents.Length; i++) {
             if (director.Agents[i] is SnowRemover a)
                 model.Agents[i] = new SnowRemover(a.Position, a.Devices);
@@ -43,31 +45,33 @@ public class CopyModel : IModel {
         model.MapPath = director.MapPath;
         model.Scale = director.Scale;
         model.Time = director.Time;
+        Name = $"Copy model from {model.MapPath}";
     }
     public CopyModel(string path) {
         path = System.IO.Path.Combine(Paths.Default.Tests, path);
-        if (File.Exists(path))
-            using (FileStream fs = new FileStream(path, FileMode.Open)) {
-                XmlSerializer xmlSerializer = new XmlSerializer(typeof(CopyModel));
-                CopyModel m = (CopyModel)xmlSerializer.Deserialize(fs);
-                Name = m.Name is not null && m.Name != "" ? m.Name : System.IO.Path.GetFileNameWithoutExtension(path);
+        if (!File.Exists(path))
+            throw new FileFormatException("Failed to load model: " + path);
 
-                ModelPath = m.ModelPath;
-                Seed = m.Seed;
-                MaxAttempts = m.MaxAttempts;
+        using FileStream fs = new FileStream(path, FileMode.Open);
+        XmlSerializer xmlSerializer = new XmlSerializer(typeof(CopyModel));
+        CopyModel m = (CopyModel?)xmlSerializer.Deserialize(fs) ?? throw new FileFormatException();
+        Name = m.Name is not null && m.Name != "" ? m.Name : System.IO.Path.GetFileNameWithoutExtension(path);
 
-                Path = path;
-            }
-        else MessageBox.Show("Failed to load model: " + path);
+        modelPath = ModelPath = m.ModelPath;
+        Seed = m.Seed;
+        MaxAttempts = m.MaxAttempts;
+
+        Path = path;
+        model = m.Unpack();
     }
     public Director Unpack() {
-        var res = new Director() {
+        Director res = new Director() {
             MapPath = model.MapPath,
             Scale = model.Scale,
             Time = model.Time,
             Seed = model.Seed,
         };
-        res.Agents = model.Agents.Clone() as Agent[];
+        res.Agents = model.Agents.Clone() as Agent[] ?? throw new Exception();
         for (int i = 0; i < model.Agents.Length; i++) {
             if (model.Agents[i] is SnowRemover a)
                 res.Agents[i] = new SnowRemover(a.Position, a.Devices);
@@ -76,7 +80,7 @@ public class CopyModel : IModel {
             res.Agents[i].Home = model.Agents[i].Home;
             res.Agents = res.Agents;
         }
-        res.Targets = model.Targets.Clone() as Target[];
+        res.Targets = model.Targets.Clone() as Target[] ?? throw new Exception();
         return res;
     }
 }
