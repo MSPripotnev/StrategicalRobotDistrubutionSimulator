@@ -50,17 +50,17 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
                     TargetPosition = Home.Position;
                 break;
             case RobotState.Ready:
-                if (Home != null && (Position - Home.Position).Length < 10)
-                    Fuel = 100;
+                if (Home is not null && CurrentState != RobotState.Working && (Position - Home.Position).Length > 15) {
+                    TargetPosition = Home.Position;
+                    return;
+                }
                 //объект взят
                 if (CurrentState == RobotState.Working) {
-                    if (AttachedObj != null) {
+                    if (AttachedObj is not null) {
                         AttachedObj.Finished = true;
                         AttachedObj.ReservedAgent = null;
                         AttachedObj = null;
                     }
-                } else if (CurrentState == RobotState.Thinking) {
-
                 } else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
                     //робот сломался/выключился
                     BlockedTargets.Clear();
@@ -90,18 +90,35 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     }
 
     public virtual void Simulate(object? sender, DateTime time) {
-        Fuel -= FuelDecrease;
-        TimeSpan timeFlow = time - _time;
-        _time = time;
-        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
+        if (CurrentState > RobotState.Thinking) {
+            if (FuelShortageCheck())
+                CurrentState = RobotState.Broken;
+            Fuel -= FuelDecrease;
+        }
+        ActualSpeedRecalculate(time);
         switch (CurrentState) {
+        case RobotState.Disable:
+            return;
+        case RobotState.Broken:
+            break;
         case RobotState.Ready:
-            if (Home != null && (Home.Position - Position).Length > 10 && AttachedObj == null && (TargetPosition - Home.Position).Length > InteractDistance)
+            if (AttachedObj is not null && !FuelShortageCheck()) {
+                TargetPosition = AttachedObj.Position;
+                break;
+            }
+            if (Home is null) break;
+            if ((Home.Position - Position).Length > 15 && (TargetPosition - Home.Position).Length > 15)
                 TargetPosition = Home.Position;
-            else if (Home != null && (Position - Home.Position).Length < 10)
+            else if ((Position - Home.Position).Length < 15 && !Trajectory.Any())
                 Fuel = 100;
-            else if (Home != null && (TargetPosition - Home.Position).Length <= InteractDistance && Trajectory.Count > 2)
+            else
                 Move();
+            break;
+        case RobotState.Going:
+            if (Trajectory.Count > 0)
+                Move();
+            if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance || AttachedObj is null && Home is not null && PathFinder.Distance(Position, Home.Position) <= 15)
+                Arrived();
             break;
         case RobotState.Thinking:
             if (Pathfinder is null || Pathfinder.Result is null)
@@ -167,6 +184,13 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         }
     }
 
+    protected virtual void Arrived() {
+        if (AttachedObj is not null)
+            CurrentState = RobotState.Working;
+        else
+            CurrentState = RobotState.Ready;
+    }
+
     protected virtual void Move() {
         Point nextPoint = Trajectory[0];
 
@@ -190,6 +214,14 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
             ui.RenderTransform = new RotateTransform(angle, 10, 10);
 
         WayIterations++;
+    }
+    protected void ActualSpeedRecalculate(DateTime time) {
+        TimeSpan timeFlow = time - _time;
+        _time = time;
+        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
+    }
+    protected bool FuelShortageCheck() {
+        return (Home is not null && ActualSpeed > 0 && Fuel < (Position - Home.Position).Length / ActualSpeed * FuelDecrease);
     }
     #endregion
 

@@ -94,14 +94,15 @@ public class Transporter : Agent {
         Pathfinder.IsCompleted = false;
         Pathfinder.Result = new List<Point>();
     }
+    protected override void Arrived() {
+        if (AttachedObj is Crop)
+            CurrentState = RobotState.Working;
+        else
+            CurrentState = RobotState.Ready;
+    }
     public override void Simulate(object? sender, DateTime time) {
-        Fuel -= FuelDecrease;
-        TimeSpan timeFlow = time - _time;
-        _time = time;
-        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
         switch (CurrentState) {
         case RobotState.Disable:
-            return;
         case RobotState.Broken:
         case RobotState.Ready:
             base.Simulate(sender, time);
@@ -111,30 +112,19 @@ public class Transporter : Agent {
                 CurrentState = RobotState.Ready;
                 break;
             }
-            if (Pathfinder is null) throw new Exception();
-            if (Pathfinder.Result != null)
-                Trajectory = Pathfinder.Result;
-            //ошибка при расчётах
-            if (Pathfinder.IsCompleted && Pathfinder.Result == null) {
-                if (AttachedObj is not null)
-                    BlockedTargets.Add(AttachedObj);
-                AttachedObj = null;
-            } else if (Pathfinder.IsCompleted) {
-                //путь найден
+
+            if (Pathfinder?.IsCompleted == true) {
                 Pathfinder.IsCompleted = false;
-                //робот едет к объекту
                 if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedAgent != this)
                     CurrentState = RobotState.Going;
-                //робот доставляет объект
-                else if (AttachedObj?.ReservedAgent == this) {
+                else if (AttachedObj?.ReservedAgent == this)
                     CurrentState = RobotState.Working;
-                }
-                //переключение на другую задачу
                 else
                     CurrentState = RobotState.Ready;
-                ThinkingIterations += Pathfinder.Iterations;
-            } else
-                Pathfinder.NextStep(); //продолжение расчёта
+                AttachedObj = null;
+                return;
+            }
+            base.Simulate(sender, time);
             break;
         case RobotState.Going:
 #if !DEBUG
@@ -144,23 +134,12 @@ public class Transporter : Agent {
                 CurrentState = RobotState.Working;
                 break;
 #else
-            //есть куда двигаться
-            if (Trajectory.Count > 0) {
-                //двигаемся
-                Move();
-                //дошли до нужной точки
-                if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance) {
-                    //цель = объект
-                    if (AttachedObj != null)
-                        //захватываем объект
-                        CurrentState = RobotState.Working;
-                    else
-                        CurrentState = RobotState.Ready;
-                }
-            }
+            base.Simulate(sender, time);
 #endif
             break;
         case RobotState.Working:
+            Fuel -= FuelDecrease;
+            ActualSpeedRecalculate(time);
 #if !DEBUG
                 TraversedWay += DistanceToTarget;
                 Position = Trajectory[^1];

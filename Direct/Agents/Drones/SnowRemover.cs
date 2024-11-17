@@ -62,23 +62,13 @@ public class SnowRemover : Agent {
         case RobotState.Broken:
         case RobotState.Ready:
         case RobotState.Thinking:
+        case RobotState.Going:
             base.Simulate(sender, time);
             break;
-        case RobotState.Going:
-            if (Trajectory.Count > 0) {
-                Move();
-                if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance) {
-                    if (AttachedObj is Snowdrift)
-                        CurrentState = RobotState.Working;
-                    else
-                        CurrentState = RobotState.Ready;
-                }
-            }
-            if (AttachedObj is Snowdrift && (AttachedObj.Position - Position).Length < InteractDistance)
-                CurrentState = RobotState.Working;
-            break;
         case RobotState.Working: {
-            if (Home is not null && Fuel < (Position - Home.Position).Length / Speed * FuelDecrease)
+            Fuel -= FuelDecrease;
+            ActualSpeedRecalculate(time);
+            if (Home is not null && ActualSpeed > 0 && Fuel < (Position - Home.Position).Length / ActualSpeed * FuelDecrease)
                 CurrentState = RobotState.Broken;
             if (AttachedObj is not Snowdrift s) return;
             s.Level -= RemoveSpeed * s.MashPercent * s.MashPercent / 10000.0;
