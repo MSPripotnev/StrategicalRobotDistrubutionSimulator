@@ -12,9 +12,6 @@ using Executive;
 public class Transporter : Agent {
 
     #region Properties
-
-    [XmlIgnore]
-    private RobotState state;
     [XmlIgnore]
     public override RobotState CurrentState {
         get {
@@ -79,7 +76,7 @@ public class Transporter : Agent {
         AttachedObj = null;
         Speed = 5F;
         InteractDistance = 30;
-        BlockedTargets = new List<Target>();
+        BlockedTargets = new List<ITargetable>();
         MaxStraightRange = 2 * Speed;
     }
     #endregion

@@ -10,6 +10,8 @@ using SRDS.Direct.Agents;
 using SRDS.Direct.Executive;
 using SRDS.Model;
 using SRDS.Model.Environment;
+using SRDS.Model.Map.Stations;
+using SRDS.Model.Targets;
 
 public enum RoadType {
     Dirt,
@@ -52,7 +54,7 @@ public class Crossroad : IPlaceable {
     public override int GetHashCode() => base.GetHashCode();
 }
 
-public class Road : IPlaceable, ITimeSimulatable {
+public class Road : ITargetable, ITimeSimulatable {
     public RoadType Type { get; set; }
     private Point position;
     [XmlElement(nameof(Point), ElementName = "Position")]
@@ -96,6 +98,10 @@ public class Road : IPlaceable, ITimeSimulatable {
     public double Snowness { get; set; } = 0;
     [XmlIgnore]
     public List<Road> RoadsConnected { get; set; } = new List<Road>();
+    public Agent? ReservedAgent { get; set; } = null;
+    public AgentStation? ReservedStation { get; set; } = null;
+    public bool Finished { get; set; } = false;
+
     public IDrone[] GetAgentsOnRoad(IPlaceable[] agents) {
         return (IDrone[])agents.Where(a => a is IDrone && DistanceToRoad(a.Position) < Height).ToArray();
     }
@@ -151,7 +157,7 @@ public class Road : IPlaceable, ITimeSimulatable {
         return h;
     }
     /// <summary>
-    /// ����������� �����
+    /// Road crossroad point
     /// </summary>
     /// <param name="left"></param>
     /// <param name="right"></param>
@@ -169,6 +175,21 @@ public class Road : IPlaceable, ITimeSimulatable {
         if (0 <= s && s <= 1 && 0 <= t && t <= 1)
             return new Point(left.Position.X + s * ((Vector)left).X, left.Position.Y + s * ((Vector)left).Y);
         return null;
+    }
+    /// <summary>
+    /// Nearest entry point to road from robot position
+    /// </summary>
+    /// <param name="p"></param>
+    /// <param name="road"></param>
+    /// <returns></returns>
+    public static Point operator ^(Point p, Road road) {
+        double x1 = road.position.X, y1 = road.position.Y,
+               x2 = road.endPosition.X, y2 = road.endPosition.Y,
+               x3 = p.X, y3 = p.Y;
+        double k = ((y2 - y1) * (x3 - x1) - (x2 - x1) * (y3 - y1)) / ((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1)),
+               x4 = x3 - k * (y2 - y1),
+               y4 = y3 + k * (x2 - x1);
+        return new Point(x4, y4);
     }
     public static explicit operator Vector(Road self) => self.EndPosition - self.Position;
     public static bool operator ==(Road left, Road right) {

@@ -3,6 +3,6 @@ using Agents;
 using Model.Targets;
 
 public interface IQualifier {
-    public double Qualify(Agent agent, Target target);
-    public Target? RecommendTargetForAgent(Agent agent, IEnumerable<Target> targets);
+    public double Qualify(IControllable agent, ITargetable target);
+    public ITargetable? RecommendTargetForAgent(IControllable agent, IEnumerable<ITargetable> targets);
 }

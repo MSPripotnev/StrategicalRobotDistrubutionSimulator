@@ -14,3 +14,6 @@ public interface IMoveable : ITimeSimulatable {
     public Point TargetPosition { get; set; }
     public double DistanceToTarget { get; }
 }
+
+public interface IControllable : IPlaceable, ITimeSimulatable {
+}

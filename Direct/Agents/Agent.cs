@@ -8,7 +8,6 @@ using System.Xml.Serialization;
 namespace SRDS.Direct.Agents;
 using Drones;
 using Direct.Executive;
-using Model;
 using Model.Map.Stations;
 using Model.Targets;
 public enum RobotState {
@@ -21,7 +20,7 @@ public enum RobotState {
 }
 [XmlInclude(typeof(SnowRemover))]
 [XmlInclude(typeof(Transporter))]
-public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
+public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     #region Control
     [XmlIgnore]
@@ -35,7 +34,7 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     #region State Machine
     protected DateTime _time;
     [XmlIgnore]
-    private RobotState state;
+    private protected RobotState state;
     [XmlIgnore]
     public virtual RobotState CurrentState {
         get {
@@ -153,6 +152,7 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     public double MaxStraightRange { get; init; }
     [XmlIgnore]
     public double Speed { get; set; }
+    public double WorkSpeed { get => Speed * 0.8; }
     [XmlIgnore]
     public double ActualSpeed { get; set; }
     [XmlIgnore]
@@ -180,7 +180,8 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         set {
             Trajectory.Clear();
             Trajectory.Add(value);
-            CurrentState = RobotState.Thinking;
+            if (CurrentState != RobotState.Working)
+                CurrentState = RobotState.Thinking;
         }
     }
 
@@ -197,7 +198,8 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         if (PathFinder.Distance(Position, nextPoint) < MaxStraightRange) {
             List<Point> pc = new(Trajectory.Skip(1));
             if (pc.Any()) {
-                TraversedWay += PathFinder.Distance(nextPoint, pc[0]) * (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint) : 1);
+                TraversedWay += PathFinder.Distance(nextPoint, pc[0]) *
+                    (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint) : 1);
                 nextPoint = pc[0];
             }
             Trajectory = pc;
@@ -217,8 +219,8 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     }
     protected void ActualSpeedRecalculate(DateTime time) {
         TimeSpan timeFlow = time - _time;
+        ActualSpeed = (CurrentState == RobotState.Working ? WorkSpeed : Speed) * timeFlow.TotalSeconds / 60;
         _time = time;
-        ActualSpeed = Speed * timeFlow.TotalSeconds / 60;
     }
     protected bool FuelShortageCheck() {
         return (Home is not null && ActualSpeed > 0 && Fuel < (Position - Home.Position).Length / ActualSpeed * FuelDecrease);
@@ -242,9 +244,9 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
     public int ViewingDistance { get; init; } = 2;
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
-    public Target? AttachedObj { get; set; } = null;
+    public ITargetable? AttachedObj { get; set; } = null;
     [XmlIgnore]
-    public List<Target> BlockedTargets { get; set; } = new List<Target>();
+    public List<ITargetable> BlockedTargets { get; set; } = new List<ITargetable>();
     [XmlIgnore]
     public List<Agent> OtherAgents { get; set; } = new List<Agent>();
     #endregion
@@ -373,7 +375,7 @@ public abstract class Agent : IPlaceable, IDrone, INotifyPropertyChanged {
         AttachedObj = null;
         Speed = 5F;
         InteractDistance = 30;
-        BlockedTargets = new List<Target>();
+        BlockedTargets = new List<ITargetable>();
         MaxStraightRange = 2 * Speed;
         BackTrajectory = Array.Empty<Point>();
     }

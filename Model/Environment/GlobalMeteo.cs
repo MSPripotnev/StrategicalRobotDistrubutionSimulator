@@ -240,7 +240,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntensityMap)));
     }
     public static (int i, int j) GetPointIntensityIndex(Point pos) =>
-            ((int)Math.Floor(pos.X / IntensityMapScale), (int)Math.Floor(pos.Y / IntensityMapScale));
+            ((int)Math.Round(pos.X / IntensityMapScale), (int)Math.Round(pos.Y / IntensityMapScale));
     public static Point GetIntensityMapPoint(int i, int j) =>
             new Point(i * IntensityMapScale, j * IntensityMapScale);
     #endregion

@@ -9,9 +9,16 @@ using System.Xml.Serialization;
 
 namespace SRDS.Model.Targets;
 
+public interface ITargetable : IPlaceable {
+    [XmlIgnore]
+    public Agent? ReservedAgent { get; set; }
+    [XmlIgnore]
+    public bool Finished { get; set; }
+}
+
 [XmlInclude(typeof(Snowdrift))]
 [XmlInclude(typeof(Crop))]
-public abstract class Target : IPlaceable {
+public abstract class Target : ITargetable {
     private Point position;
     [XmlElement(nameof(Point), ElementName = "Position")]
     public Point Position {

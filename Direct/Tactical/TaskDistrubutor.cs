@@ -36,7 +36,7 @@ public class TaskDistributor {
         get => Targets is not null ? Targets.Where(x => x.ReservedAgent == null && !x.Finished).ToArray() : Array.Empty<Target>();
     }
     [XmlIgnore]
-    public Dictionary<Target, DistributionQualifyReading> DistributionQualifyReadings { get; set; } = new();
+    public Dictionary<ITargetable, DistributionQualifyReading> DistributionQualifyReadings { get; set; } = new();
     #endregion
 
     public TaskDistributor() : this(null, new TacticalMap()) { }
@@ -47,14 +47,17 @@ public class TaskDistributor {
             Qualifier = q;
         else throw new Exception($"Could not find constructor for type '{qualifyType?.FullName}'");
         Map = map;
+        DistributeRoadsBetweenStations();
     }
 
     #region Distribution
 
     #region General
     public void DistributeTask(PropertyChangedEventHandler? propertyChanged) {
-        DistributeTaskForFreeAgents(propertyChanged);
+        // DistributeTaskForFreeAgents(propertyChanged);
         DistributeTaskForWorkingTransporters();
+        if (Map.Roads.Any(p => p.ReservedStation is null))
+            DistributeRoadsBetweenStations();
     }
 
     private void DistributeTaskForFreeAgents(PropertyChangedEventHandler? propertyChanged) {
@@ -70,15 +73,15 @@ public class TaskDistributor {
         //распределение ближайших целей по роботам
         for (int i = 0; i < freeAgents.Length; i++) {
             Agent agent = freeAgents[i];
-            Target? targetPos = Qualifier.RecommendTargetForAgent(agent, FreeTargets.Where(p => !agent.BlockedTargets.Contains(p)));
-            if (targetPos == null)
+            ITargetable? target = Qualifier.RecommendTargetForAgent(agent, FreeTargets.Where(p => !agent.BlockedTargets.Contains(p)));
+            if (target == null)
                 continue;
 
-            LinkTargetToAgent(agent, targetPos);
+            LinkTargetToAgent(agent, target);
 
             if (!agent.Trajectory.Any()) {
                 agent.AttachedObj = null;
-                agent.BlockedTargets.Add(targetPos);
+                agent.BlockedTargets.Add(target);
             }
         }
     }
@@ -102,6 +105,21 @@ public class TaskDistributor {
     #endregion
 
     #region Specific
+    private void DistributeRoadsBetweenStations() {
+        for (int i = 0; i < Map.Stations.Length; i++) {
+            if (Map.Stations[i] is not AgentStation a) continue;
+            if (a.AssignedRoads.Any()) {
+                var ar = a.AssignedRoads.ToArray();
+                for (int l = 0; l < ar.Length; l++)
+                    a.Remove(ar[l]);
+            }
+
+            for (int j = 0; j < Map.Roads.Length; j++)
+                a.Assign(Map.Roads[j]);
+            return;
+        }
+    }
+
     private void DistributeTaskForWorkingTransporters() {
         var WorkingTransporters = Agents?.Where(
             p => p is Transporter && p.CurrentState == RobotState.Working && Map.Stations
@@ -137,7 +155,7 @@ public class TaskDistributor {
     #endregion
 
     #region Links
-    private static void LinkTargetToAgent(Agent agent, Target target) {
+    private static void LinkTargetToAgent(Agent agent, ITargetable target) {
         if (target == null)
             return;
         agent.AttachedObj = target;

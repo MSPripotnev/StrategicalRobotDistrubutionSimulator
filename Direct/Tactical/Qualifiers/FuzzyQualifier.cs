@@ -69,15 +69,16 @@ public class FuzzyQualifier : IQualifier {
             Engine.Rulebase.AddRule(new FuzzyRule(nameof(Quality) + "Rule" + i, c, cs));
         }
     }
-    public Target? RecommendTargetForAgent(Agent agent, IEnumerable<Target> targets) {
-        Dictionary<Target, double> targetsDict = targets.ToDictionary(p => p, i => Qualify(agent, i));
+    public ITargetable? RecommendTargetForAgent(IControllable agent, IEnumerable<ITargetable> targets) {
+        Dictionary<ITargetable, double> targetsDict = targets.ToDictionary(p => p, i => Qualify(agent, i));
         var rs = targetsDict.OrderByDescending(x => x.Value).ToArray();
         return targetsDict.Any() ? rs[0].Key : null;
     }
-    public double Qualify(Agent agent, Target target) {
-        return Qualify(agent, target, out var _);
+    public double Qualify(IControllable agent, ITargetable target) {
+        if (agent is not Agent a) return 0;
+        return Qualify(a, target, out var _);
     }
-    public double Qualify(Agent agent, Target target, out Dictionary<string, double> activatedRules) {
+    public double Qualify(Agent agent, ITargetable target, out Dictionary<string, double> activatedRules) {
         activatedRules = new();
         if (target is not Snowdrift s) return -1;
         if (agent is not SnowRemover r) return -1;
