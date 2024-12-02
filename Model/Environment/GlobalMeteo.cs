@@ -227,17 +227,22 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
                 continue;
             for (int i = 0; i < IntensityMap.Length; i++) {
                 for (int j = 0; j < IntensityMap[i].Length; j++) {
-                    Point pos = new Point(i * IntensityMapScale, j * IntensityMapScale);
+                    Point pos = GetIntensityMapPoint(i, j);
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
                     if (Math.Abs(p.X) < cloud.Width / 2 && Math.Abs(p.Y) < cloud.Length / 2 &&
                         !Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter))
-                        IntensityMap[i][j] += cloud.Intensity / p.Length / p.Length * cloud.Width * cloud.Length;
+                        Math.Min(IntensityMap[i][j] += cloud.Intensity / p.Length / p.Length *
+                                cloud.Width * cloud.Length, 1e6);
                 }
             }
         }
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntensityMap)));
     }
+    public static (int i, int j) GetPointIntensityIndex(Point pos) =>
+            ((int)Math.Floor(pos.X / IntensityMapScale), (int)Math.Floor(pos.Y / IntensityMapScale));
+    public static Point GetIntensityMapPoint(int i, int j) =>
+            new Point(i * IntensityMapScale, j * IntensityMapScale);
     #endregion
 
     public List<Snowdrift> GeneratedSnowdrifts { get; private set; } = new();

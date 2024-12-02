@@ -205,8 +205,7 @@ public class Road : IPlaceable, ITimeSimulatable {
            }
 #else
             var p = position + dl;
-            int pi = (int)Math.Round(p.X / GlobalMeteo.IntensityMapScale),
-                pj = (int)Math.Round(p.Y / GlobalMeteo.IntensityMapScale);
+            (int pi, int pj) = GlobalMeteo.GetPointIntensityIndex(p);
             if (!intensityCells.Contains((pi, pj)))
                 intensityCells.Add((pi, pj));
 #endif
@@ -220,8 +219,12 @@ public class Road : IPlaceable, ITimeSimulatable {
 
         if (meteo.IntensityMap is null || !meteo.IntensityMap.Any())
             return;
-        Snowness = intensityCells.Sum(p => meteo.IntensityMap[p.i][p.j] /
-                DistanceToRoad(new Point(p.i  * GlobalMeteo.IntensityMapScale, p.j * GlobalMeteo.IntensityMapScale)) + 1);
+        Snowness = 0;
+        for (int i = 0; i < intensityCells.Count; i++) {
+            (int pi, int pj) = intensityCells[i];
+            Snowness += meteo.IntensityMap[pi][pj] /
+                (DistanceToRoad(GlobalMeteo.GetIntensityMapPoint(pi, pj)) + 1);
+        }
     }
 
     public override bool Equals(object? obj) => obj is Road r && r == this;
