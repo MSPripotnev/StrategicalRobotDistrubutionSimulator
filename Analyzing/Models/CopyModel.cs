@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 using SRDS.Direct.Agents.Drones;
 using SRDS.Direct.Agents;
 using SRDS.Model.Targets;
+using SRDS.Model.Map.Stations;
 
 namespace SRDS.Analyzing.Models;
 public class CopyModel : IModel {
@@ -33,6 +34,7 @@ public class CopyModel : IModel {
         modelPath = Path = model.MapPath.Replace(".xml", $"-{nameof(CopyModel)}.xml");
     }
     public CopyModel(Director director) : this() {
+        model.MapPath = director.MapPath;
         model.Agents = director.Agents.Clone() as Agent[] ?? throw new Exception();
         model.Targets = director.Targets.Clone() as Target[] ?? throw new Exception();
         for (int i = 0; i < director.Agents.Length; i++) {
@@ -40,9 +42,8 @@ public class CopyModel : IModel {
                 model.Agents[i] = new SnowRemover(a.Position, a.Devices);
             else if (director.Agents[i] is Transporter t)
                 model.Agents[i] = new Transporter(t.Position);
-            model.Agents[i].Home = director.Agents[i].Home;
+            model.Agents[i].Home = model.Map.Stations.First(p => p is AgentStation a && (a.Position - director.Agents[i].Home?.Position)?.Length < 5.0) as AgentStation;
         }
-        model.MapPath = director.MapPath;
         model.Scale = director.Scale;
         model.Time = director.Time;
         Name = $"Copy model from {model.MapPath}";
@@ -77,8 +78,8 @@ public class CopyModel : IModel {
                 res.Agents[i] = new SnowRemover(a.Position, a.Devices);
             else if (model.Agents[i] is Transporter t)
                 res.Agents[i] = new Transporter(t.Position);
-            res.Agents[i].Home = model.Agents[i].Home;
             res.Agents = res.Agents;
+            res.Agents[i].Home = res.Map.Stations.First(p => p is AgentStation a && (a.Position - model.Agents[i].Home?.Position)?.Length < 5.0) as AgentStation;
         }
         res.Targets = model.Targets.Clone() as Target[] ?? throw new Exception();
         return res;
