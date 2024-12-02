@@ -13,6 +13,8 @@ public class Obstacle : IPlaceable {
         get { return borders; }
         set {
             borders = value;
+            if (Borders.Any())
+                Position = Borders[0];
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Borders)));
         }
     }
@@ -30,7 +32,8 @@ public class Obstacle : IPlaceable {
     public Color Color { get; set; } = Colors.Gray;
     public Obstacle(Point[] obstacleBorders) {
         borders = Borders = obstacleBorders;
-        Position = Borders[0];
+        if (Borders.Any())
+            Position = Borders[0];
     }
     public Obstacle() : this(Array.Empty<Point>()) { }
     public event PropertyChangedEventHandler? PropertyChanged;

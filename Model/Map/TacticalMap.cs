@@ -99,11 +99,11 @@ public class TacticalMap : INotifyPropertyChanged {
     #region Constructors
     public TacticalMap() : this(Array.Empty<Obstacle>(), Array.Empty<Station>(), Array.Empty<Road>(), new Size(0,0)) { }
     public TacticalMap(Obstacle[] _obstacles, Station[] _bases, Road[] _roads, Size _borders) {
+        borders = Borders = _borders;
         obstacles = Obstacles = _obstacles;
         stations = Stations = _bases;
         Crossroads = Array.Empty<Crossroad>();
         roads = Roads = _roads;
-        borders = Borders = _borders;
         Path = System.IO.Path.Combine(Directory.GetCurrentDirectory(), $"{nameof(TacticalMap)}.xml");
         Name = "Map";
     }
