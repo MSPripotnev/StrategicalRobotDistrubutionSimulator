@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -333,6 +333,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         using (FileStream fs = new FileStream(path, FileMode.Open)) {
             XmlSerializer xmlReader = new XmlSerializer(typeof(Director));
             director = (Director?)xmlReader.Deserialize(fs);
+            if (director is not null)
+                director.Distributor = new TaskDistributor(null, director.map);
             fs.Close();
         }
         return director;
