@@ -232,8 +232,8 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
                     long iter = 0;
                     if (Math.Abs(p.X) < cloud.Width / 2 && Math.Abs(p.Y) < cloud.Length / 2 &&
                         !Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter))
-                        Math.Min(IntensityMap[i][j] += cloud.Intensity / p.Length / p.Length *
-                                cloud.Width * cloud.Length, 1e6);
+                        Math.Min(IntensityMap[i][j] += cloud.Intensity / Math.Sqrt(p.Length / p.Length *
+                                cloud.Width * cloud.Length), 1e6);
                 }
             }
         }
