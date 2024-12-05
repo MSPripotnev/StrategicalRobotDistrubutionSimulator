@@ -71,6 +71,15 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     }
     #endregion
 
+    private TimeSpan timeFlow = TimeSpan.Zero;
+    private DateTime _time;
+    private DateTime ctime {
+        set {
+            timeFlow = value - _time;
+            _time = value;
+        }
+    }
+
     public GlobalMeteo(TacticalMap map, int seed) {
         Rnd = new Random(seed);
         this.map = map;
@@ -82,7 +91,6 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
 
     #region Simulation
     public event PropertyChangedEventHandler? PropertyChanged;
-    private DateTime _time;
     private Vector windPerMinute;
     private void WindChange() {
         if (_time.Minute % 10 == 0 && _time.Second == 0) {
@@ -102,11 +110,10 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     public void Simulate(object? sender, DateTime time) {
         if (sender is not Director director)
             return;
-        TimeSpan timeFlow = time - _time;
-        _time = time;
+        ctime = time;
         DailyMeteoChange();
         WindChange();
-        Wind = windPerMinute * timeFlow.TotalSeconds / 60;
+        Wind = windPerMinute * timeFlow.TotalMinutes;
         CloudsBehaviour(director);
         // Temporary disabled:
         // GenerateSnowdrifts();
@@ -165,8 +172,8 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             position.Y += Rnd.Next(-(int)map.Borders.Height / 2, (int)map.Borders.Height / 2);
 
         DateTime start = _time.AddMinutes(Rnd.Next(60, 300)), end = start.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
-        const double dispersing = 10;
-        double intensity = Rnd.NextDouble() * width * length / rMax / rMin * dispersing;
+        const double dispersing = 0.1;
+        double intensity = Rnd.NextDouble() * Math.Sqrt(width * length / rMax / rMin) * dispersing;
 
         if (Rnd.NextDouble() < 0.3)
             intensity = 0;
@@ -223,19 +230,21 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     private void GenerateIntensity() {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;
         foreach (var cloud in Clouds.Where(c => c.Intensity > 0)) {
-            if (Rnd.Next(0, (int)Math.Ceiling(cloud.MaxWidth * cloud.MaxLength)) >
-                    Math.Min(cloud.Width, Math.Abs(cloud.Width - cloud.Position.X)) *
-                    Math.Min(cloud.Length, Math.Abs(cloud.Length - cloud.Position.Y)) / 2)
-                continue;
-            for (int i = 0; i < IntensityMap.Length; i++) {
-                for (int j = 0; j < IntensityMap[i].Length; j++) {
+            (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(new(cloud.Position.X - cloud.Width / 2, cloud.Position.Y - cloud.Length / 2));
+            (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(new(cloud.Position.X + cloud.Width / 2, cloud.Position.Y + cloud.Length / 2));
+            cloudStartPosi = Math.Max(0, cloudStartPosi);
+            cloudStartPosj = Math.Max(0, cloudStartPosj);
+            cloudEndPosi = Math.Min(cloudEndPosi, IntensityMap.Length);
+            cloudEndPosj = Math.Min(cloudEndPosj, IntensityMap[0].Length);
+
+            for (int i = cloudStartPosi; i < cloudEndPosi; i++) {
+                for (int j = cloudStartPosj; j < cloudEndPosj; j++) {
                     Point pos = GetIntensityMapPoint(i, j);
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
-                    if (Math.Abs(p.X) < cloud.Width / 2 && Math.Abs(p.Y) < cloud.Length / 2 &&
-                        !Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter))
-                        Math.Min(IntensityMap[i][j] += cloud.Intensity / Math.Sqrt(p.Length / p.Length *
-                                cloud.Width * cloud.Length), 1e6);
+                    if (p.X * p.X / cloud.Width / cloud.Width * 4 + p.Y * p.Y / cloud.Length / cloud.Length * 4 <= 1 &&
+                            !Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter))
+                        IntensityMap[i][j] += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
                 }
             }
         }
