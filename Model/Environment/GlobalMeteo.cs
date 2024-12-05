@@ -151,7 +151,9 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     }
     public UIElement[] CloudsUI { get => clouds.Select(p => p.Build()).ToArray(); }
     private SnowCloud GenerateCloud() {
-        const int rMin = 900, rMax = 1200;
+        double min_r = Math.Min(map.Borders.Height, map.Borders.Width);
+        int rMin = (int)Math.Round(Math.Min(2*min_r/3, 3/2*min_r)),
+            rMax = (int)Math.Round(Math.Min(rMin, 5*min_r/2));
         double width = Rnd.Next(rMin, rMax), length = Rnd.Next(rMin, rMax);
         Point position = new Point(map.Borders.Width / 2, map.Borders.Height / 2) -
             Wind / Wind.Length / 4 * (Math.Sqrt(width * width + length * length) + 1.4142*Math.Min(map.Borders.Width, map.Borders.Height));
