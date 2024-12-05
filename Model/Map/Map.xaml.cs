@@ -229,6 +229,8 @@ public partial class MapWPF : Window {
                 if (tester.Models.Any() && tester.Models[0] is CopyModel cm && cm.Unpack() != Director)
                     tester.Models[0] = new CopyModel(Director) { Path = fd.FileName };
                 tester.AttemptsN = tester.Models[0].MaxAttempts;
+                Width = 1.8 * Director.Map.Borders.Width;
+                Height = 1.18 * Director.Map.Borders.Height;
                 DrawPlaceableObjects();
             } else
                 Director?.Serialize(fd.FileName);

@@ -243,8 +243,8 @@ public class Road : ITargetable, ITimeSimulatable {
         Snowness = 0;
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
-            Snowness += meteo.IntensityMap[pi][pj] /
-                (DistanceToRoad(GlobalMeteo.GetIntensityMapPoint(pi, pj)) + 1);
+            if (0 < pi && pi < meteo.IntensityMap.Length && 0 < pj && pj < meteo.IntensityMap[0].Length)
+                Snowness += meteo.IntensityMap[pi][pj] / (DistanceToRoad(GlobalMeteo.GetIntensityMapPoint(pi, pj)) + 1);
         }
     }
 
