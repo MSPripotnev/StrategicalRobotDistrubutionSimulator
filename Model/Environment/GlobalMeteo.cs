@@ -13,12 +13,12 @@ using Targets;
 public class IntensityMapConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
         if (value is not double density || density < 0)
-            return Color.FromArgb(0, 0,0, 0);
+            return new RadialGradientBrush(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(100, 255, 255, 255));
 
-        density = density / 1000 * 256;
+        density = density / 10 * 256;
         byte r = (byte)Math.Min(255, Math.Round(density)),
              b = (byte)Math.Max(0, 255 - Math.Round(density));
-        return new RadialGradientBrush(Color.FromArgb((byte)(Math.Abs(r-b)/2), r, 0, b), Colors.LightBlue);
+        return new RadialGradientBrush(Color.FromArgb((byte)(Math.Abs(r-b)/3), r, 0, b), Color.FromArgb((byte)(Math.Abs(r-b)/5), 0, 0, 0));
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
@@ -202,9 +202,9 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
                         Rectangle el = new Rectangle() {
                             Width = IntensityMapScale,
                             Height = IntensityMapScale,
-                            RadiusX = IntensityMapScale / 8,
-                            RadiusY = IntensityMapScale / 8,
-                            Opacity = 0.5,
+                            RadiusX = IntensityMapScale / 4,
+                            RadiusY = IntensityMapScale / 4,
+                            Opacity = 0.25,
                             Margin = new Thickness(i * IntensityMapScale, j * IntensityMapScale, 0, 0),
                             Fill = (Brush)converter.Convert(IntensityMap[i][j], typeof(Color), i, CultureInfo.CurrentCulture),
                             Uid = $"{nameof(IntensityMap)}[{i}][{j}]",
