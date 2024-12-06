@@ -213,10 +213,10 @@ public partial class MapWPF : Window {
         }
         fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
         if (tag.Contains("model")) {
-            fd.Filter = "Файлы модели|*.xml|Все файлы|*.*";
+            fd.Filter = "Файлы модели|*.xsmod|Все файлы|*.*";
             serialized_object = Director;
         } else if (tag.Contains("map")) {
-            fd.Filter = "Файлы разметки|*.xml|Все файлы|*.*";
+            fd.Filter = "Файлы разметки|*.xsmap|Все файлы|*.*";
             serialized_object = Director.Map;
         } else return;
         if (fd.ShowDialog() != true || fd.FileName == "")

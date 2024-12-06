@@ -324,6 +324,12 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         Recorder.Dispose();
     }
     public void Serialize(string path) {
+        if (MapPath == "") {
+            Map.Save(Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + DateTime.Now.ToFileTime() + ".xsmap"));
+            MapPath = Map.Path;
+        }
+        if (File.Exists(path))
+            File.Delete(path);
         using FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
         XmlSerializer xmlWriter = new XmlSerializer(typeof(Director));
         xmlWriter.Serialize(fs, this);

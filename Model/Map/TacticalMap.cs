@@ -78,11 +78,11 @@ public class TacticalMap : INotifyPropertyChanged {
     public string Path { get; set; }
     public void Save() => Save(Path);
     public void Save(string path) {
+        if (File.Exists(path))
+            File.Delete(path);
         XmlSerializer xmlSerializer = new XmlSerializer(typeof(TacticalMap));
-        using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate)) {
-            xmlSerializer.Serialize(fs, this);
-            fs.Close();
-        }
+        using FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
+        xmlSerializer.Serialize(fs, this);
         Path = path;
         Name = path[path.LastIndexOf('\\')..^4];
     }
