@@ -724,8 +724,7 @@ public partial class MapWPF : Window {
     }
     public void Refresh() {
         if (Director != null) {
-            double quality = Math.Round(Director.Distributor.DistributionQualifyReadings
-                .Sum(p => p.Value.TakedLevel - (p.Value.TakedTarget is Snowdrift s ? s.Level : 0)));
+            double quality = Math.Round(Director.Map.Roads.Sum(p => p.Snowness));
 
             localTimeL.Content = $"Местное время: {Director.Time.ToShortTimeString()}  {Director.Time.ToLongDateString()}";
             systemQualityL.Content = $"Q = {quality}        Эпоха: {Director.Recorder.Epoch}";
