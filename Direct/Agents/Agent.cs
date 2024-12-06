@@ -355,11 +355,6 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             polyline.StrokeDashCap = PenLineCap.Round;
             polyline.StrokeEndLineCap = PenLineCap.Round;*/
         polyline.Margin = new Thickness(-5, -5, 0, 0);
-
-        Binding b = new Binding(opened ? nameof(OpenedPoints) : nameof(ClosedPoints));
-        b.Source = this;
-        b.Converter = new TrajectoryConverter();
-        polyline.SetBinding(Polyline.PointsProperty, b);
         return polyline;
     }
     #endregion
