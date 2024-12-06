@@ -128,11 +128,12 @@ public class SnowRemover : Agent {
         if (sender is not GlobalMeteo meteo) return;
         if (meteo.IntensityMap is null || !meteo.IntensityMap.Any()) return;
 
-        (int ix, int iy) = GlobalMeteo.GetPointIntensityIndex(Position);
         var v = Trajectory[0] - Position;
         v *= GlobalMeteo.IntensityMapScale / v.Length;
-        (v.X, v.Y) = (-v.Y, v.X);
-        (int isx, int isy) = GlobalMeteo.GetPointIntensityIndex(Position + v);
+        var vr = v;
+        (vr.X, vr.Y) = (-v.Y, v.X);
+        (int ix, int iy) = GlobalMeteo.GetPointIntensityIndex(Position);
+        (int isx, int isy) = GlobalMeteo.GetPointIntensityIndex(Position + v + vr);
         double remove_amount = Math.Min(meteo.IntensityMap[ix][iy], RemoveSpeed * ActualSpeed);
 
         for (int i = 0; i < Devices.Length; i++) {
