@@ -124,7 +124,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     #region Clouds
     private void CloudsBehaviour(Director director) {
         var clouds_list = Clouds.ToList();
-        if (_time.Minute % 30 == 0 && _time.Second == 0) {
+        if (_time.Minute % 20 == 0 && _time.Second == 0) {
             if (Rnd.NextDouble() > 0.8) {
                 var c = GenerateCloud();
                 clouds_list.Add(c);
@@ -172,7 +172,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             position.Y += Rnd.Next(-(int)map.Borders.Height / 2, (int)map.Borders.Height / 2);
 
         DateTime start = _time.AddMinutes(Rnd.Next(60, 300)), end = start.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
-        const double dispersing = 0.1;
+        const double dispersing = 0.01;
         double intensity = Rnd.NextDouble() * Math.Sqrt(width * length / rMax / rMin) * dispersing;
 
         if (Rnd.NextDouble() < 0.3)
