@@ -10,6 +10,8 @@ using Drones;
 using Direct.Executive;
 using Model.Map.Stations;
 using Model.Targets;
+using System.Windows.Media.Imaging;
+
 public enum RobotState {
     Disable = -1,
     Ready,
@@ -210,10 +212,10 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         V *= ActualSpeed / (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint) : 1);
         Position = new Point(Position.X + V.X, Position.Y + V.Y);
 
-        var angle = Vector.AngleBetween(V, new Vector(0, -1));
+        var angle = Vector.AngleBetween(V, new Vector(0, 1));
         angle = angle < 180 && angle > -180 ? -angle : angle;
         if (ui is not null)
-            ui.RenderTransform = new RotateTransform(angle, 10, 10);
+            ui.RenderTransform = new RotateTransform(angle, 20, 20);
 
         WayIterations++;
     }
@@ -305,23 +307,27 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
     public Color Color { get; set; } = Colors.Red;
+    protected BitmapImage? bitmapImage = null;
     public virtual UIElement Build() {
         if (ui is not null)
             return ui;
 
-        var r = new RectangleGeometry(new Rect(0, 0, 20, 20), 15, 5);
+        var r = new RectangleGeometry(new Rect(0, 0, 40, 40), 20, 20);
         var t = new RectangleGeometry(new Rect(8, 2, 5, 5));
         GeometryGroup group = new GeometryGroup();
         group.Children.Add(r);
-        group.Children.Add(t);
+        if (bitmapImage is not null)
+            group.Children.Add(t);
         group.FillRule = FillRule.Nonzero;
 
         Path p = new Path() {
             Data = group,
-            Stroke = Brushes.Black,
-            StrokeThickness = 2,
-            Fill = new SolidColorBrush(Color),
+            Margin = new Thickness(-20, -10, 0, 0),
         };
+        if (bitmapImage is not null)
+            p.Fill = new ImageBrush(bitmapImage);
+        else
+            p.Fill = new SolidColorBrush(Color);
 
         Binding binding = new Binding(nameof(Position) + ".X");
         binding.Source = this;

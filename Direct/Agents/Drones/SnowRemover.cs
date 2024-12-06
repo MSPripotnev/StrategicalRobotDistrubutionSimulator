@@ -3,6 +3,8 @@ using System.Windows.Media;
 using System.Xml.Serialization;
 
 namespace SRDS.Direct.Agents.Drones;
+using System.Windows.Media.Imaging;
+
 using Direct.Executive;
 
 using Model.Targets;
@@ -77,10 +79,12 @@ public class SnowRemover : Agent {
     public SnowRemover(Point position, SnowRemoverType[] devices) : this() {
         Position = position;
         Devices = devices;
+        bitmapImage = new BitmapImage(new Uri(@"../../../Direct/Agents/Drones/KDM.png", UriKind.Relative));
     }
     public SnowRemover() : base() {
         InteractDistance = 8;
         devices = Array.Empty<SnowRemoverType>();
+        bitmapImage = new BitmapImage(new Uri(@"../../../Direct/Agents/Drones/KDM.png", UriKind.Relative));
     }
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {

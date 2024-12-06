@@ -3,6 +3,7 @@ using SRDS.Direct.Agents;
 using SRDS.Direct.Executive;
 
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Xml.Serialization;
 
 namespace SRDS.Model.Map.Stations;
@@ -52,9 +53,11 @@ public class AgentStation : Station, IControllable, IRefueller {
     #region Constructors
     public AgentStation() : base() {
         Color = Colors.SandyBrown;
+        bitmapImage = new BitmapImage(new Uri(@"../../../Model/Map/Stations/garage.png", UriKind.Relative));
     }
     public AgentStation(System.Windows.Point pos) : base(pos) {
         Color = Colors.SandyBrown;
+        bitmapImage = new BitmapImage(new Uri(@"../../../Model/Map/Stations/garage.png", UriKind.Relative));
     }
     #endregion
 
