@@ -151,7 +151,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
         }
     }
-    public double MaxStraightRange { get; init; }
+    public double MaxStraightRange { get; set; }
     [XmlIgnore]
     public double Speed { get; set; }
     public double WorkSpeed { get => Speed * 0.8; }

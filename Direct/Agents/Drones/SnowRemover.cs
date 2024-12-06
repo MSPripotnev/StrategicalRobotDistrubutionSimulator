@@ -56,6 +56,7 @@ public class SnowRemover : Agent {
         set {
             switch (value) {
             case RobotState.Working:
+                MaxStraightRange = WorkSpeed;
                 if (CurrentState == RobotState.Going && AttachedObj is Road r) {
                     Trajectory.Clear();
                     if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position))
@@ -63,15 +64,23 @@ public class SnowRemover : Agent {
                     else
                         Trajectory.Add(r.EndPosition);
                     state = RobotState.Working;
+                    Vector v = (Position - Trajectory[0]);
+                    v *= r.Height / v.Length;
+                    (v.X, v.Y) = (v.Y, v.X);
+                    Trajectory[0] += v;
+                    Trajectory.Add(Trajectory[0] - v);
                 }
                 break;
             case RobotState.Ready:
                 if (base.CurrentState == RobotState.Working && (AttachedObj is not null && AttachedObj.Finished || AttachedObj is null))
                     state = RobotState.Ready;
+                else if (AttachedObj is null)
+                    state = RobotState.Ready;
                 break;
             default:
                 if (CurrentState != RobotState.Working)
                     base.CurrentState = value;
+                MaxStraightRange = 2 * Speed;
                 break;
             }
         }
@@ -111,11 +120,29 @@ public class SnowRemover : Agent {
                     CurrentState = RobotState.Ready;
             } else if (AttachedObj is Road r) {
                 if (sender is Director or AgentStation) {
-                    if (PathFinder.Distance(Position, r.Position) < MaxStraightRange)
-                        Trajectory.Add(r.EndPosition);
-                    else if (PathFinder.Distance(Position, r.EndPosition) < MaxStraightRange)
-                        Trajectory.Add(r.Position);
-                    Move();
+                    Vector v = Trajectory[0] - Position;
+                    v *= r.Height / v.Length;
+                    (v.X, v.Y) = (v.Y, v.X);
+                    if (PathFinder.Distance(Position, r.Position) < MaxStraightRange) {
+                        Trajectory.Clear();
+                        Trajectory.Add(r.EndPosition + v);
+                        Trajectory.Add(r.EndPosition - v);
+                    } else if (PathFinder.Distance(Position, r.EndPosition) < MaxStraightRange) {
+                        Trajectory.Clear();
+                        Trajectory.Add(r.Position + v);
+                        Trajectory.Add(r.Position - v);
+                    }
+                        /*
+                        if (PathFinder.Distance(Position, r.Position + v) < r.Height / 2 && PathFinder.Distance(Position, r.Position + v) < PathFinder.Distance(Position, r.Position - v))
+                            Trajectory.Add(r.Position - v);
+                        else if (PathFinder.Distance(Position, r.Position - v) < r.Height / 2 && PathFinder.Distance(Position, r.Position - v) < PathFinder.Distance(Position, r.Position + v))
+                            Trajectory.Add(r.EndPosition + v);
+                        else if (PathFinder.Distance(Position, r.EndPosition - v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition - v) < PathFinder.Distance(Position, r.EndPosition + v))
+                            Trajectory.Add(r.EndPosition + v);
+                        else if (PathFinder.Distance(Position, r.EndPosition + v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition + v) < PathFinder.Distance(Position, r.EndPosition - v))
+                            Trajectory.Add(r.Position + v);
+                        */
+                        Move();
                 }
                 RemoveSnowFromRoad(sender);
             }

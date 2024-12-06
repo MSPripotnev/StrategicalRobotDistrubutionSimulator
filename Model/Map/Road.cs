@@ -90,7 +90,7 @@ public class Road : ITargetable, ITimeSimulatable {
         get => category;
         set {
             category = value;
-            Height = (category - 1) * 5 + 1;
+            Height = (category - 1) * 10 + 5;
             Type = (RoadType)category;
         }
     }
