@@ -608,7 +608,7 @@ public partial class MapWPF : Window {
     }
     double lastSpeed = 1;
     private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-        const double maxInterval = 100;
+        const double maxInterval = 60;
         if (e.NewValue > 0) {
             refreshTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)(maxInterval / e.NewValue));
             Pause = false;

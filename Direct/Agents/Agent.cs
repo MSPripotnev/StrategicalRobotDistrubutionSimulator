@@ -374,7 +374,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         Color = Colors.Red;
         CurrentState = RobotState.Ready;
         AttachedObj = null;
-        Speed = 5F;
+        Speed = 10F;
         InteractDistance = 30;
         BlockedTargets = new List<ITargetable>();
         MaxStraightRange = 2 * Speed;

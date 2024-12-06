@@ -182,7 +182,7 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
     public Director() : this(new Size(0, 0)) {
     }
     public Director(Size mapSize) {
-        Scale = 5.0F;
+        Scale = 10.0F;
         EnableMeteo = true;
         map = Map = new TacticalMap() {
             Borders = mapSize
