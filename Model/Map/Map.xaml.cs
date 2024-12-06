@@ -122,7 +122,15 @@ public partial class MapWPF : Window {
                 if (director.Meteo != null)
                     director.Meteo.PropertyChanged += RefreshMeteo;
                 director.PropertyChanged += RefreshMeteo;
-                director.Map.Borders = mapCanvas.RenderSize;
+
+                SizeChanged -= Window_SizeChanged;
+                Width = Math.Max(800, 1.7*director.Map.Borders.Width);
+                Height = Math.Max(600, 1.1*director.Map.Borders.Height);
+                if (Width > 1800 && Height > 1000)
+                    WindowState = WindowState.Maximized;
+                else
+                    WindowState = WindowState.Normal;
+                SizeChanged += Window_SizeChanged;
 
                 director.Seed = 0;
                 if (!tester.Models.Any()) {
@@ -229,8 +237,6 @@ public partial class MapWPF : Window {
                 if (tester.Models.Any() && tester.Models[0] is CopyModel cm && cm.Unpack() != Director)
                     tester.Models[0] = new CopyModel(Director) { Path = fd.FileName };
                 tester.AttemptsN = tester.Models[0].MaxAttempts;
-                Width = 1.8 * Director.Map.Borders.Width;
-                Height = 1.18 * Director.Map.Borders.Height;
                 DrawPlaceableObjects();
             } else
                 Director?.Serialize(fd.FileName);
@@ -501,7 +507,7 @@ public partial class MapWPF : Window {
     }
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
         if (Director != null)
-            Director.Map.Borders = mapCanvas.RenderSize;
+            Director.Map.Borders = e.NewSize;
     }
     #endregion
 
