@@ -56,13 +56,13 @@ public class SnowRemover : Agent {
         set {
             switch (value) {
             case RobotState.Working:
-                MaxStraightRange = WorkSpeed;
                 if (CurrentState == RobotState.Going && AttachedObj is Road r) {
                     Trajectory.Clear();
                     if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position))
                         Trajectory.Add(r.Position);
                     else
                         Trajectory.Add(r.EndPosition);
+                    MaxStraightRange = r.Height;
                     state = RobotState.Working;
                     Vector v = (Position - Trajectory[0]);
                     v *= r.Height / v.Length;
@@ -80,7 +80,7 @@ public class SnowRemover : Agent {
             default:
                 if (CurrentState != RobotState.Working)
                     base.CurrentState = value;
-                MaxStraightRange = 2 * Speed;
+                MaxStraightRange = 30;
                 break;
             }
         }

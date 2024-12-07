@@ -146,12 +146,12 @@ public partial class MapWPF : Window {
     Task mainTask;
     CancellationTokenSource tokenSource = new CancellationTokenSource();
 #endif
+    TimeSpan ts = new TimeSpan(0);
     private void RefreshTimer_Tick(object? sender, EventArgs e) {
         refreshTimer.Stop();
-        if (d_time.AddMinutes(speedSlider.Value).Minute < speedSlider.Value)
-            d_time = d_time.AddMinutes(speedSlider.Value - d_time.AddMinutes(speedSlider.Value).Minute);
-        else
-            d_time = d_time.AddMinutes(speedSlider.Value);
+        if (d_time.Second == 0 || ts.TotalSeconds == 0)
+            ts = new TimeSpan(0, 0, 60 / (6 - (int)speedSlider.Value));
+        d_time = d_time.AddSeconds(ts.TotalSeconds);
         var dt = DateTime.Now;
         Work();
         realWayTime += (DateTime.Now - dt);
@@ -614,9 +614,9 @@ public partial class MapWPF : Window {
     }
     double lastSpeed = 1;
     private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
-        const double maxInterval = 60;
+        const int maxInterval = 20;
         if (e.NewValue > 0) {
-            refreshTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)(maxInterval / e.NewValue));
+            refreshTimer.Interval = new TimeSpan(0, 0, 0, 0, maxInterval);
             Pause = false;
         } else {
             Pause = true;

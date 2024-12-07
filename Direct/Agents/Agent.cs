@@ -221,7 +221,8 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     }
     protected void ActualSpeedRecalculate(DateTime time) {
         TimeSpan timeFlow = time - _time;
-        ActualSpeed = (CurrentState == RobotState.Working ? WorkSpeed : Speed) * timeFlow.TotalSeconds / 60;
+        if (timeFlow.TotalSeconds > 0)
+            ActualSpeed = (CurrentState == RobotState.Working ? WorkSpeed : Speed) * timeFlow.TotalSeconds;
         _time = time;
     }
     protected bool FuelShortageCheck() {
@@ -374,10 +375,10 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         Color = Colors.Red;
         CurrentState = RobotState.Ready;
         AttachedObj = null;
-        Speed = 10F;
+        Speed = 8.0/60;
         InteractDistance = 30;
         BlockedTargets = new List<ITargetable>();
-        MaxStraightRange = 2 * Speed;
+        MaxStraightRange = 30;
         BackTrajectory = Array.Empty<Point>();
     }
     #endregion
