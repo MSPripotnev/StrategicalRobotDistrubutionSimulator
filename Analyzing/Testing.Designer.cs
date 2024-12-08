@@ -12,7 +12,7 @@ namespace SRDS.Analyzing {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.5.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.11.0.0")]
     internal sealed partial class Testing : global::System.Configuration.ApplicationSettingsBase {
         
         private static Testing defaultInstance = ((Testing)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Testing())));
@@ -25,7 +25,7 @@ namespace SRDS.Analyzing {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        [global::System.Configuration.DefaultSettingValueAttribute("250")]
         public int AttemptsMax {
             get {
                 return ((int)(this["AttemptsMax"]));
