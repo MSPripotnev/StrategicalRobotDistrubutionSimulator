@@ -147,7 +147,6 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             meteo = value;
             if (meteo is not null) {
                 meteo.PropertyChanged += RefreshMeteo;
-                meteo.IntensityControl.PropertyChanged += RefreshMeteo;
                 meteo.CloudControl.PropertyChanged += RefreshMeteo;
                 TimeChanged += meteo.Simulate;
             }

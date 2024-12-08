@@ -28,12 +28,50 @@ public class IntensityMapConverter : IValueConverter {
         return DependencyProperty.UnsetValue;
     }
 }
-public struct IntensityCell {
-    public double Snow { get; set; } = 0;
-    public double MashPercent { get; set; } = 0;
-    public IntensityCell(double snow, double mashPercent) {
-        Snow = snow;
-        MashPercent = mashPercent;
+public class IntensityCell : INotifyPropertyChanged {
+    public event PropertyChangedEventHandler? PropertyChanged = default;
+    private double snow = 0, mashPercent = 0;
+    public double Snow {
+        get => snow;
+        set {
+            snow = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Snow)));
+        }
+    }
+    public double MashPercent {
+        get => mashPercent;
+        set {
+            mashPercent = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MashPercent)));
+        }
+    }
+    readonly int i, j;
+    public IntensityCell(double _snow, double _mashPercent, int i, int j) {
+        snow = _snow;
+        mashPercent = _mashPercent;
+        this.i = i; this.j = j;
+    }
+    private UIElement? ui = null;
+    public UIElement? UI {
+        get {
+            if (ui is not null) return ui;
+            var converter = new IntensityMapConverter();
+            Rectangle el = new Rectangle() {
+                Width = IntensityControl.IntensityMapScale,
+                Height = IntensityControl.IntensityMapScale,
+                RadiusX = IntensityControl.IntensityMapScale / 4,
+                RadiusY = IntensityControl.IntensityMapScale / 4,
+                Opacity = 0.25,
+                Margin = new Thickness(i * IntensityControl.IntensityMapScale, j * IntensityControl.IntensityMapScale, 0, 0),
+                Fill = (Brush)converter.Convert(Snow, typeof(Color), i, CultureInfo.CurrentCulture),
+                Uid = $"{nameof(IntensityCell)}[{i}][{j}].{nameof(Snow)}",
+            };
+            Binding b = new Binding($"{nameof(Snow)}");
+            b.Source = this;
+            b.Converter = new IntensityMapConverter();
+            el.SetBinding(Rectangle.FillProperty, b);
+            return ui = el;
+        }
     }
     public static IntensityCell operator+(IntensityCell cell, double snow) {
         cell.Snow += Math.Max(Math.Min(snow, 1e4), 0);
@@ -44,55 +82,30 @@ public struct IntensityCell {
         return cell;
     }
 }
-public class IntensityControl : INotifyPropertyChanged {
+public class IntensityControl {
     #region IntensityMap
     [XmlArray]
     public IntensityCell[][]? IntensityMap { get; set; }
     public const int IntensityMapScale = 20;
     [XmlIgnore]
     private Size Borders { get; init; }
-    public event PropertyChangedEventHandler? PropertyChanged;
-    private UIElement[][]? intensityMapUI;
-    [XmlIgnore]
-    public UIElement[][]? IntensityMapUI {
-        get {
-            if (intensityMapUI is null || intensityMapUI[0] is null) {
-                int wsize = (int)Math.Ceiling(Borders.Width / IntensityMapScale), hsize = (int)Math.Ceiling(Borders.Height / IntensityMapScale);
-                IntensityMap = new IntensityCell[wsize][];
-                intensityMapUI = new UIElement[wsize][];
-                for (int i = 0; i < wsize; i++) {
-                    IntensityMap[i] = new IntensityCell[hsize];
-                    intensityMapUI[i] = new UIElement[hsize];
-                    for (int j = 0; j < hsize; j++) {
-                        var converter = new IntensityMapConverter();
-                        Rectangle el = new Rectangle() {
-                            Width = IntensityMapScale,
-                            Height = IntensityMapScale,
-                            RadiusX = IntensityMapScale / 4,
-                            RadiusY = IntensityMapScale / 4,
-                            Opacity = 0.25,
-                            Margin = new Thickness(i * IntensityMapScale, j * IntensityMapScale, 0, 0),
-                            Fill = (Brush)converter.Convert(IntensityMap[i][j], typeof(Color), i, CultureInfo.CurrentCulture),
-                            Uid = $"{nameof(IntensityMap)}[{i}][{j}]",
-                        };
-                        Binding b = new Binding($"{nameof(IntensityMap)}[{i}][{j}].{nameof(IntensityCell.Snow)}");
-                        b.Source = this;
-                        b.Converter = new IntensityMapConverter();
-                        el.SetBinding(Rectangle.FillProperty, b);
-                        intensityMapUI[i][j] = el;
-                    }
-                }
-            }
-            return intensityMapUI;
-        }
-    }
 
     public IntensityControl(Size borders) {
         Borders = borders;
         IntensityMap = Array.Empty<IntensityCell[]>();
+        if (Borders.Width > 0 && Borders.Height > 0) {
+            int wsize = (int)Math.Ceiling(Borders.Width / IntensityMapScale), hsize = (int)Math.Ceiling(Borders.Height / IntensityMapScale);
+            IntensityMap = new IntensityCell[wsize][];
+            for (int i = 0; i < wsize; i++) {
+                IntensityMap[i] = new IntensityCell[hsize];
+                for (int j = 0; j < hsize; j++)
+                    IntensityMap[i][j] = new IntensityCell(0, 0, i, j);
+            }
+        }
     }
     public void GenerateIntensity(SnowCloud[] clouds, Obstacle[] obstacles, TimeSpan timeFlow) {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;
+        if (!clouds.Any()) return;
         foreach (var cloud in clouds.Where(c => c.Intensity > 0)) {
             (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(new(cloud.Position.X - cloud.Width / 2, cloud.Position.Y - cloud.Length / 2));
             (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(new(cloud.Position.X + cloud.Width / 2, cloud.Position.Y + cloud.Length / 2));
@@ -107,12 +120,12 @@ public class IntensityControl : INotifyPropertyChanged {
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
                     if (p.X * p.X / cloud.Width / cloud.Width * 4 + p.Y * p.Y / cloud.Length / cloud.Length * 4 <= 1 &&
-                            !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter))
-                        IntensityMap[i][j] += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
+                            !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
+                        IntensityMap[i][j].Snow += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
+                    }
                 }
             }
         }
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntensityMap)));
     }
     public static (int i, int j) GetPointIntensityIndex(Point pos) =>
             ((int)Math.Round(pos.X / IntensityMapScale), (int)Math.Round(pos.Y / IntensityMapScale));

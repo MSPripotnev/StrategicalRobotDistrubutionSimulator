@@ -26,6 +26,10 @@ public partial class MapWPF : Window {
 
     public MapWPF() {
         InitializeComponent();
+
+        RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.LowQuality);
+        RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.Default;
+
         refreshTimer = new DispatcherTimer {
             Interval = new TimeSpan(0, 0, 0, 0, 1)
         };
@@ -59,8 +63,10 @@ public partial class MapWPF : Window {
             if (e.PropertyName == nameof(Director.Meteo.CloudControl.Clouds)) {
                 for (int i = 0; i < mapCanvas.Children.Count; i++) {
                     if (mapCanvas.Children[i].Uid != nameof(SnowCloud)) continue;
-                    if (!Director.Meteo.CloudControl.CloudsUI.Contains(mapCanvas.Children[i]))
+                    if (!Director.Meteo.CloudControl.CloudsUI.Contains(mapCanvas.Children[i])) {
                         mapCanvas.Children.Remove(mapCanvas.Children[i]);
+                        i--;
+                    }
                 }
                 foreach (var c in Director.Meteo.CloudControl.CloudsUI.Where(p => p is not null && !mapCanvas.Children.Contains(p)))
                     mapCanvas.Children.Add(c);
@@ -70,9 +76,9 @@ public partial class MapWPF : Window {
         }
     }
     private void DrawMeteoIntensityMap(bool draw) {
-        for (int i = 0; i < Director?.Meteo?.IntensityControl.IntensityMapUI?.Length; i++) {
-            for (int j = 0; j < Director.Meteo.IntensityControl.IntensityMapUI[0].Length; j++) {
-                var b = Director.Meteo.IntensityControl.IntensityMapUI[i][j];
+        for (int i = 0; i < Director?.Meteo?.IntensityControl.IntensityMap?.Length; i++) {
+            for (int j = 0; j < Director.Meteo.IntensityControl.IntensityMap?[0].Length; j++) {
+                var b = Director.Meteo.IntensityControl.IntensityMap?[i][j].UI;
                 if (b is null) continue;
                 if (draw && !mapCanvas.Children.Contains(b))
                     mapCanvas.Children.Add(b);
@@ -121,8 +127,12 @@ public partial class MapWPF : Window {
                 startB.IsEnabled = true;
                 if (director.Meteo != null) {
                     director.Meteo.PropertyChanged += RefreshMeteo;
-                    director.Meteo.IntensityControl.PropertyChanged += RefreshMeteo;
                     director.Meteo.CloudControl.PropertyChanged += RefreshMeteo;
+                    if (director?.Meteo?.IntensityControl?.IntensityMap?.Any() == true) {
+                        for (int i = 0; i < director.Meteo.IntensityControl.IntensityMap.Length; i++)
+                            for (int j = 0; j < director.Meteo.IntensityControl.IntensityMap[i].Length; j++)
+                                director.Meteo.IntensityControl.IntensityMap[i][j].PropertyChanged += RefreshMeteo;
+                    }
                 }
                 director.PropertyChanged += RefreshMeteo;
 
@@ -755,8 +765,7 @@ public partial class MapWPF : Window {
     public void Refresh() {
         if (Director != null) {
             double quality = Math.Round(Director.Map.Roads.Sum(p => p.Snowness));
-
-            localTimeL.Content = $"Местное время: {Director.Time.ToShortTimeString()}  {Director.Time.ToLongDateString()}";
+            localTimeL.Content = $"Местное время: {Director.Time.ToLongTimeString()}  {Director.Time.ToLongDateString()}";
             systemQualityL.Content = $"Q = {quality}        Эпоха: {Director.Recorder.Epoch}";
             if (Director.Recorder.SystemQuality.Any()) {
                 double best_qualitity = Director.Recorder.SystemQuality.Max();
