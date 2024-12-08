@@ -1,0 +1,33 @@
+﻿<Window x:Class="SRDS.Analyzing.Tests.TestsWindow"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:SRDS.Analyzing.Tests"
+      mc:Ignorable="d" d:DesignWidth="800"
+      Title="Tests" Height="500">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="10*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*"/>
+            <RowDefinition Height="10*"/>
+        </Grid.RowDefinitions>
+        <ListBox Grid.Column="0" Grid.Row="1" x:Name="activeLB" SelectionMode="Multiple">
+        </ListBox>
+        <ListBox Grid.Column="2" Grid.Row="1" x:Name="inactiveLB" SelectionMode="Multiple"/>
+        <GridViewColumnHeader Content="Активные" Grid.Column="0"></GridViewColumnHeader>
+        <GridViewColumnHeader Content="Неактивные" Grid.Column="2"></GridViewColumnHeader>
+        <DockPanel Grid.Column="1" Grid.RowSpan="2">
+            <Grid>
+                <Button x:Name="ActivateB" Height="35" Content="&lt;&lt;" Margin="0, -50, 0,0" Click="ActivateB_Click"></Button>
+                <Button x:Name="CompleteB" Height="35" Content=">>" Margin="0,232,0,182" HorizontalAlignment="Left" Width="38" Click="DeactivateB_Click"></Button>
+            </Grid>
+        </DockPanel>
+
+    </Grid>
+</Window>

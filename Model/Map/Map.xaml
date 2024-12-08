@@ -80,6 +80,10 @@
                 <MenuItem Header="Сохранить как..." Tag="2">
                     <MenuItem Header="Модель" Tag="save model" Click="FileMenuItem_Click"/>
                     <MenuItem Header="Карта" Tag="save map" Click="FileMenuItem_Click"/>
+                    <MenuItem Header="Тест">
+                        <MenuItem Header="Случайный тест" Tag="save copy model test" Click="FileMenuItem_Click"/>
+                        <MenuItem Header="Диапазон параметров" Tag="save parametr range test" Click="FileMenuItem_Click"/>
+                    </MenuItem>
                 </MenuItem>
             </MenuItem>
         </Menu>

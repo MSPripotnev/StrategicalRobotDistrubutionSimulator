@@ -220,7 +220,22 @@ public partial class MapWPF : Window {
             return;
         }
         fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
-        if (tag.Contains("model")) {
+        if (tag.Contains("test")) {
+            if (!tester.Models.Any())
+                return;
+            IModel model;
+            if (tag.Contains("copy")) {
+                fd.Filter = "Файлы случайных тестов|*.cmt|Все файлы|*.*";
+                model = new CopyModel(Director) {
+                    Seed = new Random().Next(0, int.MaxValue),
+                    MaxAttempts = 250,
+                    AttemptTime = DateTime.MinValue.AddDays(1),
+                    Name = Director.Map.Name,
+                    ModelPath = tester.Models[0].Path,
+                };
+            } else return;
+            serialized_object = model;
+        } else if(tag.Contains("model")) {
             fd.Filter = "Файлы модели|*.xsmod|Все файлы|*.*";
             serialized_object = Director;
         } else if (tag.Contains("map")) {
@@ -240,6 +255,11 @@ public partial class MapWPF : Window {
                 DrawPlaceableObjects();
             } else
                 Director?.Serialize(fd.FileName);
+            return;
+        }
+        if (action_is_open == false && serialized_object is IModel smodel) {
+            smodel.Path = fd.FileName;
+            smodel.Save(fd.FileName);
             return;
         }
 
@@ -633,10 +653,10 @@ public partial class MapWPF : Window {
     #region Testing Control
     readonly Tester tester = new Tester();
     private void TestsB_Click(object sender, RoutedEventArgs e) {
-        // Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
-        // window.ShowDialog();
+        Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
+        window.ShowDialog();
         tester.LoadModels();
-        if (File.Exists(tester.Models[0].Path)) {
+        if (tester.Models.Any() && File.Exists(tester.Models[0].Path)) {
             tester.LoadModel(tester.Models[0].Path);
             Director = tester.ActiveDirector;
         }

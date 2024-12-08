@@ -25,9 +25,9 @@ public class Tester {
     public void LoadModels() {
         List<IModel> models = new List<IModel>();
         foreach (string fileName in Directory.GetFiles(Path.Combine(Paths.Default.Tests, "Active"))) {
-            if (fileName.EndsWith(".prgm"))
+            if (fileName.EndsWith(".prm"))
                 models.Add(new ParametrRangeGeneratedModel(fileName));
-            else if (fileName.EndsWith(".cm"))
+            else if (fileName.EndsWith(".cmt"))
                 models.Add(new CopyModel(fileName));
         }
         Models = models.ToArray();

@@ -4,5 +4,6 @@ public interface IModel {
     public string Name { get; set; }
     public int MaxAttempts { get; set; }
     public DateTime? AttemptTime { get; set; }
+    public void Save(string path) { }
     public Direct.Director Unpack();
 }

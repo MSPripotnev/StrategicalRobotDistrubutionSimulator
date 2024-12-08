@@ -96,6 +96,11 @@ public class ParametrRangeGeneratedModel : IModel {
         Name = m.Name;
         Path = path;
     }
+    public void Save(string path) {
+        using FileStream fs = new FileStream(path, FileMode.Create);
+        XmlSerializer xmlSerializer = new XmlSerializer(typeof(ParametrRangeGeneratedModel));
+        xmlSerializer.Serialize(fs, this);
+    }
     public Director Unpack() {
         var res = new Director() {
             MapPath = Map,

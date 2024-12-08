@@ -65,6 +65,11 @@ public class CopyModel : IModel {
         Path = path;
         model = m.Unpack();
     }
+    public void Save(string path) {
+        using FileStream fs = new FileStream(path, FileMode.Create);
+        XmlSerializer xmlSerializer = new XmlSerializer(typeof(CopyModel));
+        xmlSerializer.Serialize(fs, this);
+    }
     public Director Unpack() {
         Director res = new Director() {
             MapPath = model.MapPath,
