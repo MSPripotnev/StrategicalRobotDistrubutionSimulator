@@ -153,27 +153,27 @@ public class SnowRemover : Agent {
 
     private void RemoveSnowFromRoad(object? sender) {
         if (sender is not GlobalMeteo meteo) return;
-        if (meteo.IntensityMap is null || !meteo.IntensityMap.Any()) return;
+        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any()) return;
 
         var v = Trajectory[0] - Position;
-        v *= GlobalMeteo.IntensityMapScale / v.Length;
+        v *= IntensityControl.IntensityMapScale / v.Length;
         var vr = v;
         (vr.X, vr.Y) = (-v.Y, v.X);
-        (int ix, int iy) = GlobalMeteo.GetPointIntensityIndex(Position);
-        (int isx, int isy) = GlobalMeteo.GetPointIntensityIndex(Position + v + vr);
-        double remove_amount = Math.Min(meteo.IntensityMap[ix][iy], RemoveSpeed * ActualSpeed);
+        (int ix, int iy) = IntensityControl.GetPointIntensityIndex(Position);
+        (int isx, int isy) = IntensityControl.GetPointIntensityIndex(Position + v + vr);
+        double remove_amount = Math.Min(meteo.IntensityControl.IntensityMap[ix][iy], RemoveSpeed * ActualSpeed);
 
         for (int i = 0; i < Devices.Length; i++) {
             switch (Devices[i]) {
             case SnowRemoverType.Rotor:
             case SnowRemoverType.Shovel:
-                meteo.IntensityMap[ix][iy] = meteo.IntensityMap[ix][iy] > 0 ? meteo.IntensityMap[ix][iy] - remove_amount : 0;
-                if (0 < isx && isx < meteo.IntensityMap.Length && 0 < isy && isy < meteo.IntensityMap.Length)
-                    meteo.IntensityMap[isx][isy] = Math.Min(1e6, meteo.IntensityMap[isx][isy] + remove_amount);
+                meteo.IntensityControl.IntensityMap[ix][iy] = meteo.IntensityControl.IntensityMap[ix][iy] > 0 ? meteo.IntensityControl.IntensityMap[ix][iy] - remove_amount : 0;
+                if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap.Length)
+                    meteo.IntensityControl.IntensityMap[isx][isy] = Math.Min(1e6, meteo.IntensityControl.IntensityMap[isx][isy] + remove_amount);
                 break;
             case SnowRemoverType.AntiIceDistributor:
             case SnowRemoverType.PlowBrush:
-                meteo.IntensityMap[ix][iy] = meteo.IntensityMap[ix][iy] > 0 ? remove_amount : 0;
+                meteo.IntensityControl.IntensityMap[ix][iy] = meteo.IntensityControl.IntensityMap[ix][iy] > 0 ? remove_amount : 0;
                 break;
             case SnowRemoverType.Cleaver:
                 break;

@@ -56,13 +56,13 @@ public partial class MapWPF : Window {
         if (drawCB.IsChecked != true)
             return;
         if (Director?.Meteo != null && Director.Map.Borders.Width > 0) {
-            if (e.PropertyName == nameof(Director.Meteo.Clouds)) {
+            if (e.PropertyName == nameof(Director.Meteo.CloudControl.Clouds)) {
                 for (int i = 0; i < mapCanvas.Children.Count; i++) {
                     if (mapCanvas.Children[i].Uid != nameof(SnowCloud)) continue;
-                    if (!Director.Meteo.CloudsUI.Contains(mapCanvas.Children[i]))
+                    if (!Director.Meteo.CloudControl.CloudsUI.Contains(mapCanvas.Children[i]))
                         mapCanvas.Children.Remove(mapCanvas.Children[i]);
                 }
-                foreach (var c in Director.Meteo.CloudsUI.Where(p => p is not null && !mapCanvas.Children.Contains(p)))
+                foreach (var c in Director.Meteo.CloudControl.CloudsUI.Where(p => p is not null && !mapCanvas.Children.Contains(p)))
                     mapCanvas.Children.Add(c);
             }
             if (intensityMapCB.IsChecked == true)
@@ -70,9 +70,9 @@ public partial class MapWPF : Window {
         }
     }
     private void DrawMeteoIntensityMap(bool draw) {
-        for (int i = 0; i < Director?.Meteo?.IntensityMapUI?.Length; i++) {
-            for (int j = 0; j < Director.Meteo.IntensityMapUI[0].Length; j++) {
-                var b = Director.Meteo.IntensityMapUI[i][j];
+        for (int i = 0; i < Director?.Meteo?.IntensityControl.IntensityMapUI?.Length; i++) {
+            for (int j = 0; j < Director.Meteo.IntensityControl.IntensityMapUI[0].Length; j++) {
+                var b = Director.Meteo.IntensityControl.IntensityMapUI[i][j];
                 if (b is null) continue;
                 if (draw && !mapCanvas.Children.Contains(b))
                     mapCanvas.Children.Add(b);
@@ -84,7 +84,7 @@ public partial class MapWPF : Window {
     private void DrawPlaceableObjects() {
         var objs = Director?.AllObjectsOnMap.Concat(Director.Map.Roads).ToArray();
         if (Director?.Meteo != null)
-            objs = objs?.Concat(Director.Meteo.Clouds).ToArray();
+            objs = objs?.Concat(Director.Meteo.CloudControl.Clouds).ToArray();
         for (int i = 0; i < objs?.Length; i++) {
             IPlaceable obj = objs[i];
             var UIObj = obj.Build();
@@ -119,8 +119,11 @@ public partial class MapWPF : Window {
                     DrawPlaceableObjects();
                 trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
                 startB.IsEnabled = true;
-                if (director.Meteo != null)
+                if (director.Meteo != null) {
                     director.Meteo.PropertyChanged += RefreshMeteo;
+                    director.Meteo.IntensityControl.PropertyChanged += RefreshMeteo;
+                    director.Meteo.CloudControl.PropertyChanged += RefreshMeteo;
+                }
                 director.PropertyChanged += RefreshMeteo;
 
                 SizeChanged -= Window_SizeChanged;
@@ -736,8 +739,8 @@ public partial class MapWPF : Window {
             t.IsOpen = false;
             int x = (int)Math.Round(p.X), y = (int)Math.Round(p.Y);
             t.Content = $"({x}; {y})";
-            if (Director?.Meteo?.IntensityMap?.Length > x / GlobalMeteo.IntensityMapScale && Director.Meteo.IntensityMap.Length > y / GlobalMeteo.IntensityMapScale)
-                t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityMap[x / GlobalMeteo.IntensityMapScale][y / GlobalMeteo.IntensityMapScale], 4)}";
+            if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap.Length > y / IntensityControl.IntensityMapScale)
+                t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale], 4)}";
             t.IsOpen = true;
         } else {
             mapCanvas.ToolTip = new ToolTip();

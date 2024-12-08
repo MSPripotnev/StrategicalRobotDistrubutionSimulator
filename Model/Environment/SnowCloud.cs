@@ -6,8 +6,11 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 
 namespace SRDS.Model.Environment;
+
+using System.Xml.Serialization;
+
 using Map;
-public class SnowCloud : IPlaceable {
+public class SnowCloud : IPlaceable, ITimeSimulatable {
 
     public SnowCloud() {
         Color = Colors.Black;
@@ -62,6 +65,7 @@ public class SnowCloud : IPlaceable {
         }
     }
     public Color Color { get; set; }
+    [XmlIgnore]
     public UIElement? UI { get; private set; } = null;
     public UIElement Build() {
         if (UI is not null)

@@ -210,9 +210,9 @@ public class Road : ITargetable, ITimeSimulatable {
     private void CalculateIntensityCells() {
         intensityCells = new List<(int i, int j)>();
         Vector dl = endPosition - position;
-        for (dl *= GlobalMeteo.IntensityMapScale / 2 / dl.Length;
-                PathFinder.Distance(position + dl, endPosition) > GlobalMeteo.IntensityMapScale;
-                dl += dl / dl.Length * GlobalMeteo.IntensityMapScale) {
+        for (dl *= IntensityControl.IntensityMapScale / 2 / dl.Length;
+                PathFinder.Distance(position + dl, endPosition) > IntensityControl.IntensityMapScale;
+                dl += dl / dl.Length * IntensityControl.IntensityMapScale) {
 #if MULTI_CELL_QUALITY
             for (int i = -2; i <= 2; i++) {
                 var v = new Vector(i % 2, i / 2) * GlobalMeteo.IntensityMapScale / 2;
@@ -226,7 +226,7 @@ public class Road : ITargetable, ITimeSimulatable {
            }
 #else
             var p = position + dl;
-            (int pi, int pj) = GlobalMeteo.GetPointIntensityIndex(p);
+            (int pi, int pj) = IntensityControl.GetPointIntensityIndex(p);
             if (!intensityCells.Contains((pi, pj)))
                 intensityCells.Add((pi, pj));
 #endif
@@ -238,13 +238,13 @@ public class Road : ITargetable, ITimeSimulatable {
         if (!intensityCells.Any())
             CalculateIntensityCells();
 
-        if (meteo.IntensityMap is null || !meteo.IntensityMap.Any())
+        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any())
             return;
         Snowness = 0;
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
-            if (0 < pi && pi < meteo.IntensityMap.Length && 0 < pj && pj < meteo.IntensityMap[0].Length)
-                Snowness += meteo.IntensityMap[pi][pj] / (DistanceToRoad(GlobalMeteo.GetIntensityMapPoint(pi, pj)) + 1);
+            if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length)
+                Snowness += meteo.IntensityControl.IntensityMap[pi][pj] / (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
         }
     }
 

@@ -1,30 +1,10 @@
 using System.ComponentModel;
-using System.Globalization;
 using System.Windows;
-using System.Windows.Data;
-using System.Windows.Media;
-using System.Windows.Shapes;
 
 namespace SRDS.Model.Environment;
 using Map;
 using SRDS.Direct;
 using Targets;
-
-public class IntensityMapConverter : IValueConverter {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-        if (value is not double density || density < 0)
-            return new RadialGradientBrush(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(100, 255, 255, 255));
-
-        density = density / 10 * 256;
-        byte r = (byte)Math.Min(255, Math.Round(density)),
-             b = (byte)Math.Max(0, 255 - Math.Round(density));
-        return new RadialGradientBrush(Color.FromArgb((byte)(Math.Abs(r-b)/3), r, 0, b), Color.FromArgb((byte)(Math.Abs(r-b)/5), 0, 0, 0));
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-        return DependencyProperty.UnsetValue;
-    }
-}
 
 #region Enums
 public enum WindDirectionType {
@@ -73,19 +53,22 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
 
     private TimeSpan timeFlow = TimeSpan.Zero;
     private DateTime _time;
-    private DateTime ctime {
+    private DateTime Ctime {
         set {
             timeFlow = value - _time;
             _time = value;
         }
     }
 
-    public GlobalMeteo(TacticalMap map, int seed) {
+    public CloudControl CloudControl { get; init; }
+    public IntensityControl IntensityControl { get; init; }
+
+    public GlobalMeteo(TacticalMap map, int seed, DateTime time) {
         Rnd = new Random(seed);
         this.map = map;
-        clouds = Clouds = Array.Empty<SnowCloud>();
-        _time = new DateTime(0);
-        IntensityMap = Array.Empty<double[]>();
+        CloudControl = new CloudControl(Rnd, 0.8, 0.4, 60, 300);
+        _time = time;
+        IntensityControl = new IntensityControl(map.Borders);
         Simulate(this, _time);
     }
 
@@ -110,155 +93,19 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     public void Simulate(object? sender, DateTime time) {
         if (sender is not Director director)
             return;
-        ctime = time;
+        Ctime = time;
         DailyMeteoChange();
         WindChange();
-        Wind = windPerMinute * timeFlow.TotalMinutes;
-        CloudsBehaviour(director);
+        Wind = windPerMinute * timeFlow.TotalSeconds;
+        CloudControl.CloudsBehaviour(director, Wind, time);
         // Temporary disabled:
         // GenerateSnowdrifts();
-        GenerateIntensity();
+        IntensityControl.GenerateIntensity(CloudControl.Clouds, map.Obstacles, timeFlow);
     }
-    #endregion
-
-    #region Clouds
-    private void CloudsBehaviour(Director director) {
-        var clouds_list = Clouds.ToList();
-        if (_time.Minute % 20 == 0 && _time.Second == 0) {
-            if (Rnd.NextDouble() > 0.8) {
-                var c = GenerateCloud();
-                clouds_list.Add(c);
-                director.TimeChanged += c.Simulate;
-            }
-            if (Rnd.NextDouble() > 0.4) {
-                var c = SplitCloud();
-                if (c != null) {
-                    clouds_list.Add(c);
-                    director.TimeChanged += c.Simulate;
-                }
-            }
-        }
-
-        var removed_list = Clouds.Where(p => p.End < _time && p.Finished || p.IsOutside(map)).ToList();
-        for (int i = 0; i < removed_list.Count; i++) {
-            director.TimeChanged -= removed_list[i].Simulate;
-            clouds_list.Remove(removed_list[i]);
-        }
-
-        Clouds = clouds_list.ToArray();
-    }
-    private SnowCloud[] clouds;
-    public SnowCloud[] Clouds {
-        get => clouds;
-        set {
-            clouds = value;
-            PropertyChanged?.Invoke(Clouds, new PropertyChangedEventArgs(nameof(Clouds)));
-            PropertyChanged?.Invoke(Clouds, new PropertyChangedEventArgs(nameof(CloudsUI)));
-        }
-    }
-    public UIElement[] CloudsUI { get => clouds.Select(p => p.Build()).ToArray(); }
-    private SnowCloud GenerateCloud() {
-        double min_r = Math.Min(map.Borders.Height, map.Borders.Width);
-        int rMin = (int)Math.Round(Math.Min(2*min_r/3, 3/2*min_r)),
-            rMax = (int)Math.Round(Math.Min(rMin, 5*min_r/2));
-        double width = Rnd.Next(rMin, rMax), length = Rnd.Next(rMin, rMax);
-        Point position = new Point(map.Borders.Width / 2, map.Borders.Height / 2) -
-            Wind / Wind.Length / 4 * (Math.Sqrt(width * width + length * length) + 1.4142*Math.Min(map.Borders.Width, map.Borders.Height));
-        position.X = Math.Floor(position.X);
-        position.Y = Math.Floor(position.Y);
-        if (Rnd.Next(0, 10) < 5)
-            position.X += Rnd.Next(-(int)map.Borders.Width/2, (int)map.Borders.Width/2);
-        else
-            position.Y += Rnd.Next(-(int)map.Borders.Height / 2, (int)map.Borders.Height / 2);
-
-        DateTime start = _time.AddMinutes(Rnd.Next(60, 300)), end = start.AddMinutes(Rnd.Next(60, 300) * 2 * (rMin + rMax) / (width + length));
-        const double dispersing = 0.01;
-        double intensity = Rnd.NextDouble() * Math.Sqrt(width * length / rMax / rMin) * dispersing;
-
-        if (Rnd.NextDouble() < 0.3)
-            intensity = 0;
-        return new SnowCloud(position, width, length, Wind, intensity, this._time, start, end);
-    }
-    private SnowCloud? SplitCloud() {
-        if (!Clouds.Any())
-            return null;
-        var bigClouds = Clouds.Where(p => _time >= p.Start && p.Width * p.Length < 100 * 100)
-                              .OrderByDescending(p => p.Width * p.Length)
-                              .Take(Math.Min(5, Clouds.Length)).ToArray();
-        if (!bigClouds.Any()) return null;
-
-        return bigClouds[Rnd.Next(0, bigClouds.Length)].Split(Rnd, _time);
-    }
-    #endregion
-
-    #region IntensityMap
-    public double[][]? IntensityMap { get; set; }
-    public const int IntensityMapScale = 20;
-    private UIElement[][]? intensityMapUI;
-    public UIElement[][]? IntensityMapUI {
-        get {
-            if (intensityMapUI is null || intensityMapUI[0] is null) {
-                int wsize = (int)Math.Ceiling(map.Borders.Width / IntensityMapScale), hsize = (int)Math.Ceiling(map.Borders.Height / IntensityMapScale);
-                IntensityMap = new double[wsize][];
-                intensityMapUI = new UIElement[wsize][];
-                for (int i = 0; i < wsize; i++) {
-                    IntensityMap[i] = new double[hsize];
-                    intensityMapUI[i] = new UIElement[hsize];
-                    for (int j = 0; j < hsize; j++) {
-                        var converter = new IntensityMapConverter();
-                        Rectangle el = new Rectangle() {
-                            Width = IntensityMapScale,
-                            Height = IntensityMapScale,
-                            RadiusX = IntensityMapScale / 4,
-                            RadiusY = IntensityMapScale / 4,
-                            Opacity = 0.25,
-                            Margin = new Thickness(i * IntensityMapScale, j * IntensityMapScale, 0, 0),
-                            Fill = (Brush)converter.Convert(IntensityMap[i][j], typeof(Color), i, CultureInfo.CurrentCulture),
-                            Uid = $"{nameof(IntensityMap)}[{i}][{j}]",
-                        };
-                        Binding b = new Binding($"{nameof(IntensityMap)}[{i}][{j}]");
-                        b.Source = this;
-                        b.Converter = new IntensityMapConverter();
-                        el.SetBinding(Rectangle.FillProperty, b);
-                        intensityMapUI[i][j] = el;
-                    }
-                }
-            }
-            return intensityMapUI;
-        }
-    }
-    private void GenerateIntensity() {
-        if (!(IntensityMap is not null && IntensityMap.Any())) return;
-        foreach (var cloud in Clouds.Where(c => c.Intensity > 0)) {
-            (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(new(cloud.Position.X - cloud.Width / 2, cloud.Position.Y - cloud.Length / 2));
-            (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(new(cloud.Position.X + cloud.Width / 2, cloud.Position.Y + cloud.Length / 2));
-            cloudStartPosi = Math.Max(0, cloudStartPosi);
-            cloudStartPosj = Math.Max(0, cloudStartPosj);
-            cloudEndPosi = Math.Min(cloudEndPosi, IntensityMap.Length);
-            cloudEndPosj = Math.Min(cloudEndPosj, IntensityMap[0].Length);
-
-            for (int i = cloudStartPosi; i < cloudEndPosi; i++) {
-                for (int j = cloudStartPosj; j < cloudEndPosj; j++) {
-                    Point pos = GetIntensityMapPoint(i, j);
-                    Vector p = (pos - cloud.Position);
-                    long iter = 0;
-                    if (p.X * p.X / cloud.Width / cloud.Width * 4 + p.Y * p.Y / cloud.Length / cloud.Length * 4 <= 1 &&
-                            !Obstacle.IsPointOnAnyObstacle(pos, map.Obstacles, ref iter))
-                        IntensityMap[i][j] += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
-                }
-            }
-        }
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IntensityMap)));
-    }
-    public static (int i, int j) GetPointIntensityIndex(Point pos) =>
-            ((int)Math.Round(pos.X / IntensityMapScale), (int)Math.Round(pos.Y / IntensityMapScale));
-    public static Point GetIntensityMapPoint(int i, int j) =>
-            new Point(i * IntensityMapScale, j * IntensityMapScale);
-    #endregion
 
     public List<Snowdrift> GeneratedSnowdrifts { get; private set; } = new();
     private void GenerateSnowdrifts() {
-        foreach (var cloud in Clouds.Where(c => c.Intensity > 0)) {
+        foreach (var cloud in CloudControl.Clouds.Where(c => c.Intensity > 0)) {
             if (Rnd.Next(0, (int)Math.Ceiling(cloud.MaxWidth * cloud.MaxLength)) >
                     Math.Min(cloud.Width, Math.Abs(cloud.Width - cloud.Position.X)) *
                     Math.Min(cloud.Length, Math.Abs(cloud.Length - cloud.Position.Y)) / 2)
@@ -281,4 +128,5 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         if (GeneratedSnowdrifts.Any())
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GeneratedSnowdrifts)));
     }
+    #endregion
 }

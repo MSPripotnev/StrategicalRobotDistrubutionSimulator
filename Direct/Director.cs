@@ -113,8 +113,10 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         private set {
             map = value;
             TimeChanged = null;
+            if (map is null) return;
+
             if (EnableMeteo)
-                Meteo = new GlobalMeteo(map, seed);
+                Meteo = new GlobalMeteo(map, seed, Time);
             if (Distributor is not null)
                 Distributor.Map = Map;
 
@@ -130,8 +132,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
         set {
             if (!value)
                 Meteo = null;
-            else
-                Meteo = new GlobalMeteo(map, seed);
+            else if (map is not null)
+                Meteo = new GlobalMeteo(map, seed, Time);
             enableMeteo = value;
         }
     }
@@ -145,6 +147,8 @@ public partial class Director : INotifyPropertyChanged, IDisposable {
             meteo = value;
             if (meteo is not null) {
                 meteo.PropertyChanged += RefreshMeteo;
+                meteo.IntensityControl.PropertyChanged += RefreshMeteo;
+                meteo.CloudControl.PropertyChanged += RefreshMeteo;
                 TimeChanged += meteo.Simulate;
             }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Meteo)));
