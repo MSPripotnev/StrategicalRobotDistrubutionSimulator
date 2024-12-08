@@ -161,19 +161,19 @@ public class SnowRemover : Agent {
         (vr.X, vr.Y) = (-v.Y, v.X);
         (int ix, int iy) = IntensityControl.GetPointIntensityIndex(Position);
         (int isx, int isy) = IntensityControl.GetPointIntensityIndex(Position + v + vr);
-        double remove_amount = Math.Min(meteo.IntensityControl.IntensityMap[ix][iy], RemoveSpeed * ActualSpeed);
+        double remove_amount = Math.Min(meteo.IntensityControl.IntensityMap[ix][iy].Snow, RemoveSpeed * ActualSpeed);
 
         for (int i = 0; i < Devices.Length; i++) {
             switch (Devices[i]) {
             case SnowRemoverType.Rotor:
             case SnowRemoverType.Shovel:
-                meteo.IntensityControl.IntensityMap[ix][iy] = meteo.IntensityControl.IntensityMap[ix][iy] > 0 ? meteo.IntensityControl.IntensityMap[ix][iy] - remove_amount : 0;
+                meteo.IntensityControl.IntensityMap[ix][iy].Snow = meteo.IntensityControl.IntensityMap[ix][iy].Snow > 0 ? meteo.IntensityControl.IntensityMap[ix][iy].Snow - remove_amount : 0;
                 if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap.Length)
-                    meteo.IntensityControl.IntensityMap[isx][isy] = Math.Min(1e6, meteo.IntensityControl.IntensityMap[isx][isy] + remove_amount);
+                    meteo.IntensityControl.IntensityMap[isx][isy].Snow = Math.Min(1e6, meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount);
                 break;
             case SnowRemoverType.AntiIceDistributor:
             case SnowRemoverType.PlowBrush:
-                meteo.IntensityControl.IntensityMap[ix][iy] = meteo.IntensityControl.IntensityMap[ix][iy] > 0 ? remove_amount : 0;
+                meteo.IntensityControl.IntensityMap[ix][iy].Snow = meteo.IntensityControl.IntensityMap[ix][iy].Snow > 0 ? remove_amount : 0;
                 break;
             case SnowRemoverType.Cleaver:
                 break;

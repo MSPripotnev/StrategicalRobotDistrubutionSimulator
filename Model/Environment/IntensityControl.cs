@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -28,10 +28,26 @@ public class IntensityMapConverter : IValueConverter {
         return DependencyProperty.UnsetValue;
     }
 }
-
+public struct IntensityCell {
+    public double Snow { get; set; } = 0;
+    public double MashPercent { get; set; } = 0;
+    public IntensityCell(double snow, double mashPercent) {
+        Snow = snow;
+        MashPercent = mashPercent;
+    }
+    public static IntensityCell operator+(IntensityCell cell, double snow) {
+        cell.Snow += Math.Max(Math.Min(snow, 1e4), 0);
+        return cell;
+    }
+    public static IntensityCell operator^(IntensityCell cell, double mash) {
+        cell.MashPercent = Math.Max(0, Math.Min((cell.MashPercent + mash)/2, 100));
+        return cell;
+    }
+}
 public class IntensityControl : INotifyPropertyChanged {
     #region IntensityMap
-    public double[][]? IntensityMap { get; set; }
+    [XmlArray]
+    public IntensityCell[][]? IntensityMap { get; set; }
     public const int IntensityMapScale = 20;
     [XmlIgnore]
     private Size Borders { get; init; }
@@ -42,10 +58,10 @@ public class IntensityControl : INotifyPropertyChanged {
         get {
             if (intensityMapUI is null || intensityMapUI[0] is null) {
                 int wsize = (int)Math.Ceiling(Borders.Width / IntensityMapScale), hsize = (int)Math.Ceiling(Borders.Height / IntensityMapScale);
-                IntensityMap = new double[wsize][];
+                IntensityMap = new IntensityCell[wsize][];
                 intensityMapUI = new UIElement[wsize][];
                 for (int i = 0; i < wsize; i++) {
-                    IntensityMap[i] = new double[hsize];
+                    IntensityMap[i] = new IntensityCell[hsize];
                     intensityMapUI[i] = new UIElement[hsize];
                     for (int j = 0; j < hsize; j++) {
                         var converter = new IntensityMapConverter();
@@ -59,7 +75,7 @@ public class IntensityControl : INotifyPropertyChanged {
                             Fill = (Brush)converter.Convert(IntensityMap[i][j], typeof(Color), i, CultureInfo.CurrentCulture),
                             Uid = $"{nameof(IntensityMap)}[{i}][{j}]",
                         };
-                        Binding b = new Binding($"{nameof(IntensityMap)}[{i}][{j}]");
+                        Binding b = new Binding($"{nameof(IntensityMap)}[{i}][{j}].{nameof(IntensityCell.Snow)}");
                         b.Source = this;
                         b.Converter = new IntensityMapConverter();
                         el.SetBinding(Rectangle.FillProperty, b);
@@ -73,7 +89,7 @@ public class IntensityControl : INotifyPropertyChanged {
 
     public IntensityControl(Size borders) {
         Borders = borders;
-        IntensityMap = Array.Empty<double[]>();
+        IntensityMap = Array.Empty<IntensityCell[]>();
     }
     public void GenerateIntensity(SnowCloud[] clouds, Obstacle[] obstacles, TimeSpan timeFlow) {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;

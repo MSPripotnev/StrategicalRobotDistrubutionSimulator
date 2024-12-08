@@ -740,7 +740,8 @@ public partial class MapWPF : Window {
             int x = (int)Math.Round(p.X), y = (int)Math.Round(p.Y);
             t.Content = $"({x}; {y})";
             if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap.Length > y / IntensityControl.IntensityMapScale)
-                t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale], 4)}";
+                t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].Snow, 4)}\n" +
+                             $"mash: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].MashPercent, 2)}%";
             t.IsOpen = true;
         } else {
             mapCanvas.ToolTip = new ToolTip();
