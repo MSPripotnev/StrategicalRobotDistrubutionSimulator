@@ -34,14 +34,14 @@ public class IntensityCell : INotifyPropertyChanged {
     public double Snow {
         get => snow;
         set {
-            snow = value;
+            snow = Math.Max(Math.Min(value, 1e4), 0);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Snow)));
         }
     }
     public double MashPercent {
         get => mashPercent;
         set {
-            mashPercent = value;
+            mashPercent = Math.Max(0, Math.Min(value, 100));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MashPercent)));
         }
     }
@@ -64,7 +64,7 @@ public class IntensityCell : INotifyPropertyChanged {
                 Opacity = 0.25,
                 Margin = new Thickness(i * IntensityControl.IntensityMapScale, j * IntensityControl.IntensityMapScale, 0, 0),
                 Fill = (Brush)converter.Convert(Snow, typeof(Color), i, CultureInfo.CurrentCulture),
-                Uid = $"{nameof(IntensityCell)}[{i}][{j}].{nameof(Snow)}",
+                Uid = $"{nameof(IntensityCell)}[{i}][{j}]",
             };
             Binding b = new Binding($"{nameof(Snow)}");
             b.Source = this;
@@ -73,14 +73,7 @@ public class IntensityCell : INotifyPropertyChanged {
             return ui = el;
         }
     }
-    public static IntensityCell operator+(IntensityCell cell, double snow) {
-        cell.Snow += Math.Max(Math.Min(snow, 1e4), 0);
-        return cell;
-    }
-    public static IntensityCell operator^(IntensityCell cell, double mash) {
-        cell.MashPercent = Math.Max(0, Math.Min((cell.MashPercent + mash)/2, 100));
-        return cell;
-    }
+    public static double operator^(IntensityCell cell, double mash) => Math.Max(0, Math.Min((cell.MashPercent + mash) / 2, 100));
 }
 public class IntensityControl {
     #region IntensityMap
@@ -103,9 +96,15 @@ public class IntensityControl {
             }
         }
     }
-    public void GenerateIntensity(SnowCloud[] clouds, Obstacle[] obstacles, TimeSpan timeFlow) {
+    public void GenerateIntensity(SnowCloud[] clouds, Obstacle[] obstacles, TimeSpan timeFlow, Dictionary<SnowType, double> snowTypes) {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;
         if (!clouds.Any()) return;
+
+        double mid_mash = 0;
+        for (int k = 0; k < snowTypes.Count; k++)
+            mid_mash += snowTypes[(SnowType)k] * GlobalMeteo.GetMashPercent((SnowType)k);
+        mid_mash /= snowTypes.Count;
+
         foreach (var cloud in clouds.Where(c => c.Intensity > 0)) {
             (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(new(cloud.Position.X - cloud.Width / 2, cloud.Position.Y - cloud.Length / 2));
             (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(new(cloud.Position.X + cloud.Width / 2, cloud.Position.Y + cloud.Length / 2));
@@ -122,6 +121,11 @@ public class IntensityControl {
                     if (p.X * p.X / cloud.Width / cloud.Width * 4 + p.Y * p.Y / cloud.Length / cloud.Length * 4 <= 1 &&
                             !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
                         IntensityMap[i][j].Snow += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
+
+                        if (clouds.Sum(p => p.Width * p.Length) / Borders.Width * Borders.Height < 0.4)
+                            mid_mash += 0.2 * GlobalMeteo.GetMashPercent(SnowType.IceSlick) / snowTypes.Count;
+
+                        IntensityMap[i][j].MashPercent = IntensityMap[i][j] ^ mid_mash;
                     }
                 }
             }

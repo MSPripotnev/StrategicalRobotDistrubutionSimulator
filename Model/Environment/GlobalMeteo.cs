@@ -25,7 +25,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     public Vector Wind { get; set; }
     public double Temperature { get => DailyModifier(_time.Hour, t_min, t_max, 0); }
     public double Humidity { get => Math.Max(Math.Min(h_max, DailyModifier(_time.Hour, h_min, h_max, -Math.PI)), h_min); }
-    public double Pressure { get => 760 + DailyModifier(_time.Hour, p_min, p_max, -Math.PI); }
+    public double Pressure { get => 750 + DailyModifier(_time.Hour, p_min, p_max, -Math.PI); }
     #endregion
 
     #region Modifiers
@@ -36,7 +36,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         return Math.Min(Math.Max(Math.Sin(hour / 3.8 - 2 + phase) * mt + mt2 + Rnd.Next(-1, 1), min), max);
     }
     public static WindDirectionType GetWindDirection(Vector wind) {
-        if (wind.Length < 0.05)
+        if (wind.Length < 1.0)
             return WindDirectionType.Calm;
         return Math.Atan2(wind.X, wind.Y) switch {
             >= 5 * Math.PI / 8 and < 7 * Math.PI / 8 => WindDirectionType.NE,
@@ -49,6 +49,14 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             _ => WindDirectionType.N,
         };
     }
+    public static double GetMashPercent(SnowType type) => type switch {
+        SnowType.LooseSnow => 0,
+        SnowType.Snowfall => 10,
+        SnowType.IceSlick => 40,
+        SnowType.BlackIce => 70,
+        SnowType.Icy => 100,
+        _ => throw new NotImplementedException()
+    };
     #endregion
 
     private TimeSpan timeFlow = TimeSpan.Zero;
@@ -90,17 +98,55 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             p_min = Rnd.Next(-10, -5); p_max = Rnd.Next(p_min, 10);
         }
     }
+    private Dictionary<SnowType, double> FalloutType() {
+        Dictionary<SnowType, double> res = new();
+        for (int i = 0; i < typeof(SnowType).GetEnumValues().Length; i++)
+            res.Add(SnowType.LooseSnow + i, 0);
+
+        if (Temperature < -10)
+            res[SnowType.LooseSnow] += 0.43;
+        if (-10 < Temperature && Temperature < -6 && Humidity < 90)
+            res[SnowType.LooseSnow] += 0.33;
+        if (Wind.Length < 1.0 && Temperature < 0)
+            res[SnowType.LooseSnow] += 0.23;
+
+        if (-10 < Temperature && Temperature < -6 && Humidity > 90)
+            res[SnowType.Snowfall] += 0.5;
+        if (Temperature > 0 && CloudControl.Clouds.Sum(p => p.Intensity) > 0)
+             res[SnowType.Snowfall] += 0.1;
+        if (-6 < Temperature && Temperature < 0)
+            res[SnowType.Snowfall] += 0.4;
+
+        if (-6 < Temperature && Temperature < -2 && -65 < Humidity && Humidity < 85) {
+            res[SnowType.IceSlick] += 0.5;
+        }
+
+        if (95 < Humidity && GetWindDirection(Wind) == WindDirectionType.Calm)
+            res[SnowType.BlackIce] = 1.0;
+
+        if (-5 < Temperature && Humidity > 90) {
+            res[SnowType.Icy] += 0.5;
+            if (_time.Hour > 14)
+                res[SnowType.Icy] += 0.2;
+            if (Math.Abs(h_max - h_min) < 10)
+                res[SnowType.Icy] += 0.05;
+            if (CloudControl.Clouds.Sum(p => p.Intensity) > 0 && Temperature > 0)
+                res[SnowType.Icy] += 0.25;
+        }
+
+        return res;
+    }
     public void Simulate(object? sender, DateTime time) {
         if (sender is not Director director)
             return;
-        Ctime = time;
         DailyMeteoChange();
+        Ctime = time;
         WindChange();
         Wind = windPerMinute * timeFlow.TotalSeconds;
         CloudControl.CloudsBehaviour(director, Wind, time);
         // Temporary disabled:
         // GenerateSnowdrifts();
-        IntensityControl.GenerateIntensity(CloudControl.Clouds, map.Obstacles, timeFlow);
+        IntensityControl.GenerateIntensity(CloudControl.Clouds, map.Obstacles, timeFlow, FalloutType());
     }
 
     public List<Snowdrift> GeneratedSnowdrifts { get; private set; } = new();
