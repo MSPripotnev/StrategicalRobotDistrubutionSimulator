@@ -244,8 +244,9 @@ public partial class MapWPF : Window {
                     MaxAttempts = 250,
                     AttemptTime = DateTime.MinValue.AddDays(1),
                     Name = Director.Map.Name,
-                    ModelPath = tester.Models[0].Path,
                 };
+                if (tester.Models[0] is CopyModel cm)
+                    (model as CopyModel).ModelPath = cm.ModelPath;
             } else return;
             serialized_object = model;
         } else if(tag.Contains("model")) {
