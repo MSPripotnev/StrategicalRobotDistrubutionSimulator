@@ -19,10 +19,10 @@
             <RowDefinition Height="25*"/>
         </Grid.RowDefinitions>
         <Button Grid.ColumnSpan="1" Grid.RowSpan="3" Grid.Column="0"/>
-        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" MouseMove="MapCanvas_MouseMove" MouseLeave="MapCanvas_MouseLeave" >
+        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" MouseMove="MapCanvas_MouseMove" MouseLeave="MapCanvas_MouseLeave" ContextMenuOpening="MapCanvas_ContextMenuOpening" >
             <Canvas.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Добавить">
+                    <MenuItem x:Name="addObjectB" Header="Добавить">
                         <MenuItem Header="Объект" Tag="0">
                             <MenuItem Header="Плод" Click="MenuItem_Click" Tag="01"/>
                             <MenuItem Header="Сугроб" Click="MenuItem_Click" Tag="02"/>
@@ -45,6 +45,8 @@
                     <MenuItem Header="Удалить" x:Name="deleteObjectB" Click="DeleteObjectB_Click"/>
                     <MenuItem Header="Отмена" x:Name="undoB" Click="UndoB_Click"/>
                     <MenuItem Header="Завершить" x:Name="finishObjectB" Click="FinishObjectB_Click" IsEnabled="False"/>
+                    <MenuItem x:Name="assignB" Header="Назначить на..." Visibility="Collapsed" Tag="ar" Click="MenuAssignesItem_Click"/>
+                    <MenuItem x:Name="goToB" Header="Отправить к..." Visibility="Collapsed" Tag="ap" Click="MenuAssignesItem_Click"/>
                 </ContextMenu>
             </Canvas.ContextMenu>
         </Canvas>

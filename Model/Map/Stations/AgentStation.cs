@@ -35,7 +35,7 @@ public class AgentStation : Station, IControllable, IRefueller {
     private SystemState currentState;
     [XmlIgnore]
     public SystemState CurrentState {
-        get => currentState; 
+        get => currentState;
         set {
             currentState = value;
         }
@@ -97,12 +97,12 @@ public class AgentStation : Station, IControllable, IRefueller {
         }
     }
 
-    private void Link(Agent agent, Road road) {
+    public void Link(Agent agent, Road road) {
         road.ReservedAgent = agent;
         agent.AttachedObj = road;
         agent.TargetPosition = agent.Position ^ road;
     }
-    private void Free(Agent agent) {
+    public void Free(Agent agent) {
         if (agent.AttachedObj is null) return;
         agent.AttachedObj.ReservedAgent = null;
         agent.AttachedObj = null;

@@ -346,6 +346,20 @@ public partial class MapWPF : Window {
             }
         }
     }
+    private void MenuAssignesItem_Click(object sender, RoutedEventArgs e) {
+        if (sender is not MenuItem button || Director is null) return;
+        if (propertyGrid.SelectedObject is not Agent ag) throw new AccessViolationException();
+        switch (button.Tag) {
+        case "ar":
+            if (FindObject(lastClickPos) is not Road r) throw new AccessViolationException();
+            ag.Home?.Free(ag);
+            ag.Home?.Link(ag, r);
+            break;
+        case "ap":
+            ag.TargetPosition = lastClickPos;
+            break;
+        }
+    }
     private void MenuItem_Click(object sender, RoutedEventArgs e) {
         if (sender is not MenuItem button || Director is null) return;
         IPlaceable? obj = null;
@@ -756,6 +770,29 @@ public partial class MapWPF : Window {
             t.IsOpen = true;
         } else {
             mapCanvas.ToolTip = new ToolTip();
+        }
+    }
+
+    private void MapCanvas_ContextMenuOpening(object sender, ContextMenuEventArgs e) {
+        if (propertyGrid.SelectedObject is Agent) {
+            if (FindObject(lastClickPos) is Road)
+                assignB.Visibility = Visibility.Visible;
+            else
+                assignB.Visibility = Visibility.Collapsed;
+            goToB.Visibility = Visibility.Visible;
+
+            addObjectB.Visibility = Visibility.Collapsed;
+            deleteObjectB.Visibility = Visibility.Collapsed;
+            undoB.Visibility = Visibility.Collapsed;
+            finishObjectB.Visibility = Visibility.Collapsed;
+        } else {
+            assignB.Visibility = Visibility.Collapsed;
+            goToB.Visibility = Visibility.Collapsed;
+
+            addObjectB.Visibility = Visibility.Visible;
+            deleteObjectB.Visibility = Visibility.Visible;
+            undoB.Visibility = Visibility.Visible;
+            finishObjectB.Visibility = Visibility.Visible;
         }
     }
 
