@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -30,7 +30,7 @@ public class IntensityMapConverter : IValueConverter {
 }
 public class IntensityCell : INotifyPropertyChanged {
     public event PropertyChangedEventHandler? PropertyChanged = default;
-    private double snow = 0, mashPercent = 0;
+    private double snow = 0, icyPercent = 0;
     public double Snow {
         get => snow;
         set {
@@ -38,17 +38,17 @@ public class IntensityCell : INotifyPropertyChanged {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Snow)));
         }
     }
-    public double MashPercent {
-        get => mashPercent;
+    public double IcyPercent {
+        get => icyPercent;
         set {
-            mashPercent = Math.Max(0, Math.Min(value, 100));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MashPercent)));
+            icyPercent = Math.Max(0, Math.Min(value, 100));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IcyPercent)));
         }
     }
     readonly int i, j;
-    public IntensityCell(double _snow, double _mashPercent, int i, int j) {
+    public IntensityCell(double _snow, double _icyPercent, int i, int j) {
         snow = _snow;
-        mashPercent = _mashPercent;
+        icyPercent = _icyPercent;
         this.i = i; this.j = j;
     }
     private UIElement? ui = null;
@@ -73,7 +73,8 @@ public class IntensityCell : INotifyPropertyChanged {
             return ui = el;
         }
     }
-    public static double operator^(IntensityCell cell, double mash) => Math.Max(0, Math.Min((cell.MashPercent + mash) / 2, 100));
+    public static double operator^(IntensityCell cell, double icy) => 
+        Math.Max(0, Math.Min((cell.IcyPercent + icy) / 2, 100));
 }
 public class IntensityControl {
     #region IntensityMap
@@ -100,10 +101,10 @@ public class IntensityControl {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;
         if (!clouds.Any()) return;
 
-        double mid_mash = 0;
+        double mid_icy = 0;
         for (int k = 0; k < snowTypes.Count; k++)
-            mid_mash += snowTypes[(SnowType)k] * GlobalMeteo.GetMashPercent((SnowType)k);
-        mid_mash /= snowTypes.Count;
+            mid_icy += snowTypes[(SnowType)k] * GlobalMeteo.GetIcyPercent((SnowType)k);
+        mid_icy /= snowTypes.Count;
 
         foreach (var cloud in clouds.Where(c => c.Intensity > 0)) {
             (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(new(cloud.Position.X - cloud.Width / 2, cloud.Position.Y - cloud.Length / 2));
@@ -118,14 +119,16 @@ public class IntensityControl {
                     Point pos = GetIntensityMapPoint(i, j);
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
-                    if (p.X * p.X / cloud.Width / cloud.Width * 4 + p.Y * p.Y / cloud.Length / cloud.Length * 4 <= 1 &&
+                    double point_icy = 0;
+
+                    if (p.X * p.X / cloud.Width / cloud.Width + p.Y * p.Y / cloud.Length / cloud.Length <= 0.25 &&
                             !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
                         IntensityMap[i][j].Snow += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
 
-                        if (clouds.Sum(p => p.Width * p.Length) / Borders.Width * Borders.Height < 0.4)
-                            mid_mash += 0.2 * GlobalMeteo.GetMashPercent(SnowType.IceSlick) / snowTypes.Count;
+                        if (clouds.Sum(p => p.Width * p.Length) / Borders.Width / Borders.Height < 0.4)
+                            point_icy += 0.2 * GlobalMeteo.GetIcyPercent(SnowType.IceSlick) / snowTypes.Count;
 
-                        IntensityMap[i][j].MashPercent = IntensityMap[i][j] ^ mid_mash;
+                        IntensityMap[i][j].IcyPercent = IntensityMap[i][j] ^ (mid_icy + point_icy);
                     }
                 }
             }

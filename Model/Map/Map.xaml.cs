@@ -766,7 +766,7 @@ public partial class MapWPF : Window {
             t.Content = $"({x}; {y})";
             if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap.Length > y / IntensityControl.IntensityMapScale)
                 t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].Snow, 4)}\n" +
-                             $"mash: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].MashPercent, 2)}%";
+                             $"icy: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].IcyPercent, 2)}%";
             t.IsOpen = true;
         } else {
             mapCanvas.ToolTip = new ToolTip();
@@ -802,7 +802,8 @@ public partial class MapWPF : Window {
     }
     public void Refresh() {
         if (Director != null) {
-            double quality = Math.Round(Director.Map.Roads.Sum(p => p.Snowness));
+            double quality = Math.Round(Director.Map.Roads.Sum(p => p.Snowness) +
+                    Director.Map.Roads.Sum(p => p.IcyPercent) * 4);
             localTimeL.Content = $"Местное время: {Director.Time.ToLongTimeString()}  {Director.Time.ToLongDateString()}";
             systemQualityL.Content = $"Q = {quality}        Эпоха: {Director.Recorder.Epoch}";
             if (Director.Recorder.SystemQuality.Any()) {

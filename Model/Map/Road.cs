@@ -96,6 +96,8 @@ public class Road : ITargetable, ITimeSimulatable {
     }
     [XmlAttribute("Snowness")]
     public double Snowness { get; set; } = 0;
+    [XmlAttribute(nameof(IcyPercent))]
+    public double IcyPercent { get; set; } = 0;
     [XmlIgnore]
     public List<Road> RoadsConnected { get; set; } = new List<Road>();
     public Agent? ReservedAgent { get; set; } = null;
@@ -240,11 +242,15 @@ public class Road : ITargetable, ITimeSimulatable {
 
         if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any())
             return;
-        Snowness = 0;
+        Snowness = IcyPercent = 0;
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
-            if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length)
-                Snowness += meteo.IntensityControl.IntensityMap[pi][pj].Snow / (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
+            if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length) {
+                Snowness += meteo.IntensityControl.IntensityMap[pi][pj].Snow /
+                    (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
+                if (IcyPercent < meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent)
+                    IcyPercent = meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent;
+            }
         }
     }
 

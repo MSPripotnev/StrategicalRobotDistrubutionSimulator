@@ -49,7 +49,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             _ => WindDirectionType.N,
         };
     }
-    public static double GetMashPercent(SnowType type) => type switch {
+    public static double GetIcyPercent(SnowType type) => type switch {
         SnowType.LooseSnow => 0,
         SnowType.Snowfall => 10,
         SnowType.IceSlick => 40,
