@@ -174,13 +174,13 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
                 Width = Math.Max(0, MaxWidth / sizeReduceTime * mins);
                 Length = Math.Max(0, MaxLength / sizeReduceTime * mins);
             } else {
-                Width = (Width - MaxWidth) / 1.1 + MaxWidth;
-                Length = (Length - MaxLength) / 1.1 + MaxLength;
+                Width = (Width - MaxWidth) / 1.005 + MaxWidth;
+                Length = (Length - MaxLength) / 1.005 + MaxLength;
             }
         }
         Finished = Width < 0.1 || Length < 0.1 || End < time;
     }
-    public SnowCloud Split(Random rnd, DateTime _time) {
+    public SnowCloud Split(Random rnd, DateTime _time, double t1) {
         int direction = rnd.Next(0, 3) * 2 + 1;
         double width = this.Width / rnd.Next(2, 4),
                length = this.Length / rnd.Next(2, 4);
@@ -188,13 +188,13 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
         this.MaxLength *= (1 - length / this.MaxLength);
         this.MaxIntensity /= 2;
         creationTime = _time;
-        Start = _time.AddMinutes(rnd.Next(30, 60));
+        Start = _time.AddMinutes(rnd.NextDouble() * t1 + t1);
 
         Point position = new Point(
             Math.Round(this.Position.X + (direction / 3 - 1) * width),
             Math.Round(this.Position.Y + (direction % 3 - 1) * length));
 
-        return new SnowCloud(position, width, length, Velocity, this.MaxIntensity, creationTime, Start, this.End.AddMinutes(rnd.NextDouble() * 60 - 30), this.Angle);
+        return new SnowCloud(position, width, length, Velocity, this.MaxIntensity, creationTime, Start, this.End.AddMinutes(rnd.NextDouble() * t1), -this.Angle);
     }
     public bool IsOutside(TacticalMap map) {
         Point[] cloudBorders = {
