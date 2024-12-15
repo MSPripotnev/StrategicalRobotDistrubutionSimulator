@@ -7,11 +7,13 @@ using System.Windows.Shapes;
 
 namespace SRDS.Model.Environment;
 
+using System;
+using System.Windows.Media.Imaging;
 using System.Xml.Serialization;
 
 using Map;
 public class SnowCloud : IPlaceable, ITimeSimulatable {
-
+    private const double min_intensity = 0.005, mid_intensity = 0.02;
     public SnowCloud() {
         Color = Colors.Black;
         Rotation = new RotateTransform(Angle, Width / 2, Length / 2);
@@ -76,10 +78,10 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
     public UIElement Build() {
         if (UI is not null)
             return UI;
-        Ellipse el = new Ellipse() {
+        Rectangle el = new Rectangle() {
             Stroke = new SolidColorBrush(Color),
-            StrokeThickness = 1,
-            StrokeDashOffset = 2,
+            StrokeThickness = 0,
+            StrokeDashOffset = 4,
             StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 }),
             Uid = nameof(SnowCloud),
         };
@@ -100,6 +102,21 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
         binding = new Binding(nameof(Rotation));
         binding.Source = this;
         el.SetBinding(UIElement.RenderTransformProperty, binding);
+        Panel.SetZIndex(el, -1);
+
+        try {
+            BitmapImage? image = null;
+            if (Intensity < min_intensity)
+                image = new BitmapImage(new Uri(@"../../../Properties/cloud.png", UriKind.Relative));
+            else if (Intensity < mid_intensity)
+                image = new BitmapImage(new Uri(@"../../../Properties/cloud_mid_rainy.png", UriKind.Relative));
+            else
+                image = new BitmapImage(new Uri(@"../../../Properties/cloud_rainy.png", UriKind.Relative));
+            if (image is not null) {
+                el.Fill = new ImageBrush(image);
+                el.Fill.Opacity = 0.5;
+            }
+        } catch { }
         return UI = el;
     }
     #endregion
@@ -113,9 +130,9 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
         get => intensity;
         set {
             intensity = value;
-            if (intensity < 0.02)
+            if (intensity < min_intensity)
                 Color = Colors.LightGray;
-            else if (intensity < 0.1)
+            else if (intensity < mid_intensity)
                 Color = Colors.Gray;
         }
     }
