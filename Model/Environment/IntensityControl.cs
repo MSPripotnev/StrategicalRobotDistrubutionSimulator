@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -73,14 +73,14 @@ public class IntensityCell : INotifyPropertyChanged {
             return ui = el;
         }
     }
-    public static double operator^(IntensityCell cell, double icy) => 
+    public static double operator^(IntensityCell cell, double icy) =>
         Math.Max(0, Math.Min((cell.IcyPercent + icy) / 2, 100));
 }
 public class IntensityControl {
     #region IntensityMap
     [XmlArray]
     public IntensityCell[][]? IntensityMap { get; set; }
-    public const int IntensityMapScale = 20;
+    public const int IntensityMapScale = 25;
     [XmlIgnore]
     private Size Borders { get; init; }
 
@@ -97,16 +97,18 @@ public class IntensityControl {
             }
         }
     }
+    bool flag = false;
     public void GenerateIntensity(CloudControl cloudControl, Obstacle[] obstacles, TimeSpan timeFlow, Dictionary<SnowType, double> snowTypes) {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;
         if (!cloudControl.Clouds.Any()) return;
+        flag = !flag;
 
         double mid_icy = 0;
         for (int k = 0; k < snowTypes.Count; k++)
             mid_icy += snowTypes[(SnowType)k] * GlobalMeteo.GetIcyPercent((SnowType)k);
         mid_icy /= snowTypes.Count;
 
-        for (int c = 0; c < cloudControl.Clouds.Length; c++) {
+        for (int c = flag ? 0 : 1; c < cloudControl.Clouds.Length; c+=2) {
             var cloud = cloudControl.Clouds[c];
             double a = Math.Max(cloud.Width, cloud.Length);
             (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(cloud.Position - new Vector(a / 2, a / 2));
@@ -126,7 +128,7 @@ public class IntensityControl {
                     if ((Math.Pow( (p.X * Math.Cos(cloud_angle_r) + p.Y * Math.Sin(cloud_angle_r)) / cloud.Width, 2) +
                         Math.Pow( (p.X * Math.Sin(cloud_angle_r) - p.Y * Math.Cos(cloud_angle_r)) / cloud.Length, 2)) <= 0.25 &&
                             !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
-                        IntensityMap[i][j].Snow += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
+                        IntensityMap[i][j].Snow += Math.Min(2 * cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
 
                         if (cloudControl.Coverage < 0.4)
                             point_icy += 0.2 * GlobalMeteo.GetIcyPercent(SnowType.IceSlick) / snowTypes.Count;

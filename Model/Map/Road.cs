@@ -240,7 +240,8 @@ public class Road : ITargetable, ITimeSimulatable {
         if (!intensityCells.Any())
             CalculateIntensityCells();
 
-        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any())
+        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any() ||
+                (time.Minute + 2) % 5 != 0 || time.Second != 0)
             return;
         Snowness = IcyPercent = 0;
         for (int i = 0; i < intensityCells.Count; i++) {

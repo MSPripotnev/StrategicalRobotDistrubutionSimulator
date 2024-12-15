@@ -23,7 +23,7 @@ public class CloudControl : INotifyPropertyChanged {
         var clouds_list = Clouds.ToList();
         if (_time.Minute % 20 == 0 && _time.Second == 0) {
             if (rnd.NextDouble() > generationPossibilityThreshold) {
-                var c = GenerateCloud(director.Map,wind, _time);
+                var c = GenerateCloud(director.Map, wind, _time);
                 clouds_list.Add(c);
                 director.TimeChanged += c.Simulate;
             }

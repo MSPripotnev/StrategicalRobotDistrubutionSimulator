@@ -82,13 +82,13 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
 
     #region Simulation
     public event PropertyChangedEventHandler? PropertyChanged;
-    private Vector windPerMinute;
+    private Vector windPerSecond;
     private void WindChange() {
         if (_time.Minute % 10 == 0 && _time.Second == 0) {
-            windPerMinute = windPerMinute / (windPerMinute.Length + 0.00001) * DailyModifier(_time.Hour, 0, 4, 0) +
-                new Vector((Rnd.NextDouble() - 1) / 4, (Rnd.NextDouble() - 1) / 4);
+            windPerSecond = windPerSecond / (windPerSecond.Length + 0.00001) * DailyModifier(_time.Hour, 0, 4, 0) +
+                new Vector((Rnd.NextDouble() - 0.5) / 4, (Rnd.NextDouble() - 0.5) / 4);
             if (Rnd.NextDouble() < 0.01)
-                windPerMinute *= -1;
+                windPerSecond *= -1;
         }
     }
     private void DailyMeteoChange() {
@@ -142,7 +142,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         DailyMeteoChange();
         Ctime = time;
         WindChange();
-        Wind = windPerMinute * timeFlow.TotalSeconds;
+        Wind = windPerSecond * timeFlow.TotalSeconds;
         CloudControl.CloudsBehaviour(director, Wind, time);
         // Temporary disabled:
         // GenerateSnowdrifts();
