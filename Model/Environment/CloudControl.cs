@@ -11,6 +11,7 @@ public class CloudControl : INotifyPropertyChanged {
     public event PropertyChangedEventHandler? PropertyChanged;
     private readonly double generationPossibilityThreshold, splitPossibilityThreshold;
     private readonly int t1, t2;
+    public double Coverage { get; private set; }
     public CloudControl(Random rnd, double _generationPossibility, double _splitPossibility, int _t1, int _t2) {
         clouds = Array.Empty<SnowCloud>();
         this.rnd = rnd;
@@ -43,6 +44,9 @@ public class CloudControl : INotifyPropertyChanged {
         }
 
         Clouds = clouds_list.ToArray();
+
+        if (director.Map is not null)
+            Coverage = clouds.Sum(p => p.Width * p.Length) / director.Map.Borders.Width / director.Map.Borders.Height;
     }
     private SnowCloud[] clouds;
 
@@ -87,5 +91,9 @@ public class CloudControl : INotifyPropertyChanged {
         if (!bigClouds.Any()) return null;
 
         return bigClouds[rnd.Next(0, bigClouds.Length)].Split(rnd, _time);
+    }
+
+    public override string ToString() {
+        return $"Clouds: {clouds.Length}, Coverage: {Math.Round(Coverage * 100)}%";
     }
 }

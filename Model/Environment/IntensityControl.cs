@@ -97,17 +97,17 @@ public class IntensityControl {
             }
         }
     }
-    public void GenerateIntensity(SnowCloud[] clouds, Obstacle[] obstacles, TimeSpan timeFlow, Dictionary<SnowType, double> snowTypes) {
+    public void GenerateIntensity(CloudControl cloudControl, Obstacle[] obstacles, TimeSpan timeFlow, Dictionary<SnowType, double> snowTypes) {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;
-        if (!clouds.Any()) return;
+        if (!cloudControl.Clouds.Any()) return;
 
         double mid_icy = 0;
         for (int k = 0; k < snowTypes.Count; k++)
             mid_icy += snowTypes[(SnowType)k] * GlobalMeteo.GetIcyPercent((SnowType)k);
         mid_icy /= snowTypes.Count;
 
-        for (int c = 0; c < clouds.Length; c++) {
-            var cloud = clouds[c];
+        for (int c = 0; c < cloudControl.Clouds.Length; c++) {
+            var cloud = cloudControl.Clouds[c];
             double a = Math.Max(cloud.Width, cloud.Length);
             (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(cloud.Position - new Vector(a / 2, a / 2));
             (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(cloud.Position + new Vector(a / 2, a / 2));
@@ -128,7 +128,7 @@ public class IntensityControl {
                             !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
                         IntensityMap[i][j].Snow += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
 
-                        if (clouds.Sum(p => p.Width * p.Length) / Borders.Width / Borders.Height < 0.4)
+                        if (cloudControl.Coverage < 0.4)
                             point_icy += 0.2 * GlobalMeteo.GetIcyPercent(SnowType.IceSlick) / snowTypes.Count;
 
                         IntensityMap[i][j].IcyPercent = IntensityMap[i][j] ^ (mid_icy + point_icy);

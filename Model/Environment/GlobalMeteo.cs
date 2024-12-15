@@ -146,7 +146,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         CloudControl.CloudsBehaviour(director, Wind, time);
         // Temporary disabled:
         // GenerateSnowdrifts();
-        IntensityControl.GenerateIntensity(CloudControl.Clouds, map.Obstacles, timeFlow, FalloutType());
+        IntensityControl.GenerateIntensity(CloudControl, map.Obstacles, timeFlow, FalloutType());
     }
 
     public List<Snowdrift> GeneratedSnowdrifts { get; private set; } = new();
