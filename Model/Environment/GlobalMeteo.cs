@@ -21,7 +21,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     private readonly TacticalMap map;
 
     #region Weather Properties
-    private int t_min, t_max, h_min, h_max, p_min, p_max;
+    private double t_min, t_max, h_min, h_max, p_min, p_max, w_min, w_max;
     public Vector Wind { get; set; }
     public double Temperature { get => DailyModifier(_time.Hour, t_min, t_max, 0); }
     public double Humidity { get => Math.Max(Math.Min(h_max, DailyModifier(_time.Hour, h_min, h_max, -Math.PI)), h_min); }
@@ -30,7 +30,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
 
     #region Modifiers
     public Random Rnd { private get; set; }
-    private double DailyModifier(int hour, int min, int max, double phase) {
+    private double DailyModifier(int hour, double min, double max, double phase) {
         double mt = (max + Math.Abs(min)) / 2,
                mt2 = (max - Math.Abs(min)) / 2;
         return Math.Min(Math.Max(Math.Sin(hour / 3.8 - 2 + phase) * mt + mt2 + Rnd.Next(-1, 1), min), max);
@@ -84,18 +84,21 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     public event PropertyChangedEventHandler? PropertyChanged;
     private Vector windPerSecond;
     private void WindChange() {
-        if (_time.Minute % 10 == 0 && _time.Second == 0) {
-            windPerSecond = windPerSecond / (windPerSecond.Length + 0.00001) * DailyModifier(_time.Hour, 0, 4, 0) +
-                new Vector((Rnd.NextDouble() - 0.5) / 4, (Rnd.NextDouble() - 0.5) / 4);
-            if (Rnd.NextDouble() < 0.01)
+        if (_time.Minute % 20 == 0 && _time.Second == 0) {
+            if (windPerSecond.Length > 0)
+                windPerSecond /= windPerSecond.Length;
+            windPerSecond = windPerSecond * DailyModifier(_time.Hour, w_min, w_max, 0) +
+                new Vector((Rnd.NextDouble() - 0.5) / 200, (Rnd.NextDouble() - 0.5) / 200);
+            if (Rnd.NextDouble() < 0.0001)
                 windPerSecond *= -1;
         }
     }
     private void DailyMeteoChange() {
         if (_time.Hour == 0 && _time.Minute == 0 && _time.Second == 0) {
-            t_min = Rnd.Next(-20, -5); t_max = Rnd.Next(t_min, 5);
-            h_min = Rnd.Next(30, 50); h_max = Rnd.Next(h_min, t_max > 1 ? 90 : 70);
-            p_min = Rnd.Next(-10, -5); p_max = Rnd.Next(p_min, 10);
+            t_min = Rnd.Next(-20, -5); t_max = Rnd.Next((int)t_min, 5);
+            h_min = Rnd.Next(30, 50); h_max = Rnd.Next((int)h_min, t_max > 1 ? 90 : 70);
+            p_min = Rnd.Next(-10, -5); p_max = Rnd.Next((int)p_min, 10);
+            w_min = Rnd.NextDouble() / 60; w_max = Rnd.NextDouble() / 60 + w_min;
         }
     }
     private Dictionary<SnowType, double> FalloutType() {

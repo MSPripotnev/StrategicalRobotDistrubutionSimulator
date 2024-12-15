@@ -65,7 +65,7 @@ public class CloudControl : INotifyPropertyChanged {
             rMax = (int)Math.Round(Math.Min(rMin, 5 * min_r / 2));
         double width = rnd.Next(rMin, rMax), length = rnd.Next((int)(width/4), rMax);
         Point position = new Point(map.Borders.Width / 2, map.Borders.Height / 2) -
-            Wind / (Wind.Length + 0.01) / 4 * (Math.Sqrt(width * width + length * length) + 1.4142 * Math.Min(map.Borders.Width, map.Borders.Height));
+            Wind / (Wind.Length + 0.01) / 4 * (Math.Sqrt(width * width + length * length) + 2 * Math.Min(map.Borders.Width, map.Borders.Height));
         position.X = Math.Floor(position.X);
         position.Y = Math.Floor(position.Y);
 

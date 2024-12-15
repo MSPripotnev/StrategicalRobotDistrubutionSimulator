@@ -149,7 +149,7 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
 
         Vector rndWind = new Vector((new Random().NextDouble() - 0.5) / 8, (new Random().NextDouble() - 0.5) / 8);
         Velocity = meteo.Wind + rndWind;
-        Angle += Math.Cos(Vector.AngleBetween(rndWind, new Vector(1, 0))) / 4;
+        Angle += Math.Cos(Vector.AngleBetween(Velocity, new Vector(0, 1))) / 16;
         Position += Velocity;
         double mins, sizeReduceTime, intensityReduceTime;
         if (time > Start) {
