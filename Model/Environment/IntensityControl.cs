@@ -106,9 +106,11 @@ public class IntensityControl {
             mid_icy += snowTypes[(SnowType)k] * GlobalMeteo.GetIcyPercent((SnowType)k);
         mid_icy /= snowTypes.Count;
 
-        foreach (var cloud in clouds.Where(c => c.Intensity > 0)) {
-            (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(new(cloud.Position.X - cloud.Width / 2, cloud.Position.Y - cloud.Length / 2));
-            (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(new(cloud.Position.X + cloud.Width / 2, cloud.Position.Y + cloud.Length / 2));
+        for (int c = 0; c < clouds.Length; c++) {
+            var cloud = clouds[c];
+            double a = Math.Max(cloud.Width, cloud.Length);
+            (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(cloud.Position - new Vector(a / 2, a / 2));
+            (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(cloud.Position + new Vector(a / 2, a / 2));
             cloudStartPosi = Math.Max(0, cloudStartPosi);
             cloudStartPosj = Math.Max(0, cloudStartPosj);
             cloudEndPosi = Math.Min(cloudEndPosi, IntensityMap.Length);
@@ -119,9 +121,10 @@ public class IntensityControl {
                     Point pos = GetIntensityMapPoint(i, j);
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
-                    double point_icy = 0;
+                    double point_icy = 0, cloud_angle_r = cloud.Angle / 180 * Math.PI;
 
-                    if (p.X * p.X / cloud.Width / cloud.Width + p.Y * p.Y / cloud.Length / cloud.Length <= 0.25 &&
+                    if ((Math.Pow( (p.X * Math.Cos(cloud_angle_r) + p.Y * Math.Sin(cloud_angle_r)) / cloud.Width, 2) +
+                        Math.Pow( (p.X * Math.Sin(cloud_angle_r) - p.Y * Math.Cos(cloud_angle_r)) / cloud.Length, 2)) <= 0.25 &&
                             !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
                         IntensityMap[i][j].Snow += Math.Min(cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
 

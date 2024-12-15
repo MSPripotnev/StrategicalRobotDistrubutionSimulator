@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Windows;
 
@@ -58,9 +58,9 @@ public class CloudControl : INotifyPropertyChanged {
         double min_r = Math.Min(map.Borders.Height, map.Borders.Width);
         int rMin = (int)Math.Round(Math.Min(2 * min_r / 3, 3 / 2 * min_r)),
             rMax = (int)Math.Round(Math.Min(rMin, 5 * min_r / 2));
-        double width = rnd.Next(rMin, rMax), length = rnd.Next(rMin, rMax);
+        double width = rnd.Next(rMin, rMax), length = rnd.Next((int)(width/4), rMax);
         Point position = new Point(map.Borders.Width / 2, map.Borders.Height / 2) -
-            Wind / Wind.Length / 4 * (Math.Sqrt(width * width + length * length) + 1.4142 * Math.Min(map.Borders.Width, map.Borders.Height));
+            Wind / (Wind.Length + 0.01) / 4 * (Math.Sqrt(width * width + length * length) + 1.4142 * Math.Min(map.Borders.Width, map.Borders.Height));
         position.X = Math.Floor(position.X);
         position.Y = Math.Floor(position.Y);
 
@@ -75,7 +75,7 @@ public class CloudControl : INotifyPropertyChanged {
 
         if (rnd.NextDouble() < 0.3)
             intensity = 0;
-        return new SnowCloud(position, width, length, Wind, intensity, _time, start, end);
+        return new SnowCloud(position, width, length, Wind, intensity, _time, start, end, rnd.NextDouble() * 180);
     }
     private SnowCloud? SplitCloud(DateTime _time, Random rnd) {
         if (!Clouds.Any())

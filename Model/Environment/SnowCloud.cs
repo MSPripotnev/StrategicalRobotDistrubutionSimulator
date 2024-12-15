@@ -14,8 +14,10 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
 
     public SnowCloud() {
         Color = Colors.Black;
+        Rotation = new RotateTransform(Angle, Width / 2, Length / 2);
     }
-    public SnowCloud(Point p, double w, double l, Vector v, double _intensity, DateTime create, DateTime start, DateTime end) : this() {
+    public SnowCloud(Point p, double w, double l, Vector v, double _intensity, DateTime create, DateTime start, DateTime end, double angle) : this() {
+        Angle = angle;
         Position = p;
         Velocity = v;
         MaxWidth = w; // X
@@ -37,6 +39,8 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
         get => position;
         set {
             position = value;
+            Rotation = new RotateTransform(Angle, Width / 2, Length / 2);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Rotation)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UIPosition)));
         }
@@ -47,6 +51,8 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
     public Point UIPosition {
         get => position - new Vector(Width / 2, Length / 2);
     }
+    public RotateTransform Rotation { get; set; }
+    public double Angle { get; set; } = 0;
     public double MaxLength { get; set; }
     public double MaxWidth { get; set; }
     private double length, width;
@@ -77,6 +83,7 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
             StrokeDashArray = new DoubleCollection(new double[] { 4.0, 2.0 }),
             Uid = nameof(SnowCloud),
         };
+        el.RenderTransform = Rotation;
         Binding binding = new Binding(nameof(UIPosition) + ".X");
         binding.Source = this;
         el.SetBinding(System.Windows.Controls.Canvas.LeftProperty, binding);
@@ -89,6 +96,10 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
         binding = new Binding(nameof(Length));
         binding.Source = this;
         el.SetBinding(Canvas.HeightProperty, binding);
+
+        binding = new Binding(nameof(Rotation));
+        binding.Source = this;
+        el.SetBinding(UIElement.RenderTransformProperty, binding);
         return UI = el;
     }
     #endregion
@@ -121,6 +132,7 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
 
         Vector rndWind = new Vector((new Random().NextDouble() - 0.5) / 8, (new Random().NextDouble() - 0.5) / 8);
         Velocity = meteo.Wind + rndWind;
+        Angle += Math.Cos(Vector.AngleBetween(rndWind, new Vector(1, 0))) / 4;
         Position += Velocity;
         double mins, sizeReduceTime, intensityReduceTime;
         if (time > Start) {
@@ -165,7 +177,7 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
             Math.Round(this.Position.X + (direction / 3 - 1) * width),
             Math.Round(this.Position.Y + (direction % 3 - 1) * length));
 
-        return new SnowCloud(position, width, length, Velocity, this.MaxIntensity, creationTime, Start, this.End.AddMinutes(rnd.NextDouble() * 60 - 30));
+        return new SnowCloud(position, width, length, Velocity, this.MaxIntensity, creationTime, Start, this.End.AddMinutes(rnd.NextDouble() * 60 - 30), this.Angle);
     }
     public bool IsOutside(TacticalMap map) {
         Point[] cloudBorders = {
