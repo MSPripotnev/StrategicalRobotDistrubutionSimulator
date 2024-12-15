@@ -47,6 +47,7 @@
                     <MenuItem Header="Завершить" x:Name="finishObjectB" Click="FinishObjectB_Click" IsEnabled="False"/>
                     <MenuItem x:Name="assignB" Header="Назначить на..." Visibility="Collapsed" Tag="ar" Click="MenuAssignesItem_Click"/>
                     <MenuItem x:Name="goToB" Header="Отправить к..." Visibility="Collapsed" Tag="ap" Click="MenuAssignesItem_Click"/>
+                    <MenuItem x:Name="changeDeviceB" Header="Сменить устройство на..." Visibility="Collapsed" Tag="ad"/>
                 </ContextMenu>
             </Canvas.ContextMenu>
         </Canvas>

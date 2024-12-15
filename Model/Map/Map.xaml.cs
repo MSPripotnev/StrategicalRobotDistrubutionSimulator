@@ -359,6 +359,10 @@ public partial class MapWPF : Window {
             ag.TargetPosition = lastClickPos;
             break;
         }
+        if (button.Tag is SnowRemoverType d) {
+            if (FindObject(lastClickPos) is not AgentStation || ag is not SnowRemover r) throw new AccessViolationException();
+            ag.Home?.ChangeDevice(r, d);
+        }
     }
     private void MenuItem_Click(object sender, RoutedEventArgs e) {
         if (sender is not MenuItem button || Director is null) return;
@@ -780,6 +784,20 @@ public partial class MapWPF : Window {
             else
                 assignB.Visibility = Visibility.Collapsed;
             goToB.Visibility = Visibility.Visible;
+            if (FindObject(lastClickPos) is AgentStation) {
+                changeDeviceB.Visibility = Visibility.Visible;
+                changeDeviceB.Items.Clear();
+                var ds = typeof(SnowRemoverType).GetEnumValues();
+                for (int i = 0; i < ds.Length; i++) {
+                    var b = new MenuItem() {
+                        Tag = ds.GetValue(i),
+                        Name = $"device{typeof(SnowRemoverType).GetEnumName(i)}B",
+                        Header = typeof(SnowRemoverType).GetEnumName(i)
+                    };
+                    b.Click += MenuAssignesItem_Click;
+                    changeDeviceB.Items.Add(b);
+                }
+            } else changeDeviceB.Visibility = Visibility.Collapsed;
 
             addObjectB.Visibility = Visibility.Collapsed;
             deleteObjectB.Visibility = Visibility.Collapsed;
@@ -788,6 +806,7 @@ public partial class MapWPF : Window {
         } else {
             assignB.Visibility = Visibility.Collapsed;
             goToB.Visibility = Visibility.Collapsed;
+            changeDeviceB.Visibility = Visibility.Collapsed;
 
             addObjectB.Visibility = Visibility.Visible;
             deleteObjectB.Visibility = Visibility.Visible;

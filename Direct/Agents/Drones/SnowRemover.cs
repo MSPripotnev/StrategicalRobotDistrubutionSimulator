@@ -47,6 +47,7 @@ public class SnowRemover : Agent {
                 Color = Colors.Beige;
             } else if (Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
                 MashSpeed = 2.0;
+                RemoveSpeed = 0.1;
                 Color = Colors.Aqua;
             } else MashSpeed = 0;
         }

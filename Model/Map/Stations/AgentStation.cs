@@ -1,5 +1,6 @@
 ﻿using SRDS.Direct;
 using SRDS.Direct.Agents;
+using SRDS.Direct.Agents.Drones;
 using SRDS.Direct.Executive;
 
 using System.Windows.Media;
@@ -41,7 +42,7 @@ public class AgentStation : Station, IControllable, IRefueller {
         }
     }
     public void Simulate(object? sender, DateTime time) {
-        if (sender is Director d)
+        if (sender is Director)
             Distribute();
         for (int i = 0; i < AssignedAgents.Length; i++)
             do
@@ -116,6 +117,12 @@ public class AgentStation : Station, IControllable, IRefueller {
             Station st = map.Stations.Where(p => p is IRefueller r).OrderBy(p => PathFinder.Distance(p.Position, agent.Position)).First();
             agent.TargetPosition = Position;
         }
+    }
+    public void ChangeDevice(SnowRemover agent, SnowRemoverType type) {
+        var d = agent.Devices.ToList();
+        d.RemoveAll(p => type < SnowRemoverType.Cleaver ? p < SnowRemoverType.Cleaver : p >= SnowRemoverType.Cleaver);
+        d.Add(type);
+        agent.Devices = d.ToArray();
     }
     #endregion
 }
