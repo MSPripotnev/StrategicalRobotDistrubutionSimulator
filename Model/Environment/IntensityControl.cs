@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -71,6 +71,14 @@ public class IntensityCell : INotifyPropertyChanged {
             b.Converter = new IntensityMapConverter();
             el.SetBinding(Rectangle.FillProperty, b);
             return ui = el;
+        }
+    }
+    private double deicing = 0;
+    public double Deicing {
+        get => deicing;
+        set {
+            deicing = Math.Max(0, Math.Min(value, 130));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Deicing)));
         }
     }
     public static double operator^(IntensityCell cell, double icy) =>

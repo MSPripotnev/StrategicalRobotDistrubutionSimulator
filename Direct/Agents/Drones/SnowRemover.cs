@@ -21,6 +21,14 @@ public enum SnowRemoverType {
     AntiIceDistributor
 }
 public class SnowRemover : Agent {
+    public static (double remove, double mash, double fuelDecrease) DeviceRemoveSpeed(SnowRemoverType device) => device switch {
+        SnowRemoverType.Rotor => (5.0, 0.2, 0.5),
+        SnowRemoverType.Shovel => (100.0, 0.2, 0.0),
+        SnowRemoverType.AntiIceDistributor => (0.0, 200.0, 0.0),
+        SnowRemoverType.Cleaver => (0.0, 5.0, 0.25),
+        SnowRemoverType.PlowBrush => (1.0, 0.2, 0.25),
+        _ => (0.0, 0.0, 0.0)
+    };
     [XmlIgnore]
     public double RemoveSpeed { get; private set; }
     [XmlIgnore]
@@ -33,23 +41,17 @@ public class SnowRemover : Agent {
         set {
             devices = value;
             if (Devices.Contains(SnowRemoverType.Rotor)) {
-                RemoveSpeed = 1.0;
                 Color = Colors.SkyBlue;
             } else if (Devices.Contains(SnowRemoverType.PlowBrush)) {
-                RemoveSpeed = 0.8;
                 Color = Colors.Silver;
             } else if (Devices.Contains(SnowRemoverType.Shovel)) {
-                RemoveSpeed = 0.5;
                 Color = Colors.SlateGray;
-            } else RemoveSpeed = 0;
+            }
             if (Devices.Contains(SnowRemoverType.Cleaver)) {
-                MashSpeed = 1.0;
                 Color = Colors.Beige;
             } else if (Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
-                MashSpeed = 2.0;
-                RemoveSpeed = 0.1;
                 Color = Colors.Aqua;
-            } else MashSpeed = 0;
+            }
         }
     }
     public override RobotState CurrentState {
@@ -133,17 +135,17 @@ public class SnowRemover : Agent {
                         Trajectory.Add(r.Position + v);
                         Trajectory.Add(r.Position - v);
                     }
-                        /*
-                        if (PathFinder.Distance(Position, r.Position + v) < r.Height / 2 && PathFinder.Distance(Position, r.Position + v) < PathFinder.Distance(Position, r.Position - v))
-                            Trajectory.Add(r.Position - v);
-                        else if (PathFinder.Distance(Position, r.Position - v) < r.Height / 2 && PathFinder.Distance(Position, r.Position - v) < PathFinder.Distance(Position, r.Position + v))
-                            Trajectory.Add(r.EndPosition + v);
-                        else if (PathFinder.Distance(Position, r.EndPosition - v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition - v) < PathFinder.Distance(Position, r.EndPosition + v))
-                            Trajectory.Add(r.EndPosition + v);
-                        else if (PathFinder.Distance(Position, r.EndPosition + v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition + v) < PathFinder.Distance(Position, r.EndPosition - v))
-                            Trajectory.Add(r.Position + v);
-                        */
-                        Move();
+                    /*
+                    if (PathFinder.Distance(Position, r.Position + v) < r.Height / 2 && PathFinder.Distance(Position, r.Position + v) < PathFinder.Distance(Position, r.Position - v))
+                        Trajectory.Add(r.Position - v);
+                    else if (PathFinder.Distance(Position, r.Position - v) < r.Height / 2 && PathFinder.Distance(Position, r.Position - v) < PathFinder.Distance(Position, r.Position + v))
+                        Trajectory.Add(r.EndPosition + v);
+                    else if (PathFinder.Distance(Position, r.EndPosition - v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition - v) < PathFinder.Distance(Position, r.EndPosition + v))
+                        Trajectory.Add(r.EndPosition + v);
+                    else if (PathFinder.Distance(Position, r.EndPosition + v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition + v) < PathFinder.Distance(Position, r.EndPosition - v))
+                        Trajectory.Add(r.Position + v);
+                    */
+                    Move();
                 }
                 RemoveSnowFromRoad(sender);
             }
@@ -161,24 +163,48 @@ public class SnowRemover : Agent {
         var vr = v;
         (vr.X, vr.Y) = (-v.Y, v.X);
         (int ix, int iy) = IntensityControl.GetPointIntensityIndex(Position);
-        (int isx, int isy) = IntensityControl.GetPointIntensityIndex(Position + v + vr);
-        double remove_amount = Math.Min(meteo.IntensityControl.IntensityMap[ix][iy].Snow, RemoveSpeed * ActualSpeed);
-
+        if (!(0 < ix && ix < meteo.IntensityControl.IntensityMap.Length && 0 < iy && iy < meteo.IntensityControl.IntensityMap[0].Length))
+            return;
         for (int i = 0; i < Devices.Length; i++) {
+            (RemoveSpeed, MashSpeed, double fuelD) = DeviceRemoveSpeed(Devices[i]);
+            double remove_amount = Math.Min(meteo.IntensityControl.IntensityMap[ix][iy].Snow, RemoveSpeed * ActualSpeed * (100.0 - meteo.IntensityControl.IntensityMap[ix][iy].IcyPercent) / 100),
+                   mash_amount = MashSpeed * ActualSpeed;
+
+            Fuel -= fuelD;
             switch (Devices[i]) {
-            case SnowRemoverType.Rotor:
-            case SnowRemoverType.Shovel:
-                meteo.IntensityControl.IntensityMap[ix][iy].Snow = meteo.IntensityControl.IntensityMap[ix][iy].Snow > 0 ? meteo.IntensityControl.IntensityMap[ix][iy].Snow - remove_amount : 0;
-                if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap.Length)
-                    meteo.IntensityControl.IntensityMap[isx][isy].Snow = Math.Min(1e6, meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount);
-                break;
-            case SnowRemoverType.AntiIceDistributor:
-            case SnowRemoverType.PlowBrush:
-                meteo.IntensityControl.IntensityMap[ix][iy].Snow = meteo.IntensityControl.IntensityMap[ix][iy].Snow > 0 ? remove_amount : 0;
-                break;
-            case SnowRemoverType.Cleaver:
+
+            case SnowRemoverType.Rotor: {
+                int isx, isy;
+                for (int j = -1; j <= 1; j++) {
+                    (isx, isy) = IntensityControl.GetPointIntensityIndex(Position + vr + v * j);
+                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length)
+                        meteo.IntensityControl.IntensityMap[isx][isy].Snow = meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount / 6 + (j == 0 ? remove_amount / 3 : 0);
+                }
+                (isx, isy) = IntensityControl.GetPointIntensityIndex(Position + 2 * vr);
+                if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length)
+                    meteo.IntensityControl.IntensityMap[isx][isy].Snow = meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount / 6;
                 break;
             }
+            case SnowRemoverType.Shovel:
+                for (int j = 0; j < 2; j++) {
+                    (int isx, int isy) = IntensityControl.GetPointIntensityIndex(Position + v / 2 + v * j + vr);
+                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length)
+                        meteo.IntensityControl.IntensityMap[isx][isy].Snow = meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount / 2;
+                }
+                break;
+            case SnowRemoverType.AntiIceDistributor:
+                if (meteo.IntensityControl.IntensityMap[ix][iy].Deicing < 1)
+                    meteo.IntensityControl.IntensityMap[ix][iy].Deicing += mash_amount;
+                continue;
+            case SnowRemoverType.Cleaver:
+                break;
+            case SnowRemoverType.PlowBrush:
+                break;
+            }
+            meteo.IntensityControl.IntensityMap[ix][iy].Snow -= remove_amount;
+            meteo.IntensityControl.IntensityMap[ix][iy].IcyPercent -= mash_amount;
         }
+        if (meteo.IntensityControl.IntensityMap[ix][iy].Snow < 0)
+            meteo.IntensityControl.IntensityMap[ix][iy].Snow = 0;
     }
 }

@@ -234,9 +234,12 @@ public class Road : ITargetable, ITimeSimulatable {
 #endif
         }
     }
+    private DateTime _time = DateTime.MinValue;
     public void Simulate(object? sender, DateTime time) {
         if (sender is not GlobalMeteo meteo)
             return;
+        TimeSpan timeFlow = time - _time;
+        _time = time;
         if (!intensityCells.Any())
             CalculateIntensityCells();
 
@@ -247,6 +250,13 @@ public class Road : ITargetable, ITimeSimulatable {
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
             if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length) {
+                if (0 < meteo.IntensityControl.IntensityMap[pi][pj].Deicing && meteo.IntensityControl.IntensityMap[pi][pj].Deicing <= 100) {
+                    if (meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent > 0)
+                        meteo.IntensityControl.IntensityMap[pi][pj].Snow += 0.1 * timeFlow.TotalSeconds / 60;
+                    meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent -= timeFlow.TotalSeconds / 12;
+                }
+                meteo.IntensityControl.IntensityMap[pi][pj].Deicing -= timeFlow.TotalSeconds / 12;
+
                 Snowness += meteo.IntensityControl.IntensityMap[pi][pj].Snow /
                     (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
                 if (IcyPercent < meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent)
