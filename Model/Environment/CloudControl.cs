@@ -35,7 +35,8 @@ public class CloudControl : INotifyPropertyChanged {
             }
         }
 
-        var removed_list = Clouds.Where(p => p.End < _time && p.Finished || p.IsOutside(director.Map)).ToList();
+        var removed_list = Clouds.Where(p => p.End < _time && p.Finished ||
+                _time > p.Start && p.IsOutside(director.Map)).ToList();
         for (int i = 0; i < removed_list.Count; i++) {
             director.TimeChanged -= removed_list[i].Simulate;
             clouds_list.Remove(removed_list[i]);
