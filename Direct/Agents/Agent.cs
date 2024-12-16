@@ -336,6 +336,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         binding = new Binding(nameof(Position) + ".Y");
         binding.Source = this;
         p.SetBinding(System.Windows.Controls.Canvas.TopProperty, binding);
+        System.Windows.Controls.Canvas.SetZIndex(p, 3);
 
         return ui = p;
     }

@@ -42,7 +42,7 @@ public abstract class Station : IPlaceable {
         el.Stroke = Brushes.Black;
         el.StrokeThickness = 1;
         el.Margin = new Thickness(-el.Width / 2, -el.Height / 2, 0, 0);
-        System.Windows.Controls.Panel.SetZIndex(el, 1);
+        System.Windows.Controls.Panel.SetZIndex(el, 2);
 
         Binding binding = new Binding(nameof(Position) + ".X");
         binding.Source = this;
