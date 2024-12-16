@@ -301,7 +301,7 @@ node_modules/
 *.dsw
 *.dsp
 
-# Visual Studio 6 technical files 
+# Visual Studio 6 technical files
 *.ncb
 *.aps
 
@@ -400,3 +400,4 @@ FodyWeavers.xsd
 /Analyzing/Results
 /Analyzing/Tests
 /Analyzing/Maps
+/Analyzing/Models
