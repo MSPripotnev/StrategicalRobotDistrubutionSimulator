@@ -93,7 +93,8 @@ public class AgentStation : Station, IControllable, IRefueller {
         for (int i = 0; i < AssignedRoads.Length; i++) {
             if (!FreeAgents.Any()) return;
             for (int j = 0; j < FreeAgents.Length; j++) {
-                Link(FreeAgents[j], AssignedRoads[i]);
+                if (AssignedRoads[i].ReservedAgent is null)
+                    Link(FreeAgents[j], AssignedRoads[i]);
             }
         }
     }
