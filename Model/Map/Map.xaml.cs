@@ -69,7 +69,8 @@ public partial class MapWPF : Window {
                     }
                 }
                 foreach (var c in Director.Meteo.CloudControl.CloudsUI.Where(p => p is not null && !mapCanvas.Children.Contains(p)))
-                    mapCanvas.Children.Add(c);
+                    if (cloudsLevelCB.IsChecked == true)
+                        mapCanvas.Children.Add(c);
             }
             if (intensityMapCB.IsChecked == true)
                 DrawMeteoIntensityMap(true);
@@ -89,7 +90,7 @@ public partial class MapWPF : Window {
     }
     private void DrawPlaceableObjects() {
         var objs = Director?.AllObjectsOnMap.Concat(Director.Map.Roads).ToArray();
-        if (Director?.Meteo != null)
+        if (Director?.Meteo != null && cloudsLevelCB.IsChecked == true)
             objs = objs?.Concat(Director.Meteo.CloudControl.Clouds).ToArray();
         for (int i = 0; i < objs?.Length; i++) {
             IPlaceable obj = objs[i];
@@ -137,8 +138,8 @@ public partial class MapWPF : Window {
                 director.PropertyChanged += RefreshMeteo;
 
                 SizeChanged -= Window_SizeChanged;
-                Width = Math.Max(800, 1.7*director.Map.Borders.Width);
-                Height = Math.Max(600, 1.1*director.Map.Borders.Height);
+                Width = Math.Max(800, 1.7 * director.Map.Borders.Width);
+                Height = Math.Max(600, 1.1 * director.Map.Borders.Height);
                 if (Width > 1800 && Height > 1000)
                     WindowState = WindowState.Maximized;
                 else
@@ -249,7 +250,7 @@ public partial class MapWPF : Window {
                     (model as CopyModel).ModelPath = cm.ModelPath;
             } else return;
             serialized_object = model;
-        } else if(tag.Contains("model")) {
+        } else if (tag.Contains("model")) {
             fd.Filter = "Файлы модели|*.xsmod|Все файлы|*.*";
             serialized_object = Director;
         } else if (tag.Contains("map")) {
@@ -535,6 +536,16 @@ public partial class MapWPF : Window {
             intensityMapCB.IsChecked = false;
             intensityMapCB.IsEnabled = meteoCB.IsChecked ?? false;
             return;
+        }
+
+        if (sender == cloudsLevelCB) {
+            if (cloudsLevelCB.IsChecked == false)
+                for (int i = 0; i < mapCanvas.Children.Count; i++) {
+                    if (mapCanvas.Children[i].Uid != nameof(SnowCloud)) continue;
+                    mapCanvas.Children.Remove(mapCanvas.Children[i]);
+                    i--;
+                }
+            else RefreshMeteo(sender, new System.ComponentModel.PropertyChangedEventArgs(nameof(SnowCloud)));
         }
 
         if (sender == intensityMapCB) {
