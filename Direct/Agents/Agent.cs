@@ -256,33 +256,6 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     #region Debug Info
     [XmlIgnore]
-    public List<Point> OpenedPoints {
-        get {
-            var vs = new List<Point>();
-            if (Pathfinder?.ActiveExplorer == null) return vs;
-            for (int i = 0; i < Pathfinder.ActiveExplorer.OpenedPoints.Count; i++)
-                vs.Add(Pathfinder.ActiveExplorer.OpenedPoints[i].Position);
-            return vs;
-        }
-        set {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OpenedPoints)));
-        }
-    }
-    [PropertyTools.DataAnnotations.Browsable(false)]
-    [XmlIgnore]
-    public List<Point> ClosedPoints {
-        get {
-            var vs = new List<Point>();
-            if (Pathfinder?.ActiveExplorer == null) return vs;
-            for (int i = 0; i < Pathfinder.ActiveExplorer.ClosedPoints.Count; i++)
-                vs.Add(Pathfinder.ActiveExplorer.ClosedPoints[i].Position);
-            return vs;
-        }
-        set {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClosedPoints)));
-        }
-    }
-    [XmlIgnore]
     public long ThinkingIterations { get; protected set; } = 0;
     [XmlIgnore]
     public long WayIterations { get; protected set; } = 0;
@@ -376,7 +349,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         Color = Colors.Red;
         CurrentState = RobotState.Ready;
         AttachedObj = null;
-        Speed = 8.0/60;
+        Speed = 8.0 / 60;
         InteractDistance = 30;
         BlockedTargets = new List<ITargetable>();
         MaxStraightRange = 30;
