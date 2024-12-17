@@ -37,6 +37,8 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     public Meteostation() {
         rnd = new Random((int)DateTime.Now.Ticks);
         Color = Colors.LightGray;
+        bitmapImage = new System.Windows.Media.Imaging.BitmapImage(
+                new Uri("../../../Model/Map/Stations/meteostation.png", UriKind.Relative));
     }
     public Meteostation(Point pos) : this() {
         Position = pos;
