@@ -21,10 +21,15 @@ public class CloudControl : INotifyPropertyChanged {
     }
     public void CloudsBehaviour(Director director, Vector wind, DateTime _time) {
         var clouds_list = Clouds.ToList();
+        if (director.Meteo is null) return;
         if (_time.Minute % 10 == 0 && _time.Second == 0) {
-            if (rnd.NextDouble() > (generationPossibilityThreshold + Coverage / 4) / 2) {
+            double genPossibility = (generationPossibilityThreshold + Coverage) -
+                Math.Min(generationPossibilityThreshold + Coverage, (GlobalMeteo.NormalPressure - director.Meteo.Pressure) / 10);
+
+            if (rnd.NextDouble() > genPossibility && director.Meteo.Pressure > 730) {
                 var c = GenerateCloud(director.Map, wind, _time);
                 clouds_list.Add(c);
+                director.Meteo.Pressure -= 50 * c.MaxIntensity;
                 director.TimeChanged += c.Simulate;
             }
             if (rnd.NextDouble() > splitPossibilityThreshold) {
@@ -39,14 +44,16 @@ public class CloudControl : INotifyPropertyChanged {
         var removed_list = Clouds.Where(p => p.End < _time && p.Finished ||
                 _time > p.Start && p.IsOutside(director.Map)).ToList();
         for (int i = 0; i < removed_list.Count; i++) {
+            director.Meteo.Pressure += 200 * removed_list[i].MaxIntensity;
             director.TimeChanged -= removed_list[i].Simulate;
             clouds_list.Remove(removed_list[i]);
         }
 
         Clouds = clouds_list.ToArray();
 
-        if (director.Map is not null)
-            Coverage = clouds.Sum(p => p.Width * p.Length) / director.Map.Borders.Width / director.Map.Borders.Height;
+        if (director.Map is not null && clouds.Length > 0)
+            Coverage = clouds.Sum(p => p.Width * p.Length) / clouds.Length / director.Map.Borders.Width / director.Map.Borders.Height;
+        else Coverage = 0;
     }
     private SnowCloud[] clouds;
 

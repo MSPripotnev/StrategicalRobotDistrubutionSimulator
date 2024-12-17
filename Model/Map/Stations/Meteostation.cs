@@ -11,7 +11,7 @@ using SRDS.Model;
 using SRDS.Model.Environment;
 
 public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
-    private Stack<double> temperatures = new Stack<double>(),
+    private readonly Stack<double> temperatures = new Stack<double>(),
                           humidities = new Stack<double>(),
                           pressures = new Stack<double>();
     public const double WorkRadius = 150.0;
@@ -33,7 +33,7 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     [XmlIgnore]
     public bool PrecipitationTypeIsRain { get => PrecipitationIntensity > 0 && Temperature >= 0 && Humidity > 60; }
     public Cloudness CloudnessType { get; set; }
-    private Random rnd;
+    private readonly Random rnd;
     public Meteostation() {
         rnd = new Random((int)DateTime.Now.Ticks);
         Color = Colors.LightGray;
@@ -45,9 +45,11 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
         if (sender is not GlobalMeteo meteo)
             return;
 
-        Temperature = Math.Round(meteo.Temperature + rnd.NextDouble() * 2 - 1, 1);
-        Humidity = Math.Round(meteo.Humidity + rnd.NextDouble() * 2 - 1);
-        Pressure = Math.Round(meteo.Pressure + rnd.Next(0, 1));
+        if (time.Second == 0) {
+            Temperature = Math.Round(meteo.Temperature + (rnd.NextDouble() - 0.5) / 10, 1);
+            Humidity = Math.Round(meteo.Humidity + (rnd.NextDouble() - 0.5) / 10);
+            Pressure = Math.Round(meteo.Pressure + rnd.NextDouble() - 0.5);
+        }
 
         if (time.AddMinutes(1).Hour > time.Hour && temperatures.Any()) {
             TemperatureChange = Temperature - temperatures.Average();

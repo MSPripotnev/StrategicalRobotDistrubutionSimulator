@@ -25,7 +25,9 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     public Vector Wind { get; set; }
     public double Temperature { get => DailyModifier(_time.Hour, t_min, t_max, 0); }
     public double Humidity { get => Math.Max(Math.Min(h_max, DailyModifier(_time.Hour, h_min, h_max, -Math.PI)), h_min); }
-    public double Pressure { get => 750 + DailyModifier(_time.Hour, p_min, p_max, -Math.PI); }
+    public const double NormalPressure = 750;
+    private double pressure = NormalPressure;
+    public double Pressure { get => pressure; set => pressure = Math.Max(720, Math.Min(value, 770)); }
     #endregion
 
     #region Modifiers
@@ -33,10 +35,10 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     private double DailyModifier(int hour, double min, double max, double phase) {
         double mt = (max + Math.Abs(min)) / 2,
                mt2 = (max - Math.Abs(min)) / 2;
-        return Math.Min(Math.Max(Math.Sin(hour / 3.8 - 2 + phase) * mt + mt2 + Rnd.Next(-1, 1), min), max);
+        return Math.Min(Math.Max(Math.Sin(hour / 3.8 - 2 + phase) * mt + mt2 + (Rnd.NextDouble()-0.5) / 4, min), max);
     }
     public static WindDirectionType GetWindDirection(Vector wind) {
-        if (wind.Length < 1.0)
+        if (wind.Length < 0.4)
             return WindDirectionType.Calm;
         return Math.Atan2(wind.X, wind.Y) switch {
             >= 5 * Math.PI / 8 and < 7 * Math.PI / 8 => WindDirectionType.NE,
@@ -74,7 +76,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     public GlobalMeteo(TacticalMap map, int seed, DateTime time) {
         Rnd = new Random(seed);
         this.map = map;
-        CloudControl = new CloudControl(Rnd, 0.1, 0.3, 150, 600);
+        CloudControl = new CloudControl(Rnd, 0.2, 0.3, 150, 400);
         _time = time;
         IntensityControl = new IntensityControl(map.Borders);
         Simulate(this, _time);
@@ -87,7 +89,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         if (_time.Minute % 20 == 0 && _time.Second == 0) {
             if (windPerSecond.Length > 0)
                 windPerSecond /= windPerSecond.Length;
-            windPerSecond = windPerSecond * DailyModifier(_time.Hour, w_min, w_max, 0) +
+            windPerSecond = windPerSecond * DailyModifier(_time.Hour, w_min, w_max, 0) * Math.Abs(NormalPressure - Pressure) / 5 +
                 new Vector((Rnd.NextDouble() - 0.5) / 200, (Rnd.NextDouble() - 0.5) / 200);
             if (Rnd.NextDouble() < 0.0001)
                 windPerSecond *= -1;
@@ -96,8 +98,8 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     private void DailyMeteoChange() {
         if (_time.Hour == 0 && _time.Minute == 0 && _time.Second == 0) {
             t_min = Rnd.Next(-20, -5); t_max = Rnd.Next((int)t_min, 5);
-            h_min = Rnd.Next(30, 50); h_max = Rnd.Next((int)h_min, t_max > 1 ? 90 : 70);
-            p_min = Rnd.Next(-10, -5); p_max = Rnd.Next((int)p_min, 10);
+            h_min = Rnd.Next(50, 70); h_max = Rnd.Next((int)h_min, t_max > 1 ? 90 : 80);
+            p_min = Rnd.Next(-20, -5); p_max = Rnd.Next((int)5, 20);
             w_min = Rnd.NextDouble() / 60; w_max = Rnd.NextDouble() / 60 + w_min;
         }
     }
@@ -146,6 +148,9 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         Ctime = time;
         WindChange();
         Wind = windPerSecond * timeFlow.TotalSeconds;
+        if (time.Minute == 0 && time.Second == 0)
+            Pressure += DailyModifier(time.Hour, p_min, p_max, -Math.PI)
+                      - DailyModifier(time.Hour - 1, p_min, p_max, -Math.PI);
         CloudControl.CloudsBehaviour(director, Wind, time);
         // Temporary disabled:
         // GenerateSnowdrifts();
