@@ -570,7 +570,7 @@ public partial class MapWPF : Window {
     }
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
         if (Director != null)
-            Director.Map.Borders = e.NewSize;
+            Director.Map.Borders = mapCanvas.RenderSize;
     }
     #endregion
 
@@ -779,7 +779,7 @@ public partial class MapWPF : Window {
             t.IsOpen = false;
             int x = (int)Math.Round(p.X), y = (int)Math.Round(p.Y);
             t.Content = $"({x}; {y})";
-            if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap.Length > y / IntensityControl.IntensityMapScale)
+            if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap[0].Length > y / IntensityControl.IntensityMapScale)
                 t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].Snow, 4)}\n" +
                              $"icy: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].IcyPercent, 2)}%\n" +
                              $"deicing: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].Deicing, 2)}";
