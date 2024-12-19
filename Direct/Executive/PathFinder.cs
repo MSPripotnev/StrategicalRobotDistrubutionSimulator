@@ -29,28 +29,28 @@ public class RelateDistanceComparer : IComparer {
     }
 }
 public class PathFinder {
-    TacticalMap map;
-    float scale = 1.0F;
+    public TacticalMap Map { get; private set; }
+    public float Scale { get; private set; } = 1.0F;
     public long Iterations { get; set; } = 0;
     public List<Point>? Result { get; set; }
     public IExplorer? ActiveExplorer { get; private set; }
     public bool IsCompleted { get; set; }
     public PathFinder() {
         Result = new List<Point>();
-        map = new TacticalMap();
-        scale = 1.0F;
+        Map = new TacticalMap();
+        Scale = 1.0F;
         IsCompleted = false;
     }
     public PathFinder(TacticalMap _map, float _scale) : this() {
-        map = _map;
-        scale = _scale;
+        Map = _map;
+        Scale = _scale;
     }
     public void Refresh(object? o, PropertyChangedEventArgs e) {
         if (o is TacticalMap _map)
-            map = _map;
+            Map = _map;
     }
     public void Refresh(float _scale) {
-        scale = _scale;
+        Scale = _scale;
     }
 
     public void NextStep() {
@@ -59,7 +59,7 @@ public class PathFinder {
         Result = CreatePathFromLastPoint(ActiveExplorer.Result);
     }
     public void SelectExplorer(Point mainTarget, Point robotPosition, double interactDistance) {
-        ActiveExplorer = new AStarExplorer(robotPosition, mainTarget, scale, map, interactDistance);
+        ActiveExplorer = new AStarExplorer(robotPosition, mainTarget, Scale, Map, interactDistance);
         ActiveExplorer.PathCompleted += OnPathCompleted;
         ActiveExplorer.PathFailed += OnPathFailed;
     }
@@ -75,7 +75,7 @@ public class PathFinder {
         IsCompleted = true;
     }
     public double GetPointHardness(Point pos) {
-        var road = map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
+        var road = Map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
             .MinBy(p => p.DistanceToRoad(pos));
         double hardness;
         if (road is null)

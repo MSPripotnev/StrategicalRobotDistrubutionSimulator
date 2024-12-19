@@ -25,6 +25,14 @@ internal class AStarExplorer : IExplorer {
         ClosedPoints.Add(new AnalyzedPoint(null, start, 0, double.MaxValue));
         Result = ClosedPoints[0];
     }
+    public bool FindWaySync() {
+        while (Result.Heuristic > InteractDistance) {
+            OpenPoints(Result);
+            if (!SelectNextPoint() || !OpenedPoints.Any())
+                return false;
+        }
+        return true;
+    }
     public void NextStep() {
         OpenPoints(Result);
         if (!SelectNextPoint())
