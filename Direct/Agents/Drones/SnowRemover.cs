@@ -98,6 +98,9 @@ public class SnowRemover : Agent {
         devices = Array.Empty<SnowRemoverType>();
         bitmapImage = new BitmapImage(new Uri(@"../../../Direct/Agents/Drones/KDM.png", UriKind.Relative));
     }
+    public SnowRemover(SnowRemover snowRemover, RobotState? _state = null) : base(snowRemover, _state) {
+        devices = snowRemover.devices;
+    }
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {
         case RobotState.Broken:

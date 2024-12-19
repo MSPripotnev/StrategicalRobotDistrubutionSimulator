@@ -79,6 +79,7 @@ public class Transporter : Agent {
         BlockedTargets = new List<ITargetable>();
         MaxStraightRange = 2 * Speed;
     }
+    public Transporter(Transporter transporter, RobotState? _state = null) : base(transporter, _state) { }
     #endregion
 
     #region Func
@@ -105,14 +106,14 @@ public class Transporter : Agent {
             base.Simulate(sender, time);
             break;
         case RobotState.Thinking:
-            if (AttachedObj != null && AttachedObj.ReservedAgent != null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
+            if (AttachedObj is not null && AttachedObj.ReservedAgent is not null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
                 CurrentState = RobotState.Ready;
                 break;
             }
 
             if (Pathfinder?.IsCompleted == true) {
                 Pathfinder.IsCompleted = false;
-                if (AttachedObj == null || AttachedObj != null && AttachedObj.ReservedAgent != this)
+                if (AttachedObj is null || AttachedObj is not null && AttachedObj.ReservedAgent != this)
                     CurrentState = RobotState.Going;
                 else if (AttachedObj?.ReservedAgent == this)
                     CurrentState = RobotState.Working;

@@ -47,7 +47,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             case RobotState.Disable:
                 break;
             case RobotState.Broken:
-                if (Home != null && (TargetPosition - Home.Position).Length > InteractDistance)
+                if (Home is not null && (TargetPosition - Home.Position).Length > InteractDistance)
                     TargetPosition = Home.Position;
                 break;
             case RobotState.Ready:
@@ -355,6 +355,21 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         MaxStraightRange = 30;
         BackTrajectory = Array.Empty<Point>();
     }
+    public Agent(Agent agent, RobotState? _state = null) : this(agent.Position) {
+        state = _state ?? agent.state;
+        Pathfinder = agent.Pathfinder;
+        AttachedObj = agent.AttachedObj;
+        bitmapImage = agent.bitmapImage;
+        Fuel = agent.Fuel;
+        Home = agent.Home;
+        _time = agent._time;
+        Trajectory = agent.Trajectory;
+        BlockedTargets = agent.BlockedTargets;
+        InteractDistance = agent.InteractDistance;
+        MaxStraightRange = agent.MaxStraightRange;
+        OtherAgents = agent.OtherAgents;
+    }
+
     #endregion
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -363,4 +378,11 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         return Enum.GetName(typeof(RobotState), state) + "_" +
             new Point(Math.Round(position.X, 2), Math.Round(position.Y, 2)).ToString();
     }
+    public override int GetHashCode() => base.GetHashCode();
+    public override bool Equals(object? obj) => obj is Agent a && obj.GetType() == this.GetType() && PathFinder.Distance(a.Position, Position) < 15;
+    public static bool operator ==(Agent? a, Agent? b) {
+        return a is not null && b is not null && a.AttachedObj == b.AttachedObj && a.CurrentState == b.CurrentState && a.Home == b.Home
+            && PathFinder.Distance(a.Position, b.Position) < 15 || a?.ui == b?.ui || a is null && b is null;
+    }
+    public static bool operator !=(Agent? a, Agent? b) => !(a == b);
 }

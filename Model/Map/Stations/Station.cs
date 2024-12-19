@@ -6,6 +6,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
 
+using SRDS.Direct.Executive;
+
 namespace SRDS.Model.Map.Stations;
 [XmlInclude(typeof(AgentStation))]
 [XmlInclude(typeof(GasStation))]
@@ -53,5 +55,15 @@ public abstract class Station : IPlaceable {
         el.SetBinding(System.Windows.Controls.Canvas.TopProperty, binding);
 
         return el;
+    }
+    public override int GetHashCode() => base.GetHashCode();
+    public override bool Equals(object? obj) {
+        return obj is Station s && obj.GetType() == this.GetType() && PathFinder.Distance(s.Position, Position) < 15;
+    }
+    public static bool operator==(Station? a, Station? b) {
+        return (a is null && b is null) || a is not null && b is not null && PathFinder.Distance(a.Position, b.Position) < 15;
+    }
+    public static bool operator !=(Station? a, Station? b) {
+        return !(a == b);
     }
 }

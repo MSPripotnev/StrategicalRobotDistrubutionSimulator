@@ -126,4 +126,12 @@ public class AgentStation : Station, IControllable, IRefueller {
         agent.Devices = d.ToArray();
     }
     #endregion
+    public override int GetHashCode() => base.GetHashCode();
+    public override bool Equals(object? obj) => base.Equals(obj);
+    public static bool operator ==(AgentStation? a, AgentStation? b) {
+        return (a is null && b is null) || a is not null && b is not null && PathFinder.Distance(a.Position, b.Position) < 15 && a.AssignedAgents.All(p => b.AssignedAgents.Contains(p)) && a.AssignedRoads.All(p => b.AssignedRoads.Contains(p));
+    }
+    public static bool operator !=(AgentStation? a, AgentStation? b) {
+        return !(a == b);
+    }
 }

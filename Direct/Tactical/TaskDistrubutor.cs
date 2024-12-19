@@ -25,7 +25,7 @@ public class TaskDistributor {
     public IQualifier Qualifier { get; set; }
     [XmlIgnore]
     public Agent[] NonAssignedAgents {
-        get => Agents is not null ? Agents.Where(p => p.Home == null).ToArray() : Array.Empty<Agent>();
+        get => Agents is not null ? Agents.Where(p => p.Home is null).ToArray() : Array.Empty<Agent>();
     }
     [XmlIgnore]
     public Agent[] FreeAgents {
@@ -33,7 +33,7 @@ public class TaskDistributor {
     }
     [XmlIgnore]
     public Target[] FreeTargets {
-        get => Targets is not null ? Targets.Where(x => x.ReservedAgent == null && !x.Finished).ToArray() : Array.Empty<Target>();
+        get => Targets is not null ? Targets.Where(x => x.ReservedAgent is null && !x.Finished).ToArray() : Array.Empty<Target>();
     }
     [XmlIgnore]
     public Dictionary<ITargetable, DistributionQualifyReading> DistributionQualifyReadings { get; set; } = new();
@@ -132,7 +132,7 @@ public class TaskDistributor {
                 Transporter transporter = (Transporter)WorkingTransporters[i];
                 CollectingStation? nearBase = (CollectingStation?)Map.Stations.Where(p => p is CollectingStation).MinBy(p => PathFinder.Distance(p.Position, transporter.Position));
 
-                if (nearBase == null)
+                if (nearBase is null)
                     return;
 
                 if ((nearBase.Position - transporter.BackTrajectory[^1]).Length < transporter.InteractDistance / 2) {

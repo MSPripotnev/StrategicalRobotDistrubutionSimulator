@@ -116,6 +116,11 @@ public class Road : ITargetable, ITimeSimulatable {
     public Road() {
         intensityCells = new();
     }
+    public Road(Road road) : this() {
+        Position = road.Position;
+        EndPosition = road.EndPosition;
+        Category = road.Category;
+    }
     public UIElement Build() {
         Vector v = EndPosition - Position;
         v.Normalize(); v *= Height * 2;
@@ -267,4 +272,6 @@ public class Road : ITargetable, ITimeSimulatable {
 
     public override bool Equals(object? obj) => obj is Road r && r == this;
     public override int GetHashCode() => base.GetHashCode();
+    public override string ToString() => $"Road ({Math.Round(Position.X)};" +
+        $"{Math.Round(Position.Y)})...({Math.Round(EndPosition.X)};{Math.Round(EndPosition.Y)})";
 }
