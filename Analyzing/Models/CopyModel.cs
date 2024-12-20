@@ -33,7 +33,8 @@ public class CopyModel : IModel {
         Name = "Default copy model";
         modelPath = Path = model.MapPath.Replace(".xml", $"-{nameof(CopyModel)}.xml");
     }
-    public CopyModel(Director director) : this() {
+    public CopyModel(Director director) {
+        model = new Director(director.Map.Borders);
         model.MapPath = director.MapPath;
         model.Agents = director.Agents.Clone() as Agent[] ?? throw new Exception();
         model.Targets = director.Targets.Clone() as Target[] ?? throw new Exception();
@@ -46,6 +47,7 @@ public class CopyModel : IModel {
         }
         model.Scale = director.Scale;
         model.Time = director.Time;
+        modelPath = Path = model.MapPath.Replace(".xml", $"-{nameof(CopyModel)}.xml");
         Name = $"Copy model from {model.MapPath}";
     }
     public CopyModel(string path) {

@@ -126,15 +126,6 @@ public partial class MapWPF : Window {
                     DrawPlaceableObjects();
                 trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
                 startB.IsEnabled = true;
-                if (director.Meteo != null) {
-                    director.Meteo.PropertyChanged += RefreshMeteo;
-                    director.Meteo.CloudControl.PropertyChanged += RefreshMeteo;
-                    if (director?.Meteo?.IntensityControl?.IntensityMap?.Any() == true) {
-                        for (int i = 0; i < director.Meteo.IntensityControl.IntensityMap.Length; i++)
-                            for (int j = 0; j < director.Meteo.IntensityControl.IntensityMap[i].Length; j++)
-                                director.Meteo.IntensityControl.IntensityMap[i][j].PropertyChanged += RefreshMeteo;
-                    }
-                }
                 director.PropertyChanged += RefreshMeteo;
 
                 SizeChanged -= Window_SizeChanged;
@@ -153,6 +144,16 @@ public partial class MapWPF : Window {
                     tester.Models = vs.ToArray();
                 }
                 tester.ModelSwitched += director.Recorder.OnModelSwitched;
+
+                if (director.Meteo != null) {
+                    director.Meteo.PropertyChanged += RefreshMeteo;
+                    director.Meteo.CloudControl.PropertyChanged += RefreshMeteo;
+                    if (director?.Meteo?.IntensityControl?.IntensityMap?.Any() == true) {
+                        for (int i = 0; i < director.Meteo.IntensityControl.IntensityMap.Length; i++)
+                            for (int j = 0; j < director.Meteo.IntensityControl.IntensityMap[i].Length; j++)
+                                director.Meteo.IntensityControl.IntensityMap[i][j].PropertyChanged += RefreshMeteo;
+                    }
+                }
             }
         }
     }

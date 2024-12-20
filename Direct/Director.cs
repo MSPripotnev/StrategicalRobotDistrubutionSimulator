@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -17,7 +17,7 @@ using Model.Targets;
 using Tactical;
 using Tactical.Qualifiers;
 
-public partial class Director : INotifyPropertyChanged, IDisposable {
+public class Director : INotifyPropertyChanged, IDisposable {
 
     #region Properties
     public long ThinkingIterations {
