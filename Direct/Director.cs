@@ -43,7 +43,8 @@ public class Director : INotifyPropertyChanged, IDisposable {
             //установка модуля построения пути
             if (Agents != null) {
                 for (int i = 0; i < Agents.Length; i++) {
-                    if (Agents[i].Pathfinder == null) {
+                    Agents[i].ID = i;
+                    if (Agents[i].Pathfinder is null) {
                         var p = new PathFinder(Map, Scale);
                         if (p is null) continue;
                         Agents[i].Pathfinder = p;
