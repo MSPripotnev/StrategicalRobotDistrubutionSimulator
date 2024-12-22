@@ -247,8 +247,9 @@ public partial class MapWPF : Window {
                     AttemptTime = DateTime.MinValue.AddDays(1),
                     Name = Director.Map.Name,
                 };
+                if (model is not CopyModel cmodel) throw new InvalidDataException();
                 if (tester.Models[0] is CopyModel cm)
-                    (model as CopyModel).ModelPath = cm.ModelPath;
+                    (cmodel as CopyModel).ModelPath = cm.ModelPath;
             } else return;
             serialized_object = model;
         } else if (tag.Contains("model")) {

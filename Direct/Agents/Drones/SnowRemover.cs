@@ -148,7 +148,8 @@ public class SnowRemover : Agent {
                     else if (PathFinder.Distance(Position, r.EndPosition + v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition + v) < PathFinder.Distance(Position, r.EndPosition - v))
                         Trajectory.Add(r.Position + v);
                     */
-                    Move();
+                    if (Trajectory.Any())
+                        Move();
                 }
                 RemoveSnowFromRoad(sender);
             }
@@ -159,7 +160,7 @@ public class SnowRemover : Agent {
 
     private void RemoveSnowFromRoad(object? sender) {
         if (sender is not GlobalMeteo meteo) return;
-        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any()) return;
+        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any() || !Trajectory.Any()) return;
 
         var v = Trajectory[0] - Position;
         v *= IntensityControl.IntensityMapScale / v.Length;
@@ -175,7 +176,6 @@ public class SnowRemover : Agent {
 
             Fuel -= fuelD;
             switch (Devices[i]) {
-
             case SnowRemoverType.Rotor: {
                 int isx, isy;
                 for (int j = -1; j <= 1; j++) {

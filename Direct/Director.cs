@@ -329,7 +329,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
     }
     public void Serialize(string path) {
         if (MapPath == "") {
-            Map.Save(Path.Combine(Path.GetDirectoryName(path), Path.GetFileNameWithoutExtension(path) + DateTime.Now.ToFileTime() + ".xsmap"));
+            Map.Save(Path.Combine(Path.GetDirectoryName(path) ?? "", Path.GetFileNameWithoutExtension(path) + DateTime.Now.ToFileTime() + ".xsmap"));
             MapPath = Map.Path;
         }
         if (File.Exists(path))
