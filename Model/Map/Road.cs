@@ -55,9 +55,17 @@ public class Crossroad : IPlaceable {
 }
 
 public class Road : ITargetable, ITimeSimulatable {
+    [XmlAttribute("Snowness")]
+    [Category("Environment")]
+    public double Snowness { get; set; } = 0;
+    [XmlAttribute(nameof(IcyPercent))]
+    [Category("Environment")]
+    public double IcyPercent { get; set; } = 0;
+    [Category("Construction")]
     public RoadType Type { get; set; }
     private Point position;
     [XmlElement(nameof(Point), ElementName = "Position")]
+    [Category("Construction")]
     public Point Position {
         get { return position; }
         set {
@@ -68,6 +76,7 @@ public class Road : ITargetable, ITimeSimulatable {
     }
     private Point endPosition;
     [XmlElement(nameof(Point), ElementName = "EndPosition")]
+    [Category("Construction")]
     public Point EndPosition {
         get { return endPosition; }
         set {
@@ -77,15 +86,19 @@ public class Road : ITargetable, ITimeSimulatable {
         }
     }
     [XmlIgnore]
+    [Browsable(false)]
     public Color Color { get; set; } = Color.FromRgb(70, 70, 0);
 
     public event PropertyChangedEventHandler? PropertyChanged;
     [XmlIgnore]
+    [Category("Construction")]
     public double Length { get => (EndPosition - Position).Length; }
     [XmlIgnore]
+    [Category("Construction")]
     public int Height { get; private set; }
     private int category;
     [XmlAttribute("Category")]
+    [Category("Construction")]
     public int Category {
         get => category;
         set {
@@ -94,14 +107,14 @@ public class Road : ITargetable, ITimeSimulatable {
             Type = (RoadType)category;
         }
     }
-    [XmlAttribute("Snowness")]
-    public double Snowness { get; set; } = 0;
-    [XmlAttribute(nameof(IcyPercent))]
-    public double IcyPercent { get; set; } = 0;
     [XmlIgnore]
+    [Category("Construction")]
     public List<Road> RoadsConnected { get; set; } = new List<Road>();
+    [Browsable(false)]
     public Agent? ReservedAgent { get; set; } = null;
+    [Browsable(false)]
     public AgentStation? ReservedStation { get; set; } = null;
+    [Browsable(false)]
     public bool Finished { get; set; } = false;
 
     public IDrone[] GetAgentsOnRoad(IPlaceable[] agents) {

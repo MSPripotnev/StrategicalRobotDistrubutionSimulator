@@ -5,6 +5,7 @@ using System.Windows.Shapes;
 
 namespace SRDS.Model.Map.Stations;
 
+using System.ComponentModel;
 using System.Xml.Serialization;
 
 using SRDS.Model;
@@ -15,23 +16,34 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
                           humidities = new Stack<double>(),
                           pressures = new Stack<double>();
     public const double WorkRadius = 150.0;
+    [Category(nameof(Temperature))]
     public double Temperature { get; set; }
     [XmlIgnore]
+    [Category(nameof(Temperature))]
     public double TemperatureChange { get; private set; }
+    [Category(nameof(Humidity))]
     public double Humidity { get; set; }
     [XmlIgnore]
+    [Category(nameof(Humidity))]
     public double HumidityChange { get; private set; }
     [XmlIgnore]
+    [Category(nameof(Pressure))]
     public double Pressure { get; set; }
     [XmlIgnore]
+    [Category(nameof(Pressure))]
     public double PressureChange { get; private set; }
     [XmlIgnore]
+    [Category("Wind")]
     public double WindSpeed { get; private set; }
     [XmlIgnore]
+    [Category("Wind")]
     public WindDirectionType WindDirection { get; private set; }
+    [Category("Clouds")]
     public double PrecipitationIntensity { get; set; }
     [XmlIgnore]
+    [Category("Clouds")]
     public bool PrecipitationTypeIsRain { get => PrecipitationIntensity > 0 && Temperature >= 0 && Humidity > 60; }
+    [Category("Clouds")]
     public Cloudness CloudnessType { get; set; }
     private readonly Random rnd;
     public Meteostation() {
