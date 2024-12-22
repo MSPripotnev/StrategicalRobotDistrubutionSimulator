@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -13,6 +13,8 @@ using Model.Environment;
 using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
+
+using Strategical;
 
 using Tactical;
 using Tactical.Qualifiers;
@@ -114,6 +116,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
         private set {
             map = value;
             TimeChanged = null;
+            TimeChanged += Scheduler.Simulate;
             if (map is null) return;
 
             if (EnableMeteo)
@@ -175,9 +178,16 @@ public class Director : INotifyPropertyChanged, IDisposable {
     }
     #endregion
 
+    #region Modules
+    [XmlIgnore]
+    public Planner Planner { get; set; } = new Planner();
+    [XmlIgnore]
+    public Scheduler Scheduler { get; set; } = new Scheduler();
     [XmlIgnore]
     public Recorder Recorder { get; set; } = new Recorder();
+    [XmlIgnore]
     public TaskDistributor Distributor { get; set; }
+    #endregion
 
     #endregion
 
@@ -193,6 +203,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
         };
         mapPath = "";
         Distributor = new TaskDistributor(typeof(FuzzyQualifier), Map);
+        TimeChanged += Scheduler.Simulate;
         Targets = Array.Empty<Target>();
         Agents = Array.Empty<Agent>();
     }

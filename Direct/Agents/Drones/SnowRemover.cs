@@ -1,17 +1,15 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Xml.Serialization;
-
-namespace SRDS.Direct.Agents.Drones;
 using System.Windows.Media.Imaging;
 
+namespace SRDS.Direct.Agents.Drones;
 using Direct.Executive;
 
 using Model.Targets;
-
-using SRDS.Model.Environment;
-using SRDS.Model.Map;
-using SRDS.Model.Map.Stations;
+using Model.Environment;
+using Model.Map;
+using Model.Map.Stations;
 
 public enum SnowRemoverType {
     PlowBrush,
@@ -101,9 +99,16 @@ public class SnowRemover : Agent {
     public SnowRemover(SnowRemover snowRemover, RobotState? _state = null) : base(snowRemover, _state) {
         devices = snowRemover.devices;
     }
+    public void ChangeDevice(SnowRemoverType type) {
+        var d = Devices.ToList();
+        d.RemoveAll(p => type < SnowRemoverType.Cleaver ? p < SnowRemoverType.Cleaver : p >= SnowRemoverType.Cleaver);
+        d.Add(type);
+        Devices = d.ToArray();
+    }
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {
         case RobotState.Broken:
+        case RobotState.Refuel:
         case RobotState.Ready:
         case RobotState.Thinking:
         case RobotState.Going:

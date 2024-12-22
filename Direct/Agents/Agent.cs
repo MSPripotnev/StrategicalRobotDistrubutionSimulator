@@ -2,23 +2,26 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
 
 namespace SRDS.Direct.Agents;
+using Executive;
 using Drones;
-using Direct.Executive;
+
+using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
-using System.Windows.Media.Imaging;
 
 public enum RobotState {
     Disable = -1,
+    Broken,
+    Refuel,
     Ready,
     Thinking,
     Going,
-    Working,
-    Broken
+    Working
 }
 [XmlInclude(typeof(SnowRemover))]
 [XmlInclude(typeof(Transporter))]
@@ -26,11 +29,13 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public int ID { get; set; } = 0;
     #region Control
     [XmlIgnore]
-    public const double FuelDecrease = 0.01;
+    public double FuelCapacity { get; init; } = 350;
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    public const double FuelDecrease = 30.0 / 100 / 1000;
     private double fuel = 100;
     public double Fuel {
         get => fuel;
-        set => fuel = Math.Min(100, Math.Max(0, value));
+        set => fuel = Math.Min(FuelCapacity, Math.Max(0, value));
     }
 
     #region State Machine
@@ -45,16 +50,10 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         set {
             switch (value) {
             case RobotState.Disable:
-                break;
             case RobotState.Broken:
-                if (Home is not null && (TargetPosition - Home.Position).Length > InteractDistance)
-                    TargetPosition = Home.Position;
+            case RobotState.Refuel:
                 break;
             case RobotState.Ready:
-                if (Home is not null && CurrentState != RobotState.Working && (Position - Home.Position).Length > 15) {
-                    TargetPosition = Home.Position;
-                    return;
-                }
                 //объект взят
                 if (CurrentState == RobotState.Working) {
                     if (AttachedObj is not null) {
@@ -102,18 +101,15 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             return;
         case RobotState.Broken:
             break;
+        case RobotState.Refuel:
+            if ((Fuel += 40.0 / 60 * timeFlow.TotalSeconds) > FuelCapacity - 1)
+                CurrentState = RobotState.Ready;
+            break;
         case RobotState.Ready:
             if (AttachedObj is not null && !FuelShortageCheck()) {
                 TargetPosition = AttachedObj.Position;
                 break;
             }
-            if (Home is null) break;
-            if ((Home.Position - Position).Length > 15 && (TargetPosition - Home.Position).Length > 15)
-                TargetPosition = Home.Position;
-            else if ((Position - Home.Position).Length < 15 && !Trajectory.Any())
-                Fuel = 100;
-            else
-                Move();
             break;
         case RobotState.Going:
             if (Trajectory.Count > 0)
@@ -219,8 +215,9 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
         WayIterations++;
     }
+    protected TimeSpan timeFlow = TimeSpan.Zero;
     protected void ActualSpeedRecalculate(DateTime time) {
-        TimeSpan timeFlow = time - _time;
+        timeFlow = time - _time;
         if (timeFlow.TotalSeconds > 0)
             ActualSpeed = (CurrentState == RobotState.Working ? WorkSpeed : Speed) * timeFlow.TotalSeconds;
         _time = time;
@@ -252,6 +249,31 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public List<ITargetable> BlockedTargets { get; set; } = new List<ITargetable>();
     [XmlIgnore]
     public List<Agent> OtherAgents { get; set; } = new List<Agent>();
+
+    public bool Refuel(Station station, double fuel) {
+        if (station is not AgentStation or AntiIceStation or GasStation) return false;
+        if (PathFinder.Distance(station.Position, Position) > 15) return false;
+        if (CurrentState != RobotState.Refuel) {
+            CurrentState = RobotState.Refuel;
+            return false;
+        }
+        if (Fuel < fuel)
+            return false;
+        return true;
+    }
+    public bool Link(ITargetable target) {
+        if (target is Road r && PathFinder.Distance(Position, Position ^ r) > 15) return false;
+        else if (target is Target t && PathFinder.Distance(Position, t.Position) > 15) return false;
+        target.ReservedAgent = this;
+        AttachedObj = target;
+        CurrentState = RobotState.Working;
+        return true;
+    }
+    public void Unlink() {
+        AttachedObj = null;
+        Trajectory.Clear();
+        CurrentState = RobotState.Ready;
+    }
     #endregion
 
     #region Debug Info

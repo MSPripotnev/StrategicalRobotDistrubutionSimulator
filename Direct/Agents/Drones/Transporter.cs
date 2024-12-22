@@ -102,6 +102,7 @@ public class Transporter : Agent {
         switch (CurrentState) {
         case RobotState.Disable:
         case RobotState.Broken:
+        case RobotState.Refuel:
         case RobotState.Ready:
             base.Simulate(sender, time);
             break;

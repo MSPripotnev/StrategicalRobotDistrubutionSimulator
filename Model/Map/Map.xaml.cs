@@ -16,10 +16,12 @@ using Direct.Agents;
 using Direct.Agents.Drones;
 using Direct.Executive;
 using Direct.Tactical.Qualifiers;
+using Direct.Strategical;
 using Environment;
 using Stations;
 using Targets;
 using PropertyTools.Wpf;
+using System;
 
 /// <summary>
 /// Логика взаимодействия для Map.xaml
@@ -146,6 +148,8 @@ public partial class MapWPF : Window {
                     tester.Models = vs.ToArray();
                 }
                 tester.ModelSwitched += director.Recorder.OnModelSwitched;
+
+                director.Scheduler.Scheduled += PlanRefresh;
 
                 if (director.Meteo != null) {
                     director.Meteo.PropertyChanged += RefreshMeteo;
@@ -336,32 +340,53 @@ public partial class MapWPF : Window {
                 };
                 mapCanvas.Children.Add(crossroad_r);
             } else {
-                IPlaceable? obj = FindObject(clickPos);
-                if (obj != null) {
-                    Binding binding = new Binding(".");
-                    binding.Source = obj;
-                    binding.Mode = BindingMode.TwoWay;
-                    propertyGrid.SetBinding(PropertyGrid.SelectedObjectProperty, binding);
-                } else propertyGrid.SelectedObject = null;
+                if (FindObject(clickPos) is IPlaceable obj) {
+                    propertyGrid.Visibility = Visibility.Visible;
+                    planView.Visibility = Visibility.Collapsed;
+                    propertyGrid.SetBinding(PropertyGrid.SelectedObjectProperty, new Binding(".") { Source = obj, Mode = BindingMode.TwoWay });
+                } else {
+                    propertyGrid.SelectedObject = null;
+                    propertyGrid.SetBinding(PropertyGrid.SelectedObjectProperty, "");
+                    propertyGrid.Visibility = Visibility.Collapsed;
+                    planView.Visibility = Visibility.Visible;
+                }
             }
         }
     }
     private void MenuAssignesItem_Click(object sender, RoutedEventArgs e) {
         if (sender is not MenuItem button || Director is null) return;
-        if (propertyGrid.SelectedObject is not Agent ag) throw new AccessViolationException();
+        if (propertyGrid.SelectedObject is not Agent agent) throw new AccessViolationException();
         switch (button.Tag) {
-        case "ar":
-            if (FindObject(lastClickPos) is not Road r) throw new AccessViolationException();
-            ag.Home?.Free(ag);
-            ag.Home?.Link(ag, r);
-            break;
-        case "ap":
-            ag.TargetPosition = lastClickPos;
+        case "ap": {
+            var action = Planner.GoToPlan(agent, lastClickPos, d_time);
+            if (action is null) return;
+
+            director?.Scheduler.Add(action);
             break;
         }
-        if (button.Tag is SnowRemoverType d) {
-            if (FindObject(lastClickPos) is not AgentStation || ag is not SnowRemover r) throw new AccessViolationException();
-            ag.Home?.ChangeDevice(r, d);
+        case "ar": {
+            if (FindObject(lastClickPos) is not Road road || agent is not SnowRemover remover) throw new AccessViolationException();
+            var actions = Planner.WorkOnRoad(remover, road, d_time, DateTime.MaxValue, 0.0, 0.0);
+            if (!actions.HasValue) throw new InvalidOperationException();
+
+            director?.Scheduler.Add(actions.Value.goAction);
+            break;
+        }
+        case "af": {
+            if (director is null || director.Map is null) return;
+            var actions = Planner.RefuelPlan(agent, director.Map, d_time);
+            if (!actions.HasValue) throw new InvalidOperationException();
+
+            director?.Scheduler.Add(actions.Value.goAction);
+            break;
+        }
+        }
+        if (button.Tag is SnowRemoverType device) {
+            if (FindObject(lastClickPos) is not AgentStation station || agent is not SnowRemover remover) throw new AccessViolationException();
+            var actions = Planner.ChangeDevicePlan(remover, station, device, d_time);
+            if (!actions.HasValue) return;
+
+            director?.Scheduler.Add(actions.Value.goAction);
         }
     }
     private void MenuItem_Click(object sender, RoutedEventArgs e) {
@@ -654,6 +679,7 @@ public partial class MapWPF : Window {
         stopB.IsEnabled = false;
         stepB.IsEnabled = false;
         propertyGrid.SelectedObject = null;
+        planView.Items.Clear();
     }
     private void StartButton_Click(object sender, RoutedEventArgs e) {
         if (startB.Content.ToString() == "▶️") {
@@ -796,20 +822,29 @@ public partial class MapWPF : Window {
             else
                 assignB.Visibility = Visibility.Collapsed;
             goToB.Visibility = Visibility.Visible;
-            if (FindObject(lastClickPos) is AgentStation) {
-                changeDeviceB.Visibility = Visibility.Visible;
-                changeDeviceB.Items.Clear();
-                var ds = typeof(SnowRemoverType).GetEnumValues();
-                for (int i = 0; i < ds.Length; i++) {
-                    var b = new MenuItem() {
-                        Tag = ds.GetValue(i),
-                        Name = $"device{typeof(SnowRemoverType).GetEnumName(i)}B",
-                        Header = typeof(SnowRemoverType).GetEnumName(i)
-                    };
-                    b.Click += MenuAssignesItem_Click;
-                    changeDeviceB.Items.Add(b);
+            var obj = FindObject(lastClickPos);
+            if (obj is AgentStation or GasStation or AntiIceStation) {
+                refuelB.Visibility = Visibility.Visible;
+                if (obj is AgentStation) {
+                    changeDeviceB.Visibility = Visibility.Visible;
+                    changeDeviceB.Items.Clear();
+                    var ds = typeof(SnowRemoverType).GetEnumValues();
+                    for (int i = 0; i < ds.Length; i++) {
+                        var b = new MenuItem() {
+                            Tag = ds.GetValue(i),
+                            Name = $"device{typeof(SnowRemoverType).GetEnumName(i)}B",
+                            Header = typeof(SnowRemoverType).GetEnumName(i)
+                        };
+                        b.Click += MenuAssignesItem_Click;
+                        changeDeviceB.Items.Add(b);
+                    }
+                } else {
+                    changeDeviceB.Visibility = Visibility.Collapsed;
                 }
-            } else changeDeviceB.Visibility = Visibility.Collapsed;
+            } else {
+                changeDeviceB.Visibility = Visibility.Collapsed;
+                refuelB.Visibility = Visibility.Visible;
+            }
 
             addObjectB.Visibility = Visibility.Collapsed;
             deleteObjectB.Visibility = Visibility.Collapsed;
@@ -819,6 +854,7 @@ public partial class MapWPF : Window {
             assignB.Visibility = Visibility.Collapsed;
             goToB.Visibility = Visibility.Collapsed;
             changeDeviceB.Visibility = Visibility.Collapsed;
+            refuelB.Visibility = Visibility.Collapsed;
 
             addObjectB.Visibility = Visibility.Visible;
             deleteObjectB.Visibility = Visibility.Visible;
@@ -848,6 +884,14 @@ public partial class MapWPF : Window {
                 if (Director.Agents.Any())
                     wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
             }
+        }
+    }
+    public void PlanRefresh(object? sender, SystemAction action) {
+        if (action.UI?.Parent is not null) return;
+        if (sender is null)
+            planView.Items.Remove(action.UI);
+        else if (action.UI is not null) {
+            planView.Items.Add(action.UI);
         }
     }
     #endregion
