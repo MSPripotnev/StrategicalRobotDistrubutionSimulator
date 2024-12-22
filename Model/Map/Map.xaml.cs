@@ -19,6 +19,8 @@ using Direct.Tactical.Qualifiers;
 using Environment;
 using Stations;
 using Targets;
+using PropertyTools.Wpf;
+
 /// <summary>
 /// Логика взаимодействия для Map.xaml
 /// </summary>
@@ -184,11 +186,6 @@ public partial class MapWPF : Window {
         }
         if (Director != null && !Director.CheckMission())
             refreshTimer.Start();
-        if (propertyGrid.SelectedObject != null) {
-            object o = propertyGrid.SelectedObject;
-            propertyGrid.SelectedObject = null;
-            propertyGrid.SelectedObject = o;
-        }
     }
     private void Work() {
         try {
@@ -341,10 +338,10 @@ public partial class MapWPF : Window {
             } else {
                 IPlaceable? obj = FindObject(clickPos);
                 if (obj != null) {
-                    Binding binding = new Binding();
+                    Binding binding = new Binding(".");
                     binding.Source = obj;
                     binding.Mode = BindingMode.TwoWay;
-                    propertyGrid.SelectedObject = binding.Source;
+                    propertyGrid.SetBinding(PropertyGrid.SelectedObjectProperty, binding);
                 } else propertyGrid.SelectedObject = null;
             }
         }
@@ -656,6 +653,7 @@ public partial class MapWPF : Window {
                 el.IsEnabled = true;
         stopB.IsEnabled = false;
         stepB.IsEnabled = false;
+        propertyGrid.SelectedObject = null;
     }
     private void StartButton_Click(object sender, RoutedEventArgs e) {
         if (startB.Content.ToString() == "▶️") {
