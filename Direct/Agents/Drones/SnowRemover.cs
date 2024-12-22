@@ -10,6 +10,7 @@ using Model.Targets;
 using Model.Environment;
 using Model.Map;
 using Model.Map.Stations;
+using PropertyTools.DataAnnotations;
 
 public enum SnowRemoverType {
     PlowBrush,
@@ -28,12 +29,15 @@ public class SnowRemover : Agent {
         _ => (0.0, 0.0, 0.0)
     };
     [XmlIgnore]
+    [Category("Work")]
     public double RemoveSpeed { get; private set; }
     [XmlIgnore]
+    [Category("Work")]
     public double MashSpeed { get; private set; }
     private SnowRemoverType[] devices;
     [XmlArray("Devices")]
     [XmlArrayItem("Device")]
+    [Category("Work")]
     public SnowRemoverType[] Devices {
         get => devices;
         set {
