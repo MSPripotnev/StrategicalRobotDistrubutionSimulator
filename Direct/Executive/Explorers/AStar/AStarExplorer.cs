@@ -26,7 +26,7 @@ internal class AStarExplorer : IExplorer {
         Result = ClosedPoints[0];
     }
     public bool FindWaySync() {
-        while (Result.Heuristic > InteractDistance) {
+        while (Result.Heuristic > Scale) {
             OpenPoints(Result);
             if (!SelectNextPoint() || !OpenedPoints.Any())
                 return false;
@@ -41,7 +41,7 @@ internal class AStarExplorer : IExplorer {
     }
     public static void PrevStep() { }
     private void Check() {
-        if (Result.Heuristic < InteractDistance)
+        if (Result.Heuristic < Scale)
             PathCompleted?.Invoke(this, Result);
         else if (!OpenedPoints.Any())
             PathFailed?.Invoke(this, EventArgs.Empty);
