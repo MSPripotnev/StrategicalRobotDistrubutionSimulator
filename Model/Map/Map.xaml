@@ -19,7 +19,7 @@
             <RowDefinition Height="25*"/>
         </Grid.RowDefinitions>
         <Button Grid.ColumnSpan="1" Grid.RowSpan="3" Grid.Column="0"/>
-        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" Background="WhiteSmoke" MouseMove="MapCanvas_MouseMove" MouseLeave="MapCanvas_MouseLeave" ContextMenuOpening="MapCanvas_ContextMenuOpening" >
+        <Canvas x:Name="mapCanvas" Grid.Column="0" Grid.Row="0" Grid.RowSpan="3" MouseMove="MapCanvas_MouseMove" MouseLeave="MapCanvas_MouseLeave" ContextMenuOpening="MapCanvas_ContextMenuOpening" Background="Snow" >
             <Canvas.ContextMenu>
                 <ContextMenu>
                     <MenuItem x:Name="addObjectB" Header="Добавить">
@@ -48,6 +48,7 @@
                     <MenuItem x:Name="assignB" Header="Назначить на..." Visibility="Collapsed" Tag="ar" Click="MenuAssignesItem_Click"/>
                     <MenuItem x:Name="goToB" Header="Отправить к..." Visibility="Collapsed" Tag="ap" Click="MenuAssignesItem_Click"/>
                     <MenuItem x:Name="changeDeviceB" Header="Сменить устройство на..." Visibility="Collapsed" Tag="ad"/>
+                    <MenuItem x:Name="refuelB" Header="Заправиться" Visibility="Collapsed" Tag="af" Click="MenuAssignesItem_Click"/>
                 </ContextMenu>
             </Canvas.ContextMenu>
         </Canvas>
@@ -73,6 +74,12 @@
         <Label x:Name="bestQualityL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,110,0,0" VerticalAlignment="Top"/>
         <Label x:Name="allTimeCountL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,140,0,0" VerticalAlignment="Top"/>
         <Label x:Name="traversedWayL" Grid.Column="2" Grid.Row="0" Content="" MaxHeight="50" Margin="0,170,0,0" VerticalAlignment="Top"/>
+        <pt:PropertyGrid Grid.Column="1" Grid.Row="1"
+                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                         x:Name="propertyGrid" Panel.ZIndex="5"
+                         />
+        <TreeView Grid.Column="1" Grid.Row="1"
+                  Name="planView" Panel.ZIndex="4" Visibility="Collapsed" ScrollViewer.CanContentScroll="True"/>
         <Menu x:Name="menu" BorderThickness="2" BorderBrush="Gray" Height="20" Grid.ColumnSpan="2" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" VerticalAlignment="Top" >
             <MenuItem Header="Файл" FlowDirection="LeftToRight" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-5,0,0,0">
                 <MenuItem Header="Создать" Tag="0" Click="FileMenuItem_Click"/>
@@ -90,10 +97,6 @@
                 </MenuItem>
             </MenuItem>
         </Menu>
-        <pt:PropertyGrid Grid.Column="1" Grid.Row="1"
-                         HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                         Name="propertyGrid" Panel.ZIndex="0"
-                         ></pt:PropertyGrid>
         <Button x:Name="testsB" Grid.Column="1" Content="Модели" HorizontalAlignment="Right" Margin="0,75,10,0" Grid.Row="2" VerticalAlignment="Top" Height="30" Width="69" Click="TestsB_Click"/>
         <CheckBox x:Name="drawCB" Grid.Column="2" Grid.Row="2" MaxHeight="50" Margin="0,5,5,0" VerticalAlignment="Top" HorizontalAlignment="Right" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" IsChecked="True"/>
         <CheckBox x:Name="meteoCB" Grid.Column="1" Content="Погода" HorizontalAlignment="Left" Margin="10,37,0,0" Grid.Row="2" VerticalAlignment="Top" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked"/>
