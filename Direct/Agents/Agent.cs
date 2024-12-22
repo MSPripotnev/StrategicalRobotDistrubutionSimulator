@@ -26,13 +26,17 @@ public enum RobotState {
 [XmlInclude(typeof(SnowRemover))]
 [XmlInclude(typeof(Transporter))]
 public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
+    [Category("Identify")]
+    [PropertyTools.DataAnnotations.SortIndex(-1)]
     public int ID { get; set; } = 0;
     #region Control
     [XmlIgnore]
+    [Category("Movement")]
     public double FuelCapacity { get; init; } = 350;
     [PropertyTools.DataAnnotations.Browsable(false)]
     public const double FuelDecrease = 30.0 / 100 / 1000;
     private double fuel = 100;
+    [Category("Movement")]
     public double Fuel {
         get => fuel;
         set => fuel = Math.Min(FuelCapacity, Math.Max(0, value));
@@ -43,6 +47,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     private protected RobotState state;
     [XmlIgnore]
+    [Category("Control")]
     public virtual RobotState CurrentState {
         get {
             return state;
@@ -140,6 +145,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     #region Pathfinder
     private Point position;
+    [Category("Movement")]
     public Point Position {
         get => position;
         set {
@@ -147,11 +153,15 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Position)));
         }
     }
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public double MaxStraightRange { get; set; }
     [XmlIgnore]
+    [Category("Movement")]
     public double Speed { get; set; }
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public double WorkSpeed { get => Speed * 0.8; }
     [XmlIgnore]
+    [Category("Movement")]
     public double ActualSpeed { get; set; }
     [XmlIgnore]
     private List<Point> trajectory = new List<Point>();
@@ -162,6 +172,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     public Point[] BackTrajectory { get; set; }
     [XmlIgnore]
+    [Category("Movement")]
     public List<Point> Trajectory {
         get { return trajectory; }
         set {
@@ -171,6 +182,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         }
     }
     [XmlIgnore]
+    [Category("Movement")]
     public Point TargetPosition {
         get {
             return Trajectory.Count > 0 ? Trajectory[^1] : Position; //последняя точка пути
@@ -231,6 +243,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     #region Interact
     private AgentStation? home;
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public AgentStation? Home {
         get => home;
         set {
@@ -239,15 +252,19 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         }
     }
     [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public int InteractDistance { get; init; } = 30;
     [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public int ViewingDistance { get; init; } = 2;
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
     public ITargetable? AttachedObj { get; set; } = null;
     [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public List<ITargetable> BlockedTargets { get; set; } = new List<ITargetable>();
     [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public List<Agent> OtherAgents { get; set; } = new List<Agent>();
 
     public bool Refuel(Station station, double fuel) {
@@ -278,12 +295,16 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     #region Debug Info
     [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public long ThinkingIterations { get; protected set; } = 0;
     [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public long WayIterations { get; protected set; } = 0;
     [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public double TraversedWay { get; set; } = 0;
     [XmlIgnore]
+    [Category("Movement")]
     public double DistanceToTarget {
         get {
             if (Trajectory.Count < 1 || AttachedObj == null) return -1;

@@ -24,6 +24,7 @@ public abstract class Station : IPlaceable {
         }
     }
     [XmlIgnore]
+    [Browsable(false)]
     public Color Color { get; set; }
     protected BitmapImage? bitmapImage = null;
     public Station() { }

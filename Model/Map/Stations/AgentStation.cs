@@ -7,6 +7,8 @@ using Direct;
 using Direct.Agents;
 using Direct.Executive;
 
+using PropertyTools.DataAnnotations;
+
 public enum SystemState {
 
 }
@@ -22,6 +24,7 @@ public class AgentStation : Station, IControllable, IRefueller {
     [XmlIgnore]
     public Road[] AssignedRoads { get; set; } = Array.Empty<Road>();
     [XmlIgnore]
+    [Browsable(false)]
     public Agent[] FreeAgents {
         get {
             return AssignedAgents.Where(x => x.CurrentState == RobotState.Ready).ToArray();
