@@ -38,33 +38,34 @@ public class Planner {
 
         return (goAction, action);
     }
-    public static (SystemAction goAction, SystemAction workAction, SystemAction? returnAction)? WorkOnRoad(SnowRemover agent, Road road, DateTime startTime, DateTime endTime, double snowness, double icy) {
+    public static (SystemAction goAction, SystemAction workAction, SystemAction? returnAction)? WorkOnRoad(SnowRemover agent, Road road, DateTime startTime, DateTime workEndTime, double snowness = 0.0, double icy = 0.0) {
         var goAction = GoToPlan(agent, agent.Position ^ road, startTime);
         if (goAction is null) return null;
 
         SystemAction? returnAction = null;
-        if (endTime < DateTime.MaxValue) {
-            returnAction = GoToPlan(agent, agent.Home is not null ? agent.Home.Position : agent.Position, endTime);
-            if (returnAction is null) return null;
-        }
 
-        var action = new SystemAction(goAction.EndTime, DateTime.MaxValue, ActionType.WorkOn, agent, road) {
+        var action = new SystemAction(goAction.EndTime, workEndTime, ActionType.WorkOn, agent, road) {
             ExpectedResult = new ActionResult() {
                 SubjectAfter = new SnowRemover(agent, RobotState.Working) { Position = agent.Position ^ road },
                 ObjectAfter = new Road(road) {
                     Snowness = snowness,
                     IcyPercent = icy
                 },
-                EstimatedTime = (returnAction is not null ? returnAction.EndTime : endTime) - startTime
+                EstimatedTime = workEndTime - startTime
             }
-        };
+        }; 
         goAction.Next = action;
+
+        if (workEndTime < DateTime.MaxValue) {
+            returnAction = GoToPlan(agent, agent.Home is not null ? agent.Home.Position : agent.Position, workEndTime);
+            if (returnAction is null) return null;
+        }
         action.Next = returnAction;
 
         if (action is null) return null;
         return (goAction, action, returnAction);
     }
-    public static SystemAction? GoToPlan(Agent agent, Point targetPosition, DateTime time) {
+    public static SystemAction? GoToPlan(Agent agent, Point targetPosition, DateTime startTime) {
         if (agent.Pathfinder is null) return null;
         AStarExplorer explorer = new AStarExplorer(agent.Position, targetPosition, agent.Pathfinder.Scale, agent.Pathfinder.Map, agent.InteractDistance);
         if (!explorer.FindWaySync())
@@ -74,13 +75,13 @@ public class Planner {
 
         ActionResult result = new ActionResult() {
             SubjectAfter = (IControllable)subjectConstructorInfo.Invoke(new object?[] { agent, null }),
-            EstimatedTime = time.AddMinutes(explorer.Result.Distance / agent.Speed) - time
+            EstimatedTime = startTime.AddMinutes(explorer.Result.Distance / agent.Speed) - startTime
         };
         if (result.SubjectAfter is not Agent ragent) return null;
         ragent.Position = explorer.Result;
         ragent.CurrentState = RobotState.Ready;
 
-        return new SystemAction(time, time.AddMinutes(explorer.Result.Distance > 10 ? explorer.Result.Distance / agent.Speed / 60.0 : 0.0), ActionType.GoTo, result, agent, targetPosition);
+        return new SystemAction(startTime, startTime.AddMinutes(explorer.Result.Distance > 10 ? explorer.Result.Distance / agent.Speed / 60.0 : 0.0), ActionType.GoTo, result, agent, targetPosition);
     }
     private static Station? FindNearestRefuelStation(Agent agent, TacticalMap map) {
         var refuelStations = map.Stations.Where(p => p is GasStation or AgentStation).ToArray();

@@ -11,7 +11,8 @@ public enum ActionType {
     GoTo,
     Refuel,
     WorkOn,
-    ChangeDevice
+    ChangeDevice,
+    Union
 }
 public class ActionResult {
     public IControllable? SubjectAfter = null;
@@ -20,24 +21,16 @@ public class ActionResult {
 }
 public class SystemAction {
     public SystemAction() : this(DateTime.MinValue, DateTime.MinValue, ActionType.GoTo, new ActionResult(), null, null) { }
-    public SystemAction(DateTime startTime, DateTime estimatedTime, ActionType type, ActionResult expectedResult, IControllable? _subject, object? _object) {
+    public SystemAction(DateTime startTime, DateTime endTime, ActionType type, ActionResult expectedResult, IControllable? _subject, object? _object) {
         StartTime = startTime;
-        EndTime = estimatedTime;
+        EndTime = endTime;
         Type = type;
         ExpectedResult = expectedResult;
         RealResult = null;
         Subject = _subject;
         Object = _object;
     }
-    public SystemAction(DateTime startTime, DateTime estimatedTime, ActionType type, IControllable? _subject, object? _object) {
-        StartTime = startTime;
-        EndTime = estimatedTime;
-        Type = type;
-        ExpectedResult = new ActionResult();
-        RealResult = null;
-        Subject = _subject;
-        Object = _object;
-    }
+    public SystemAction(DateTime startTime, DateTime endTime, ActionType type, IControllable? _subject, object? _object) : this(startTime, endTime, type, new ActionResult(), _subject, _object) { }
     public ActionType Type { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
@@ -65,6 +58,7 @@ public class SystemAction {
         }
     }
     public override string? ToString() {
+        // if (Header is not null) return Header;
         switch (Type) {
         case ActionType.GoTo: {
             if (Subject is not Agent agent || Object is not Point point) return base.ToString();

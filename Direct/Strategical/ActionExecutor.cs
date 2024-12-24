@@ -21,7 +21,7 @@ public class ActionExecutor {
             ags.Assign(n_agent);
         else if (action.Object is Road n_road)
             ags.Assign(n_road);
-        else return false;
+        else if (action.Object is (int nAgents, int nRoads))
         return true;
     }
 

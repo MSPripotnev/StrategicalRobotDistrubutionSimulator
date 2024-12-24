@@ -23,7 +23,7 @@ public class SnowRemover : Agent {
     public static (double remove, double mash, double fuelDecrease) DeviceRemoveSpeed(SnowRemoverType device) => device switch {
         SnowRemoverType.Rotor => (5.0, 0.2, 0.5),
         SnowRemoverType.Shovel => (100.0, 0.2, 0.0),
-        SnowRemoverType.AntiIceDistributor => (0.0, 200.0, 0.0),
+        SnowRemoverType.AntiIceDistributor => (4.0, 50.0, 0.0),
         SnowRemoverType.Cleaver => (0.0, 5.0, 0.25),
         SnowRemoverType.PlowBrush => (1.0, 0.2, 0.25),
         _ => (0.0, 0.0, 0.0)

@@ -52,8 +52,8 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         };
     }
     public static double GetIcyPercent(SnowType type) => type switch {
-        SnowType.LooseSnow => 0,
-        SnowType.Snowfall => 10,
+        SnowType.LooseSnow => 10,
+        SnowType.Snowfall => 20,
         SnowType.IceSlick => 40,
         SnowType.BlackIce => 70,
         SnowType.Icy => 100,
