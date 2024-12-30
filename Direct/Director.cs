@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Xml.Serialization;
@@ -202,7 +202,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
             Borders = mapSize
         };
         mapPath = "";
-        Distributor = new TaskDistributor(typeof(FuzzyQualifier), Map);
+        Distributor = new TaskDistributor(typeof(FuzzyQualifier), Map, TaskDistributor.GetSnowdriftControlFuzzyQualifyVariables());
         TimeChanged += Scheduler.Simulate;
         Targets = Array.Empty<Target>();
         Agents = Array.Empty<Agent>();
@@ -354,8 +354,9 @@ public class Director : INotifyPropertyChanged, IDisposable {
         using (FileStream fs = new FileStream(path, FileMode.Open)) {
             XmlSerializer xmlReader = new XmlSerializer(typeof(Director));
             director = (Director?)xmlReader.Deserialize(fs);
-            if (director is not null)
-                director.Distributor = new TaskDistributor(null, director.map);
+            if (director is not null) {
+                director.Distributor = new TaskDistributor(null, director.map, TaskDistributor.GetSnowdriftControlFuzzyQualifyVariables());
+            }
             fs.Close();
         }
         return director;

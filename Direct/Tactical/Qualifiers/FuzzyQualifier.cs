@@ -30,17 +30,7 @@ public class FuzzyQualifier : IQualifier {
     }
     public object Net;
     public FuzzyLogic.Inference.Engines.Base.FuzzyInferenceEngine Engine;
-    public FuzzyQualifier() {
-        SnowRemover r;
-        Snowdrift s;
-        Dictionary<string, (double min, double max)> values = new Dictionary<string, (double min, double max)>() {
-            { "DistanceToTarget", (50, 400) },
-            { nameof(r.Fuel), (0, 100) },
-            { nameof(s.Level), (0, 40) },
-            { nameof(s.MashPercent), (0, 100)},
-            { nameof(r.RemoveSpeed), (0.5, 1.0)},
-            { nameof(r.MashSpeed), (1.0, 2.0)}
-        };
+    public FuzzyQualifier(Dictionary<string, (double min, double max)> values) {
 
         Engine = new FuzzyLogic.Inference.Engines.SugenoInferenceEngine(TNorm, TConorm,
             new FuzzyLogic.Defuzzification.CentroidDefuzzifier());

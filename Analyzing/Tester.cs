@@ -4,6 +4,7 @@ using System.Xml.Serialization;
 namespace SRDS.Analyzing;
 using SRDS.Analyzing.Models;
 using SRDS.Direct;
+using SRDS.Direct.Tactical;
 
 public class Tester {
     public IModel[] Models { get; set; } = Array.Empty<IModel>();
@@ -82,7 +83,7 @@ public class Tester {
         ActiveDirector = Models[0].Unpack();
         ActiveDirector.Recorder = r;
         ActiveDirector.Learning = l;
-        ActiveDirector.Distributor = new(q, ActiveDirector.Map);
+        ActiveDirector.Distributor = new(q, ActiveDirector.Map, TaskDistributor.GetSnowdriftControlFuzzyQualifyVariables());
         return ActiveDirector;
     }
     public void LoadModel(string path) {
