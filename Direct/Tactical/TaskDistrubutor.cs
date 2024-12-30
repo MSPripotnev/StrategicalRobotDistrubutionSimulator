@@ -39,18 +39,33 @@ public class TaskDistributor {
     public Dictionary<ITargetable, DistributionQualifyReading> DistributionQualifyReadings { get; set; } = new();
     #endregion
 
-    public TaskDistributor() : this(null, new TacticalMap()) { }
-    public TaskDistributor(Type? qualifyType, TacticalMap map) {
+    public TaskDistributor() : this(null, new TacticalMap(), new Dictionary<string, (double min, double max)>()) { }
+    public TaskDistributor(Type? qualifyType, TacticalMap map, Dictionary<string, (double min, double max)> inputVars) {
         if (qualifyType == null)
             qualifyType = typeof(DistanceQualifier);
-        if (qualifyType?.GetConstructor(Type.EmptyTypes)?.Invoke(null) is IQualifier q)
+        if (qualifyType == typeof(FuzzyQualifier) && qualifyType?.GetConstructor(new Type[] { typeof(Dictionary<string, (double min, double max)>) })?.Invoke(new object[] { inputVars }) is IQualifier q)
             Qualifier = q;
+        else if (qualifyType == typeof(DistanceQualifier)) 
+            Qualifier = new DistanceQualifier();
         else throw new Exception($"Could not find constructor for type '{qualifyType?.FullName}'");
         Map = map;
         DistributeRoadsBetweenStations();
     }
 
     #region Distribution
+
+    public static Dictionary<string, (double min, double max)> GetSnowdriftControlFuzzyQualifyVariables() {
+        SnowRemover r;
+        Snowdrift s;
+        return new Dictionary<string, (double min, double max)>() {
+            { "DistanceToTarget", (50, 400) },
+            { nameof(r.Fuel), (0, 100) },
+            { nameof(s.Level), (0, 40) },
+            { nameof(s.MashPercent), (0, 100)},
+            { nameof(r.RemoveSpeed), (0.5, 1.0)},
+            { nameof(r.MashSpeed), (1.0, 2.0)}
+        };
+    }
 
     #region General
     public void DistributeTask(PropertyChangedEventHandler? propertyChanged) {
