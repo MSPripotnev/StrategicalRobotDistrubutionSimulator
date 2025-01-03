@@ -7,7 +7,7 @@
     d:DataContext="{d:DesignInstance Type=srds:Director}"
     x:Class="SRDS.Model.Map.MapWPF"
         mc:Ignorable="d"
-        Title="Map" Height="520" Width="900" MouseDown="Window_MouseDown" SizeChanged="Window_SizeChanged" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown">
+        Title="Map" Height="520" Width="900" MouseDown="Window_MouseDown" SizeChanged="Window_SizeChanged" Closing="Window_Closing" PreviewKeyDown="Window_PreviewKeyDown" MouseWheel="Window_MouseWheel">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="100*"/>
@@ -52,6 +52,7 @@
                 </ContextMenu>
             </Canvas.ContextMenu>
         </Canvas>
+        <Label x:Name="scaleL" Grid.Column="0" Grid.Row="2" Content="1 пкс = 1 м" Margin="0,0,5,5" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
         <WrapPanel Grid.Column="1" Grid.Row="2" Panel.ZIndex="0" Background="#FFCFC0B0"/>
         <Label Grid.Row="2" Grid.Column="1" MaxHeight="30" MaxWidth="110" Content="Масштаб поиска: " VerticalAlignment="Top" HorizontalAlignment="Left" Margin="0,0,0,0"/>
         <Label Grid.Row="2" Grid.Column="1" MaxHeight="50" Content="Тестирование: " VerticalAlignment="Top" HorizontalAlignment="Center" Margin="50,0,20,0"/>

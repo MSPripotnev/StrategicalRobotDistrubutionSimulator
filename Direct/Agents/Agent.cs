@@ -169,9 +169,18 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public double ActualSpeed { get; set; }
     [XmlIgnore]
     private List<Point> trajectory = new List<Point>();
+    private PathFinder? pathfinder;
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
-    public PathFinder? Pathfinder { get; set; }
+    public PathFinder? Pathfinder {
+        get => pathfinder;
+        set {
+            pathfinder = value;
+            if (state == RobotState.Thinking)
+                CurrentState = RobotState.Thinking;
+            Speed = 90 / 3.6 / (pathfinder?.Map.MapScale ?? 1);
+        }
+    }
     [PropertyTools.DataAnnotations.Browsable(false)]
     [XmlIgnore]
     public Point[] BackTrajectory { get; set; }
@@ -196,7 +205,6 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             Trajectory.Add(value);
             if (CurrentState != RobotState.Working)
                 CurrentState = RobotState.Thinking;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Trajectory)));
         }
     }
 
@@ -397,7 +405,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         Color = Colors.Red;
         CurrentState = RobotState.Ready;
         AttachedObj = null;
-        Speed = 8.0 / 60;
+        Speed = 90 / 3.6;
         InteractDistance = 30;
         BlockedTargets = new List<ITargetable>();
         MaxStraightRange = 30;

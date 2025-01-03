@@ -19,7 +19,7 @@ public enum Cloudness {
 
 public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
     private readonly TacticalMap map;
-
+    public double MapScale { get => map.MapScale; }
     #region Weather Properties
     private double t_min, t_max, h_min, h_max, p_min, p_max, w_min, w_max;
     public Vector Wind { get; set; }
@@ -89,8 +89,8 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         if (_time.Minute % 20 == 0 && _time.Second == 0) {
             if (windPerSecond.Length > 0)
                 windPerSecond /= windPerSecond.Length;
-            windPerSecond = windPerSecond * DailyModifier(_time.Hour, w_min, w_max, 0) * Math.Abs(NormalPressure - Pressure) / 5 +
-                new Vector((Rnd.NextDouble() - 0.5) / 200, (Rnd.NextDouble() - 0.5) / 200);
+            windPerSecond = windPerSecond * DailyModifier(_time.Hour, w_min, w_max, 0) * Math.Abs(NormalPressure - Pressure) / 10 +
+                new Vector((Rnd.NextDouble() - 0.5), (Rnd.NextDouble() - 0.5));
             if (Rnd.NextDouble() < 0.0001)
                 windPerSecond *= -1;
         }
@@ -100,7 +100,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             t_min = Rnd.Next(-20, -5); t_max = Rnd.Next((int)t_min, 5);
             h_min = Rnd.Next(50, 70); h_max = Rnd.Next((int)h_min, t_max > 1 ? 90 : 80);
             p_min = Rnd.Next(-20, -5); p_max = Rnd.Next((int)5, 20);
-            w_min = Rnd.NextDouble() / 60; w_max = Rnd.NextDouble() / 60 + w_min;
+            w_min = Rnd.NextDouble() * 4; w_max = w_min + Rnd.NextDouble() * 2;
         }
     }
     private Dictionary<SnowType, double> FalloutType() {

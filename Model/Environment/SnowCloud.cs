@@ -142,13 +142,12 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
     private DateTime creationTime;
     public bool Finished { get; set; }
     #endregion
-
     public void Simulate(object? sender, DateTime time) {
         if (sender is not GlobalMeteo meteo)
             return;
 
         Vector rndWind = new Vector((new Random().NextDouble() - 0.5) / 8, (new Random().NextDouble() - 0.5) / 8);
-        Velocity = meteo.Wind + rndWind;
+        Velocity = (meteo.Wind + rndWind) / meteo.MapScale;
         Angle += Math.Cos(Vector.AngleBetween(Velocity, new Vector(0, 1))) / 16;
         Position += Velocity;
         double mins, sizeReduceTime, intensityReduceTime;

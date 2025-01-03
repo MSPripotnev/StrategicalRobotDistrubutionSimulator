@@ -12,6 +12,18 @@ public class TacticalMap : INotifyPropertyChanged {
     private Station[] stations;
     private Road[] roads;
     private Size borders;
+    private int mapScale = 1;
+    /// <summary>
+    /// Meters per pixel
+    /// </summary>
+    [XmlAttribute(AttributeName = "scale")]
+    public int MapScale {
+        get => mapScale;
+        set {
+            mapScale = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MapScale)));
+        }
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
