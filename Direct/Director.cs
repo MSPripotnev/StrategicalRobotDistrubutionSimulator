@@ -47,7 +47,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
                 for (int i = 0; i < Agents.Length; i++) {
                     Agents[i].ID = i;
                     if (Agents[i].Pathfinder is null) {
-                        var p = new PathFinder(Map, Scale);
+                        var p = new PathFinder(Map, PathScale);
                         if (p is null) continue;
                         Agents[i].Pathfinder = p;
                         PropertyChanged += p.Refresh;
@@ -124,12 +124,24 @@ public class Director : INotifyPropertyChanged, IDisposable {
             if (Distributor is not null)
                 Distributor.Map = Map;
 
-            foreach (IPlaceable obj in AllObjectsOnMap.Concat(map.Roads))
-                if (obj is ITimeSimulatable its)
+            foreach (IPlaceable obj in AllObjectsOnMap.Concat(map.Roads)) {
+                if (obj is ITimeSimulatable its) {
                     TimeChanged += its.Simulate;
+                    if (obj is Agent agent)
+                        agent.Pathfinder = new PathFinder(map, pathScale);
+                }
+            }
+            Map.PropertyChanged += Map_PropertyChanged;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
         }
     }
+
+    private void Map_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+        foreach (Agent a in agents)
+            a.Pathfinder = new PathFinder(map, pathScale);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Map)));
+    }
+
     private bool enableMeteo;
     public bool EnableMeteo {
         get => enableMeteo;
@@ -167,13 +179,13 @@ public class Director : INotifyPropertyChanged, IDisposable {
     #endregion
 
     #region Settings
-    private float scale;
+    private float pathScale;
     [XmlIgnore]
-    public float Scale {
-        get => scale;
+    public float PathScale {
+        get => pathScale;
         set {
-            scale = value;
-            SettingsChanged?.Invoke(scale);
+            pathScale = value;
+            SettingsChanged?.Invoke(pathScale);
         }
     }
     #endregion
@@ -196,7 +208,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
     public Director() : this(new Size(0, 0)) {
     }
     public Director(Size mapSize) {
-        Scale = 10.0F;
+        PathScale = 10.0F;
         EnableMeteo = true;
         map = Map = new TacticalMap() {
             Borders = mapSize

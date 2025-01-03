@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -47,6 +47,14 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     [Category("Clouds")]
     public Cloudness CloudnessType { get; set; }
     private readonly Random rnd;
+    private TimeSpan timeFlow = TimeSpan.Zero;
+    private DateTime _time;
+    private DateTime Ctime {
+        set {
+            timeFlow = value - _time;
+            _time = value;
+        }
+    }
     public Meteostation() {
         rnd = new Random((int)DateTime.Now.Ticks);
         Color = Colors.LightGray;
@@ -59,6 +67,7 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     public void Simulate(object? sender, DateTime time) {
         if (sender is not GlobalMeteo meteo)
             return;
+        Ctime = time;
 
         if (time.Second == 0) {
             Temperature = Math.Round(meteo.Temperature + (rnd.NextDouble() - 0.5) / 10, 1);
@@ -112,7 +121,7 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
         PropertyChanged?.Invoke(this, new(nameof(PrecipitationIntensity)));
         PropertyChanged?.Invoke(this, new(nameof(CloudnessType)));
 
-        WindSpeed = meteo.Wind.Length;
+        WindSpeed = meteo.Wind.Length / timeFlow.TotalSeconds;
         WindDirection = GlobalMeteo.GetWindDirection(meteo.Wind);
         PropertyChanged?.Invoke(this, new(nameof(WindSpeed)));
         PropertyChanged?.Invoke(this, new(nameof(WindDirection)));

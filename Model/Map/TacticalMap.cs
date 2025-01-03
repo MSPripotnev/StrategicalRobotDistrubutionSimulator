@@ -12,6 +12,18 @@ public class TacticalMap : INotifyPropertyChanged {
     private Station[] stations;
     private Road[] roads;
     private Size borders;
+    private int mapScale;
+    /// <summary>
+    /// Meters per pixel
+    /// </summary>
+    [XmlAttribute(AttributeName = "scale")]
+    public int MapScale {
+        get => mapScale;
+        set {
+            mapScale = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MapScale)));
+        }
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -102,6 +114,7 @@ public class TacticalMap : INotifyPropertyChanged {
         borders = Borders = _borders;
         obstacles = Obstacles = _obstacles;
         stations = Stations = _bases;
+        mapScale = MapScale = 1;
         Crossroads = Array.Empty<Crossroad>();
         roads = Roads = _roads;
         Path = System.IO.Path.Combine(Directory.GetCurrentDirectory(), $"{nameof(TacticalMap)}.xml");
@@ -125,6 +138,7 @@ public class TacticalMap : INotifyPropertyChanged {
         roads = Roads = newMap.Roads;
         borders = Borders = newMap.Borders;
         Name = newMap.Name;
+        MapScale = newMap.MapScale;
         Path = path;
     }
     #endregion

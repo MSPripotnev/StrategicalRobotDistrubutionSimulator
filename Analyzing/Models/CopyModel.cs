@@ -45,7 +45,7 @@ public class CopyModel : IModel {
                 model.Agents[i] = new Transporter(t.Position);
             model.Agents[i].Home = model.Map.Stations.First(p => p is AgentStation a && (a.Position - director.Agents[i].Home?.Position)?.Length < 5.0) as AgentStation;
         }
-        model.Scale = director.Scale;
+        model.PathScale = director.PathScale;
         model.Time = director.Time;
         modelPath = Path = model.MapPath.Replace(".xml", $"-{nameof(CopyModel)}.xml");
         Name = $"Copy model from {model.MapPath}";
@@ -75,7 +75,7 @@ public class CopyModel : IModel {
     public Director Unpack() {
         Director res = new Director() {
             MapPath = model.MapPath,
-            Scale = model.Scale,
+            PathScale = model.PathScale,
             Time = model.Time,
             Seed = model.Seed,
         };

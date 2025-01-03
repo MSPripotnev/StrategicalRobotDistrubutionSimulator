@@ -53,7 +53,7 @@ public class Recorder : IDisposable {
         var analyzer = new ModelReading() {
             ModelName = modelName,
             TransportersCount = director.Agents.Length,
-            Scale = Math.Round(director.Scale, 3),
+            Scale = Math.Round(director.PathScale, 3),
             ThinkingIterations = director.ThinkingIterations,
             WayIterations = director.WayIterations,
             FullTime = fullTime.TotalSeconds,

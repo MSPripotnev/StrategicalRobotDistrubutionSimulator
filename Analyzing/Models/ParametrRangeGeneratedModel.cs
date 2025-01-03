@@ -104,7 +104,7 @@ public class ParametrRangeGeneratedModel : IModel {
     public Director Unpack() {
         var res = new Director() {
             MapPath = Map,
-            Scale = ScalesT[^1],
+            PathScale = ScalesT[^1],
         };
         for (int i = 0; i < TransportersT[^1]; i++) {
             var t = new Direct.Agents.Drones.Transporter(res.Map.Stations[0].Position);

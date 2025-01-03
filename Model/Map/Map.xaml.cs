@@ -27,7 +27,6 @@ using System;
 /// Логика взаимодействия для Map.xaml
 /// </summary>
 public partial class MapWPF : Window {
-
     public MapWPF() {
         InitializeComponent();
 
@@ -79,6 +78,8 @@ public partial class MapWPF : Window {
             if (intensityMapCB.IsChecked == true)
                 DrawMeteoIntensityMap(true);
         }
+        if (e.PropertyName == nameof(Director.Map))
+            scaleL.Content = $"1 пкс = {Director?.Map.MapScale} м";
     }
     private void DrawMeteoIntensityMap(bool draw) {
         for (int i = 0; i < Director?.Meteo?.IntensityControl.IntensityMap?.Length; i++) {
@@ -128,7 +129,7 @@ public partial class MapWPF : Window {
                 mapCanvas.Children.Clear();
                 if (drawCB.IsChecked == true)
                     DrawPlaceableObjects();
-                trajectoryScaleTB.Text = Math.Round(director.Scale, 3).ToString();
+                trajectoryScaleTB.Text = Math.Round(director.PathScale, 3).ToString();
                 startB.IsEnabled = true;
                 director.PropertyChanged += RefreshMeteo;
 
@@ -150,8 +151,9 @@ public partial class MapWPF : Window {
                 tester.ModelSwitched += director.Recorder.OnModelSwitched;
 
                 director.Scheduler.Scheduled += PlanRefresh;
+                scaleL.Content = $"1 пкс = {director.Map.MapScale} м";
 
-                if (director.Meteo != null) {
+                if (director.Meteo is not null) {
                     director.Meteo.PropertyChanged += RefreshMeteo;
                     director.Meteo.CloudControl.PropertyChanged += RefreshMeteo;
                     if (director?.Meteo?.IntensityControl?.IntensityMap?.Any() == true) {
@@ -590,11 +592,19 @@ public partial class MapWPF : Window {
     }
     private void TrajectoryScale_TextChanged(object sender, TextChangedEventArgs e) {
         if (Director != null && float.TryParse((sender as TextBox ?? throw new Exception()).Text.Replace('.', ','), out float scale))
-            Director.Scale = scale;
+            Director.PathScale = scale;
     }
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
         if (Director != null)
             Director.Map.Borders = mapCanvas.RenderSize;
+    }
+    private void Window_MouseWheel(object sender, MouseWheelEventArgs e) {
+        if (director is not null) {
+            director.Map.MapScale += e.Delta / 12;
+            if (director.Map.MapScale > 200) director.Map.MapScale = 200;
+            else if (director.Map.MapScale < 1) director.Map.MapScale = 1;
+            scaleL.Content = $"1 пкс = {director.Map.MapScale} м";
+        } else scaleL.Content = "";
     }
     #endregion
 
@@ -660,6 +670,7 @@ public partial class MapWPF : Window {
         mainTask.Start();
 #else
         refreshTimer.Start();
+        MouseWheel -= Window_MouseWheel;
 #endif
     }
     private void Stop() {
@@ -679,6 +690,7 @@ public partial class MapWPF : Window {
         stopB.IsEnabled = false;
         stepB.IsEnabled = false;
         propertyGrid.SelectedObject = null;
+        MouseWheel += Window_MouseWheel;
         planView.Items.Clear();
     }
     private void StartButton_Click(object sender, RoutedEventArgs e) {
@@ -736,7 +748,7 @@ public partial class MapWPF : Window {
         attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
             $"Транспортеров: {Director.Agents.Length}\n" +
             $"Моделей: {tester.Models.Length}";
-        trajectoryScaleTB.Text = Math.Round(Director.Scale, 3).ToString();
+        trajectoryScaleTB.Text = Math.Round(Director.PathScale, 3).ToString();
 
         StartButton_Click(sender ?? this, new RoutedEventArgs());
     }
@@ -867,11 +879,12 @@ public partial class MapWPF : Window {
         if (mapCanvas.ToolTip is ToolTip t)
             t.IsOpen = false;
     }
+
     public void Refresh() {
         if (Director != null) {
             double quality = Math.Round(Director.Map.Roads.Sum(p => p.Snowness) +
                     Director.Map.Roads.Sum(p => p.IcyPercent) * 4);
-            localTimeL.Content = $"Местное время: {Director.Time.ToLongTimeString()}  {Director.Time.ToLongDateString()}";
+            localTimeL.Content = $"Местное время: {Director.Time.ToLongTimeString()} {Director.Time.ToLongDateString()}";
             systemQualityL.Content = $"Q = {quality}        Эпоха: {Director.Recorder.Epoch}";
             if (Director.Recorder.SystemQuality.Any()) {
                 double best_qualitity = Director.Recorder.SystemQuality.Max();
