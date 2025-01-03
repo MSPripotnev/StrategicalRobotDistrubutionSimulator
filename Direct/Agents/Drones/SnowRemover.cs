@@ -20,6 +20,7 @@ public enum SnowRemoverType {
     AntiIceDistributor
 }
 public class SnowRemover : Agent {
+    public new event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
     public static (double remove, double mash, double fuelDecrease) DeviceRemoveSpeed(SnowRemoverType device) => device switch {
         SnowRemoverType.Rotor => (5.0, 0.2, 0.5),
         SnowRemoverType.Shovel => (100.0, 0.2, 0.0),
@@ -54,6 +55,7 @@ public class SnowRemover : Agent {
             } else if (Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
                 Color = Colors.Aqua;
             }
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Devices)));
         }
     }
     public override RobotState CurrentState {
@@ -88,6 +90,7 @@ public class SnowRemover : Agent {
                 MaxStraightRange = 30;
                 break;
             }
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(CurrentState)));
         }
     }
     public SnowRemover(Point position, SnowRemoverType[] devices) : this() {
@@ -165,6 +168,7 @@ public class SnowRemover : Agent {
             break;
         }
         }
+        PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Trajectory)));
     }
 
     private void RemoveSnowFromRoad(object? sender) {

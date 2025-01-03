@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -12,6 +12,7 @@ using SRDS.Model;
 using SRDS.Model.Environment;
 
 public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
+    public new event PropertyChangedEventHandler? PropertyChanged;
     private readonly Stack<double> temperatures = new Stack<double>(),
                           humidities = new Stack<double>(),
                           pressures = new Stack<double>();
@@ -77,6 +78,13 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
         temperatures.Push(Temperature);
         humidities.Push(Humidity);
 
+        PropertyChanged?.Invoke(this, new(nameof(Temperature)));
+        PropertyChanged?.Invoke(this, new(nameof(Humidity)));
+        PropertyChanged?.Invoke(this, new(nameof(Pressure)));
+        PropertyChanged?.Invoke(this, new(nameof(TemperatureChange)));
+        PropertyChanged?.Invoke(this, new(nameof(HumidityChange)));
+        PropertyChanged?.Invoke(this, new(nameof(PressureChange)));
+
         PrecipitationIntensity = 0;
         double cloudness_area = 0;
         foreach (var o in meteo.CloudControl.Clouds.Where(p => p.Length/2 + WorkRadius > (p.Position - Position).Length ||
@@ -101,8 +109,13 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
             CloudnessType = Cloudness.PartyCloudy;
         else
             CloudnessType = Cloudness.Cloudy;
+        PropertyChanged?.Invoke(this, new(nameof(PrecipitationIntensity)));
+        PropertyChanged?.Invoke(this, new(nameof(CloudnessType)));
+
         WindSpeed = meteo.Wind.Length;
         WindDirection = GlobalMeteo.GetWindDirection(meteo.Wind);
+        PropertyChanged?.Invoke(this, new(nameof(WindSpeed)));
+        PropertyChanged?.Invoke(this, new(nameof(WindDirection)));
     }
 
     public UIElement BuildArea() {
