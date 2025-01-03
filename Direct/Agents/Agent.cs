@@ -39,7 +39,10 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [Category("Movement")]
     public double Fuel {
         get => fuel;
-        set => fuel = Math.Min(FuelCapacity, Math.Max(0, value));
+        set {
+            fuel = Math.Min(FuelCapacity, Math.Max(0, value));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Fuel)));
+        }
     }
 
     #region State Machine
@@ -91,6 +94,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
                 break;
             }
             state = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentState)));
         }
     }
 
@@ -192,6 +196,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             Trajectory.Add(value);
             if (CurrentState != RobotState.Working)
                 CurrentState = RobotState.Thinking;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Trajectory)));
         }
     }
 

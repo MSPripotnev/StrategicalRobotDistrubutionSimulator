@@ -7,11 +7,11 @@ using System.Xml.Serialization;
 namespace SRDS.Direct.Agents.Drones;
 using Agents;
 using Model.Targets;
-using Executive;
 
 public class Transporter : Agent {
 
     #region Properties
+    public new event PropertyChangedEventHandler? PropertyChanged;
     [XmlIgnore]
     public override RobotState CurrentState {
         get {
@@ -60,6 +60,7 @@ public class Transporter : Agent {
                 break;
             }
             state = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentState)));
         }
     }
 
@@ -86,7 +87,7 @@ public class Transporter : Agent {
     private void ResetTarget() {
         AttachedObj = null;
         Trajectory.Clear();
-        Trajectory = Trajectory;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Trajectory)));
         BackTrajectory = Array.Empty<Point>();
         if (Pathfinder is null) return;
         Pathfinder.IsCompleted = false;

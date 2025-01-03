@@ -104,7 +104,8 @@ public class Road : ITargetable, ITimeSimulatable {
         set {
             category = value;
             Height = (category - 1) * 10 + 5;
-            Type = (RoadType)category;
+            Type = (RoadType)((category - 1) % 5);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Category)));
         }
     }
     [XmlIgnore]
@@ -281,6 +282,8 @@ public class Road : ITargetable, ITimeSimulatable {
                     IcyPercent = meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent;
             }
         }
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Snowness)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IcyPercent)));
     }
 
     public override bool Equals(object? obj) => obj is Road r && r == this;
