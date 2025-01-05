@@ -55,7 +55,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
                         AgentStation? home = Agents[i].Home;
                         home ??= Agents[i].Home = Map.Stations.Where(p => p is AgentStation).MinBy(p => (p.Position - Agents[i].Position).Length) as AgentStation;
                         if (home is not null) {
-                            (Map.Stations.First(p => PathFinder.Distance(p.Position, home.Position) < 5) as AgentStation)?.Assign(Agents[i]);
+                            (Map.Stations.OfType<AgentStation>().MinBy(p => PathFinder.Distance(p.Position, home.Position)))?.Assign(Agents[i]);
                             if (Agents[i].CurrentState == RobotState.Ready && (Agents[i].Position - home.Position).Length > 5)
                                 Agents[i].TargetPosition = home.Position;
                         }

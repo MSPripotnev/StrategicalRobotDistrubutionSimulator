@@ -43,7 +43,7 @@ public class CopyModel : IModel {
                 model.Agents[i] = new SnowRemover(a.Position, a.Devices);
             else if (director.Agents[i] is Transporter t)
                 model.Agents[i] = new Transporter(t.Position);
-            model.Agents[i].Home = model.Map.Stations.First(p => p is AgentStation a && (a.Position - director.Agents[i].Home?.Position)?.Length < 5.0) as AgentStation;
+            model.Agents[i].Home = model.Map.Stations.OfType<AgentStation>().MinBy(p => (p.Position - (director.Agents[i].Home?.Position ?? model.Agents[i].Position)).Length);
         }
         model.PathScale = director.PathScale;
         model.Time = director.Time;
@@ -86,7 +86,8 @@ public class CopyModel : IModel {
             else if (model.Agents[i] is Transporter t)
                 res.Agents[i] = new Transporter(t.Position);
             res.Agents = res.Agents;
-            res.Agents[i].Home = res.Map.Stations.First(p => p is AgentStation a && (a.Position - model.Agents[i].Home?.Position)?.Length < 5.0) as AgentStation;
+            if (model.Agents[i].Home is not null)
+                res.Agents[i].Home = res.Map.Stations.OfType<AgentStation>().MinBy(p => (p.Position - (model.Agents[i].Home?.Position ?? model.Agents[i].Position)).Length);
         }
         res.Targets = model.Targets.Clone() as Target[] ?? throw new Exception();
         return res;
