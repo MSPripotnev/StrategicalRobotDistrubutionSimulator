@@ -1,13 +1,17 @@
-using System.Windows.Media;
+﻿using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Serialization;
 
 namespace SRDS.Model.Map.Stations;
+
+using System.ComponentModel;
+
 using Direct;
 using Direct.Agents;
+using Direct.Agents.Drones;
+using Direct.ControlSystem;
 using Direct.Executive;
-
-using PropertyTools.DataAnnotations;
+using Direct.Strategical;
 
 public enum SystemState {
 
@@ -18,18 +22,23 @@ public enum FuzzySystemState {
 }
 
 public class AgentStation : Station, IControllable, IRefueller {
+    public new event PropertyChangedEventHandler? PropertyChanged;
     #region Properties
     [XmlIgnore]
     public Agent[] AssignedAgents { get; set; } = Array.Empty<Agent>();
     [XmlIgnore]
     public Road[] AssignedRoads { get; set; } = Array.Empty<Road>();
     [XmlIgnore]
-    [Browsable(false)]
+    [PropertyTools.DataAnnotations.Browsable(false)]
     public Agent[] FreeAgents {
         get {
             return AssignedAgents.Where(x => x.CurrentState == RobotState.Ready).ToArray();
         }
     }
+    [XmlIgnore]
+    public SystemAction[] LocalPlans { get; set; } = Array.Empty<SystemAction>();
+    [XmlIgnore]
+    public ExpertSnowRemovePlanner PlannerModule { get; set; } = new();
     #endregion
 
     public void Simulate(object? sender, DateTime time) {
@@ -37,6 +46,18 @@ public class AgentStation : Station, IControllable, IRefueller {
             do
                 AssignedAgents[i].Simulate(sender is Director ? this : sender, time);
             while (AssignedAgents[i].CurrentState == RobotState.Thinking);
+
+        if (sender is not Director director) return;
+
+        // TODO: replace time.Hour % 6 == 0 by plans correction
+        var lastPlan = LocalPlans.Any() ? LocalPlans[0] : null;
+        while (lastPlan?.Next != null) lastPlan = lastPlan.Next;
+        if ((!LocalPlans.Any() && time.Second == 0 && time.Minute % 30 == 0) ||
+            time.Second == 0 && time.Minute == 0 && time.Hour >= lastPlan?.EndTime.Hour) {
+            PlannerModule.Simulate(sender, time);
+            LocalPlans = PlannerModule.PlanPrepare(this, director.Map, time, LocalPlans.Any());
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LocalPlans)));
+        }
     }
 
     #region Constructors
@@ -49,7 +70,7 @@ public class AgentStation : Station, IControllable, IRefueller {
     }
     #endregion
 
-    #region Misc
+    #region Operations
     public bool Assign(Agent agent) {
         if (AssignedAgents.Contains(agent)) return true;
         if (PathFinder.Distance(agent.Position, Position) < 10) return false;

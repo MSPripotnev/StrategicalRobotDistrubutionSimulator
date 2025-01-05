@@ -1,4 +1,4 @@
-namespace SRDS.Direct.Strategical;
+﻿namespace SRDS.Direct.Strategical;
 using Agents;
 using Model;
 
@@ -54,6 +54,13 @@ public class Scheduler : ITimeSimulatable {
                 act.EndTime += timeFlow;
             }
         Delayed?.Invoke(this, action);
+    }
+
+    public void LocalPlansScheduled(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
+        if (e.PropertyName != nameof(Model.Map.Stations.AgentStation.LocalPlans) || sender is not Model.Map.Stations.AgentStation station) return;
+
+        foreach (var a in station.LocalPlans)
+            Add(a);
     }
 
     public void Simulate(object? sender, DateTime time) {

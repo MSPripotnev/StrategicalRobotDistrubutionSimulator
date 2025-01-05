@@ -16,8 +16,10 @@ The software package provides the following functions:
 
 * Building an environment model in the form of a terrain map with mapped key points, roads and obstacles
 * Simulating weather conditions:
-  * temperature, humidity, wind and their influence to map targets
+  * temperature, humidity, pressure, wind and their influence to map targets
   * clouds approximated by gaussians with intensity increasing in their live zone and time
 * Building routes for individual robots by A* algorithm
 * Distributing tasks between robots using various algorithms, according to the highest efficiency
 * Using fuzzy logic neural network algorithms to calculate agent-target efficiency
+* Schedule plans as a set of agents time-distributed actions
+* Calculate and record efficiency of each solution on several attempts and different testing models

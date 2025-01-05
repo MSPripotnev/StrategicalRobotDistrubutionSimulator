@@ -129,6 +129,8 @@ public class Director : INotifyPropertyChanged, IDisposable {
                     TimeChanged += its.Simulate;
                     if (obj is Agent agent)
                         agent.Pathfinder = new PathFinder(map, pathScale);
+                    if (obj is AgentStation ags)
+                        ags.PropertyChanged += Scheduler.LocalPlansScheduled;
                 }
             }
             Map.PropertyChanged += Map_PropertyChanged;
