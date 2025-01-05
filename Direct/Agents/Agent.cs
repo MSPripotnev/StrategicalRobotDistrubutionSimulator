@@ -203,7 +203,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         set {
             Trajectory.Clear();
             Trajectory.Add(value);
-            if (CurrentState != RobotState.Working)
+            if (CurrentState != RobotState.Working && PathFinder.Distance(TargetPosition, Position) > MaxStraightRange)
                 CurrentState = RobotState.Thinking;
         }
     }

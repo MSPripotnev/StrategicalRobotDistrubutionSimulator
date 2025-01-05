@@ -22,7 +22,7 @@ internal class AStarExplorer : IExplorer {
         Iterations = 0;
         InteractDistance = interactDistance;
         Map = map;
-        ClosedPoints.Add(new AnalyzedPoint(null, start, 0, double.MaxValue));
+        ClosedPoints.Add(new AnalyzedPoint(null, start, 0, Distance(_start, _end)));
         Result = ClosedPoints[0];
     }
     public bool FindWaySync() {
@@ -49,6 +49,8 @@ internal class AStarExplorer : IExplorer {
     protected virtual bool SelectNextPoint() {
         var v = OpenedPoints.MinBy(p => p.Heuristic + p.Distance);
         if (v is null) return false;
+        if (ClosedPoints.Count < 2 && Result.Heuristic < Scale) 
+            return true;
         Result = v;
         ClosedPoints.Add(Result);
         OpenedPoints.Remove(Result);
@@ -72,8 +74,7 @@ internal class AStarExplorer : IExplorer {
             else
                 hardness = Road.DistanceHardness(road.Type) + Math.Min(road.Snowness, 2);
             AnalyzedPoint interimP = new AnalyzedPoint(currentPoint, pos,
-            currentPoint.Distance + Distance(currentPoint, pos) * hardness,
-            Distance(pos, end));
+                currentPoint.Distance + Distance(currentPoint, pos) * hardness, Distance(pos, end));
             if (ClosedPoints.Contains(interimP) || interimP == currentPoint)
                 continue;
             //проверка на препятствие или уход за границу карты

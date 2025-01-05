@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 
 namespace SRDS.Direct.Strategical;
 using Agents;
@@ -34,9 +34,10 @@ public class ActionExecutor {
         switch (action.Type) {
         case ActionType.GoTo: {
             if (action.Object is not Point p) throw new InvalidOperationException();
-            if (PathFinder.Distance(agent.TargetPosition, p) > 5) {
+            // TODO: check map scale instead hardcode
+            if (PathFinder.Distance(agent.TargetPosition, p) > 15) {
                 agent.TargetPosition = p;
-            } else if (PathFinder.Distance(agent.Position, p) < 5) {
+            } else if (PathFinder.Distance(agent.Position, p) < 15) {
                 // Ended earlier
                 agent.CurrentState = RobotState.Ready;
                 action.EndTime = time;
