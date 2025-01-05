@@ -119,6 +119,7 @@ public partial class MapWPF : Window {
 
     #region Main Cycle
     readonly DispatcherTimer refreshTimer;
+    TimeSpan ts = new TimeSpan(0);
     DateTime d_time = new DateTime(0);
     private Director? director;
     public Director? Director {
@@ -169,7 +170,6 @@ public partial class MapWPF : Window {
     Task mainTask;
     CancellationTokenSource tokenSource = new CancellationTokenSource();
 #endif
-    TimeSpan ts = new TimeSpan(0);
     private void RefreshTimer_Tick(object? sender, EventArgs e) {
         refreshTimer.Stop();
         if (d_time.Second == 0 || ts.TotalSeconds == 0)
@@ -706,12 +706,13 @@ public partial class MapWPF : Window {
     }
     private void StepB_Click(object sender, RoutedEventArgs e) {
         refreshTimer.Stop();
+        d_time = d_time.AddSeconds(ts.TotalSeconds);
         var dt = DateTime.Now;
         Work();
-        var ts = DateTime.Now - dt;
+        var wts = DateTime.Now - dt;
         tempTime -= DateTime.Now - pauseTime; Refresh();
         tempTime += DateTime.Now - pauseTime;
-        realWayTime += ts;
+        realWayTime += wts;
     }
     double lastSpeed = 1;
     private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
