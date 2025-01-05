@@ -43,14 +43,16 @@ public class Planner {
         return (goAction, action);
     }
     public static (SystemAction goAction, SystemAction workAction, SystemAction? returnAction)? WorkOnRoad(SnowRemover agent, Road road, DateTime startTime, DateTime workEndTime, double snowness = 0.0, double icy = 0.0) {
-        var goAction = GoToPlan(agent, agent.Position ^ road, startTime);
+        var roadPosition = agent.Position ^ road;
+        (roadPosition.X, roadPosition.Y) = (Math.Round(roadPosition.X), Math.Round(roadPosition.Y));
+        var goAction = GoToPlan(agent, roadPosition, startTime);
         if (goAction is null) return null;
 
         SystemAction? returnAction = null;
 
         var action = new SystemAction(goAction.EndTime, workEndTime, ActionType.WorkOn, agent, road) {
             ExpectedResult = new ActionResult() {
-                SubjectAfter = new SnowRemover(agent, RobotState.Working) { Position = agent.Position ^ road },
+                SubjectAfter = new SnowRemover(agent, RobotState.Working) { Position = roadPosition },
                 ObjectAfter = new Road(road) {
                     Snowness = snowness,
                     IcyPercent = icy
@@ -79,13 +81,13 @@ public class Planner {
 
         ActionResult result = new ActionResult() {
             SubjectAfter = (IControllable)subjectConstructorInfo.Invoke(new object?[] { agent, null }),
-            EstimatedTime = startTime.AddMinutes(explorer.Result.Distance / agent.Speed) - startTime
+            EstimatedTime = startTime.AddSeconds(Math.Round(explorer.Result.Distance / agent.Speed)) - startTime
         };
         if (result.SubjectAfter is not Agent ragent) return null;
         ragent.Position = explorer.Result;
         ragent.CurrentState = RobotState.Ready;
 
-        return new SystemAction(startTime, startTime.AddMinutes(explorer.Result.Distance > 10 ? explorer.Result.Distance / agent.Speed / 60.0 : 0.0), ActionType.GoTo, result, agent, targetPosition);
+        return new SystemAction(startTime, startTime.AddSeconds(explorer.Result.Distance > 10 ? Math.Round(explorer.Result.Distance / agent.Speed) : 0.0), ActionType.GoTo, result, agent, targetPosition);
     }
     private static Station? FindNearestRefuelStation(Agent agent, TacticalMap map) {
         var refuelStations = map.Stations.Where(p => p is GasStation or AgentStation).ToArray();

@@ -1,4 +1,4 @@
-﻿namespace SRDS.Direct.Strategical;
+namespace SRDS.Direct.Strategical;
 using Agents;
 using Agents.Drones;
 
@@ -19,7 +19,7 @@ public class StrategicQualifier {
     public double IcyDelayThreshold { get; set; }
     public double IcyIncreasePowerThreshold { get; set; }
     public double DistanceThreshold { get; set; }
-    public StrategicQualifier(double snowDelay, double snowIncrease, double icyDelay, double icyIncrease, double distance = 10.0) {
+    public StrategicQualifier(double snowDelay, double snowIncrease, double icyDelay, double icyIncrease, double distance = 15.0) {
         SnownessDelayThreshold = snowDelay;
         SnownessIncreasePowerThreshold = snowIncrease;
         IcyDelayThreshold = icyDelay;
