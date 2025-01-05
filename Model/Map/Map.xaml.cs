@@ -685,7 +685,7 @@ public partial class MapWPF : Window {
 #if PARALLEL
         tokenSource.Cancel();
 #endif
-        if (testingCB.IsChecked == false && tester.Models?.Length < 2) {
+        if (testingCB.IsChecked == false) {
             Director = tester.ReloadModel();
             meteoCB.IsEnabled = true;
         }
