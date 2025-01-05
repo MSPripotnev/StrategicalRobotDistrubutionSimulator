@@ -64,22 +64,23 @@ public class SystemAction {
         }
     }
     public override string? ToString() {
+        string is_completed_str = $"{(Finished ? "(completed)" : "")}";
         switch (Type) {
         case ActionType.GoTo: {
             if (Subject is not Agent agent || Object is not Point point) return base.ToString();
-            return $"{agent} go to -> ({Math.Round(point.X)}; {Math.Round(point.Y)}) at {StartTime.ToLongTimeString()} until {EndTime.ToLongTimeString()}";
+            return $"{agent} go to -> ({Math.Round(point.X)}; {Math.Round(point.Y)}) at {StartTime.ToLongTimeString()} until {EndTime.ToLongTimeString()} {is_completed_str}";
         }
         case ActionType.ChangeDevice: {
             if (Subject is not SnowRemover agent || Object is not SnowRemoverType device) return base.ToString();
-            return $"{agent} take {device} at {EndTime.ToLongTimeString()}";
+            return $"{agent} take {device} at {EndTime.ToLongTimeString()} {is_completed_str}";
         }
         case ActionType.WorkOn: {
             if (ExpectedResult.SubjectAfter is not Agent agent || Object is not Road road) return base.ToString();
-            return $"{agent} work on {road} from {StartTime} to {EndTime}";
+            return $"{agent} work on {road} from {StartTime} to {EndTime} {is_completed_str}";
         }
         case ActionType.Refuel: {
             if (ExpectedResult.SubjectAfter is not Agent agent) return base.ToString();
-            return $"{agent} refuel to {agent.Fuel}/{agent.FuelCapacity}";
+            return $"{agent} refuel to {agent.Fuel}/{agent.FuelCapacity} {is_completed_str}";
         }
         }
         return base.ToString();
