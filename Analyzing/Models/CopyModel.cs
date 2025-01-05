@@ -11,12 +11,13 @@ namespace SRDS.Analyzing.Models;
 public class CopyModel : IModel {
     private Director model;
     [XmlIgnore]
-    public string Path { get; set; }
-    private string modelPath;
-    public string ModelPath {
+    public string? Path { get; set; }
+    private string? modelPath;
+    public string? ModelPath {
         get => modelPath;
         set {
-            model = Director.Deserialize(value) ?? throw new FileFormatException(value);
+            if (value is not null)
+                model = Director.Deserialize(value) ?? throw new FileFormatException(value);
             modelPath = value;
         }
     }
@@ -47,7 +48,6 @@ public class CopyModel : IModel {
         }
         model.PathScale = director.PathScale;
         model.Time = director.Time;
-        modelPath = Path = model.MapPath.Replace(".xml", $"-{nameof(CopyModel)}.xml");
         Name = $"Copy model from {model.MapPath}";
     }
     public CopyModel(string path) {

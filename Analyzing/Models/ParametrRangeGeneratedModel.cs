@@ -37,7 +37,7 @@ public class ParametrRangeGeneratedModel : IModel {
     [XmlAttribute("name")]
     public string Name { get; set; }
     [XmlIgnore]
-    public string Path { get; set; }
+    public string? Path { get; set; }
     public string Map { get; set; }
     public int MaxAttempts { get; set; } = Testing.Default.AttemptsMax;
     public DateTime? AttemptTime { get; set; } = null;

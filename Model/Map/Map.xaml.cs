@@ -27,9 +27,11 @@ using System;
 /// Логика взаимодействия для Map.xaml
 /// </summary>
 public partial class MapWPF : Window {
+    readonly Paths paths = new Paths();
     public MapWPF() {
         InitializeComponent();
-
+        paths.Reload();
+        
         RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.LowQuality);
         RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.Default;
 
@@ -239,6 +241,7 @@ public partial class MapWPF : Window {
         }
         fd = action_is_open.Value ? new Microsoft.Win32.OpenFileDialog() : new Microsoft.Win32.SaveFileDialog();
         if (tag.Contains("test")) {
+            fd.InitialDirectory = paths.Tests;
             if (!tester.Models.Any())
                 return;
             IModel model;
@@ -256,9 +259,11 @@ public partial class MapWPF : Window {
             } else return;
             serialized_object = model;
         } else if (tag.Contains("model")) {
+            fd.InitialDirectory = paths.Models;
             fd.Filter = "Файлы модели|*.xsmod|Все файлы|*.*";
             serialized_object = Director;
         } else if (tag.Contains("map")) {
+            fd.InitialDirectory = paths.Maps;
             fd.Filter = "Файлы разметки|*.xsmap|Все файлы|*.*";
             serialized_object = Director.Map;
         } else return;
@@ -270,7 +275,10 @@ public partial class MapWPF : Window {
                 Director = Director.Deserialize(fd.FileName);
                 if (Director is null) return;
                 if (tester.Models.Any() && tester.Models[0] is CopyModel cm && cm.Unpack() != Director)
-                    tester.Models[0] = new CopyModel(Director) { Path = fd.FileName };
+                    tester.Models[0] = new CopyModel(Director) { 
+                        ModelPath = fd.FileName,
+                        Name = fd.SafeFileName.Replace(".xsmod", $"-{nameof(CopyModel)}")
+                    };
                 tester.AttemptsN = tester.Models[0].MaxAttempts;
                 DrawPlaceableObjects();
             } else
@@ -738,8 +746,8 @@ public partial class MapWPF : Window {
         Analyzing.Tests.TestsWindow window = new Analyzing.Tests.TestsWindow();
         window.ShowDialog();
         tester.LoadModels();
-        if (tester.Models.Any() && File.Exists(tester.Models[0].Path)) {
-            tester.LoadModel(tester.Models[0].Path);
+        if (tester.Models.Any() && tester.Models[0].Path is not null && File.Exists(tester.Models[0].Path)) {
+            tester.LoadModel(tester.Models[0].Path ?? "");
             Director = tester.ActiveDirector;
         }
     }

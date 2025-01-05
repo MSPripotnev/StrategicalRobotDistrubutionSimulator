@@ -32,8 +32,8 @@ public class Tester {
                 models.Add(new CopyModel(fileName));
         }
         Models = models.ToArray();
-        if (Models.Any()) {
-            currentFilePath = Models[0].Path;
+        if (Models.Any() && Models[0].Path is string path) {
+            currentFilePath = path;
             AttemptsN = Models[0].MaxAttempts;
             LoadModel(currentFilePath);
         }
@@ -59,9 +59,9 @@ public class Tester {
             AttemptStarted?.Invoke(this, new());
     }
     public void NextModel() {
-        Directory.Move(Models[0].Path,
-            Path.Combine(Paths.Default.Tests, "Complete",
-            Models[0].Path[(Array.LastIndexOf(Models[0].Path.ToCharArray(), '\\') + 1)..Models[0].Path.Length]));
+        if (!Models.Any() || Models[0].Path is not string path) return;
+        Directory.Move(path, Path.Combine(Paths.Default.Tests, "Complete",
+            path[(Array.LastIndexOf(path.ToCharArray(), '\\') + 1)..path.Length]));
         Models = Models.Skip(1).ToArray();
         if (Models.Any())
             ModelSwitched?.Invoke(Models[0], new());
