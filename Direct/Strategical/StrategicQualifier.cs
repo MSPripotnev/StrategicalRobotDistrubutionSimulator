@@ -1,4 +1,4 @@
-﻿namespace SRDS.Direct.Strategical;
+namespace SRDS.Direct.Strategical;
 using Agents;
 using Agents.Drones;
 
@@ -44,6 +44,11 @@ public class StrategicQualifier {
                 else return ActionRecommendation.Delay;
             }
             if (expected.ObjectAfter is Road roadExpected && real?.ObjectAfter is Road roadReal && agent is SnowRemover remover) {
+                if (remover.Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
+                    if (roadReal.Deicing > 50)
+                        return ActionRecommendation.Approve;
+                    return ActionRecommendation.Delay;
+                }
                 if (remover.Devices.Contains(SnowRemoverType.Shovel) || remover.Devices.Contains(SnowRemoverType.Rotor) || remover.Devices.Contains(SnowRemoverType.PlowBrush)) {
                     if (roadReal.Snowness - roadExpected.Snowness < SnownessDelayThreshold)
                         return ActionRecommendation.Approve;
@@ -51,7 +56,7 @@ public class StrategicQualifier {
                         return ActionRecommendation.Delay;
                     return ActionRecommendation.IncreasePower;
                 }
-                if (remover.Devices.Contains(SnowRemoverType.Cleaver) || remover.Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
+                if (remover.Devices.Contains(SnowRemoverType.Cleaver)) {
                     if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyDelayThreshold)
                         return ActionRecommendation.Approve;
                     if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyIncreasePowerThreshold)

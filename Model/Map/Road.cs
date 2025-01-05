@@ -61,6 +61,9 @@ public class Road : ITargetable, ITimeSimulatable {
     [XmlAttribute(nameof(IcyPercent))]
     [Category("Environment")]
     public double IcyPercent { get; set; } = 0;
+    [XmlAttribute(nameof(Deicing))]
+    [Category("Environment")]
+    public double Deicing { get; set; } = 0;
     [Category("Construction")]
     public RoadType Type { get; set; }
     private Point position;
@@ -266,6 +269,7 @@ public class Road : ITargetable, ITimeSimulatable {
                 (time.Minute + 2) % 5 != 0 || time.Second != 0)
             return;
         Snowness = IcyPercent = 0;
+        Deicing = 0;
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
             if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length) {
@@ -280,10 +284,13 @@ public class Road : ITargetable, ITimeSimulatable {
                     (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
                 if (IcyPercent < meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent)
                     IcyPercent = meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent;
+                Deicing += meteo.IntensityControl.IntensityMap[pi][pj].Deicing;
             }
         }
+        Deicing /= intensityCells.Count;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Snowness)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IcyPercent)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Deicing)));
     }
 
     public override bool Equals(object? obj) => obj is Road r && r == this;
