@@ -126,6 +126,9 @@ public class SnowCloud : IPlaceable, ITimeSimulatable {
     #region Properties
     public double MaxIntensity { get; private set; } = 0;
     private double intensity = 0;
+    /// <summary>
+    /// Cloud fallout intensity in mm/sec
+    /// </summary>
     public double Intensity {
         get => intensity;
         set {

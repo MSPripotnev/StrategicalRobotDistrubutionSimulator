@@ -82,7 +82,7 @@ public class CloudControl : INotifyPropertyChanged {
             position.Y += rnd.Next(-(int)map.Borders.Height / 2, (int)map.Borders.Height / 2);
 
         DateTime start = _time.AddMinutes(rnd.Next(t1, t2)), end = start.AddMinutes(rnd.Next(t1, t2) * 2 * Math.Sqrt(rMin * rMax / width / length) / (Coverage + 0.1));
-        const double dispersing = 0.01;
+        const double dispersing = 0.001;
         double intensity = rnd.NextDouble() * Math.Sqrt(width * length / rMax / rMin) * dispersing;
         end = end.AddMinutes(intensity * 100);
 

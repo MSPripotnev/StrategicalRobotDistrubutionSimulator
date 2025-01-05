@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -16,7 +16,7 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     private readonly Stack<double> temperatures = new Stack<double>(),
                           humidities = new Stack<double>(),
                           pressures = new Stack<double>();
-    public const double WorkRadius = 150.0;
+    public const double WorkRadius = 800.0;
     [Category(nameof(Temperature))]
     public double Temperature { get; set; }
     [XmlIgnore]
@@ -36,6 +36,9 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     [XmlIgnore]
     [Category("Wind")]
     public double WindSpeed { get; private set; }
+    /// <summary>
+    /// Summary clouds fallout in mm/h
+    /// </summary>
     [XmlIgnore]
     [Category("Wind")]
     public WindDirectionType WindDirection { get; private set; }
@@ -118,6 +121,7 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
             CloudnessType = Cloudness.PartyCloudy;
         else
             CloudnessType = Cloudness.Cloudy;
+        PrecipitationIntensity = Math.Round(PrecipitationIntensity * 3600, 4);
         PropertyChanged?.Invoke(this, new(nameof(PrecipitationIntensity)));
         PropertyChanged?.Invoke(this, new(nameof(CloudnessType)));
 
