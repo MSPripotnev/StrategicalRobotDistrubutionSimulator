@@ -81,7 +81,7 @@ public class PathFinder {
         if (road is null)
             hardness = 4.0;
         else
-            hardness = Road.DistanceHardness(road.Type) + Math.Min(road.Snowness, 2);
+            hardness = Road.DistanceHardness(road.Type) + Math.Min(road.Snowness / 5, 1);
         return hardness;
     }
 
