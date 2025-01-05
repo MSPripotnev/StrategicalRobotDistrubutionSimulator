@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 
 namespace SRDS.Direct.Strategical;
 using Agents;
@@ -41,21 +41,25 @@ public class ActionExecutor {
                 // Ended earlier
                 agent.CurrentState = RobotState.Ready;
                 action.EndTime = time;
+                action.Finished = true;
             }
             return true;
         }
         case ActionType.Refuel: {
-            if (action.Object is not Station station || station is not AgentStation and not GasStation and not AntiIceStation || action.ExpectedResult.SubjectAfter is not Agent futureAgent) 
+            if (action.Object is not Station station || station is not AgentStation and not GasStation and not AntiIceStation || action.ExpectedResult.SubjectAfter is not Agent futureAgent)
                 throw new InvalidOperationException();
             return agent.Refuel(station, futureAgent.Fuel);
         }
         case ActionType.WorkOn: {
-            if (action.Object is AgentStation station && !station.Assign(agent))
+            if (action.Object is AgentStation station && !station.Assign(agent)) {
                 return false;
-            else if (action.Object is ITargetable target && !agent.Link(target))
-                return false;
-            else if (action.Object is null)
+            } else if (action.Object is ITargetable target) {
+                if (!agent.Link(target))
+                    return false;
+                agent.CurrentState = RobotState.Working;
+            } else if (action.Object is null) {
                 agent.Unlink();
+            }
             Linked?.Invoke(this, (agent, action.Object));
             return true;
         }

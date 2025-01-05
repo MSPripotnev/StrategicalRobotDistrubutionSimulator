@@ -1,4 +1,4 @@
-﻿namespace SRDS.Direct.Strategical;
+namespace SRDS.Direct.Strategical;
 using Agents;
 using Model;
 
@@ -47,9 +47,12 @@ public class Scheduler : ITimeSimulatable {
         Scheduled?.Invoke(null, action);
     }
     public void Delay(SystemAction action) {
-        for (SystemAction? act = action; act != null; act = act.Next)
-            if (act.EndTime < DateTime.MaxValue)
+        action.EndTime += timeFlow;
+        for (SystemAction? act = action.Next; act != null; act = act.Next)
+            if (act.EndTime < DateTime.MaxValue) {
+                act.StartTime += timeFlow;
                 act.EndTime += timeFlow;
+            }
         Delayed?.Invoke(this, action);
     }
 
@@ -62,7 +65,7 @@ public class Scheduler : ITimeSimulatable {
                 if (!Executor.Execute(_actions[i], time))
                     _actions[i].StartTime += timeFlow;
             }
-            if (_actions[i].EndTime <= time) {
+            if (_actions[i].EndTime <= time || _actions[i].Finished) {
                 _actions[i].RealResult = Qualifier.Qualify(director, _actions[i], time);
                 var recommendation = Qualifier.Recommend(_actions[i].Type, _actions[i].ExpectedResult, _actions[i].RealResult);
                 if (recommendation == ActionRecommendation.Approve) {
@@ -77,6 +80,10 @@ public class Scheduler : ITimeSimulatable {
                         break;
                     }
                     _actions[i].Finished = true;
+                    if (_actions[i].Next is SystemAction nextAction && _actions[i].RealResult is ActionResult realResult) {
+                        var shiftTime = nextAction.StartTime - (_actions[i].StartTime + realResult.EstimatedTime);
+                        nextAction.StartTime -= shiftTime;
+                    }
                 } else if (recommendation == ActionRecommendation.Delay) {
                     Delay(_actions[i]);
                 } else {

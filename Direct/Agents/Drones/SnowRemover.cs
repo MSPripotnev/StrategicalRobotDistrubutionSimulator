@@ -63,7 +63,7 @@ public class SnowRemover : Agent {
         set {
             switch (value) {
             case RobotState.Working:
-                if (CurrentState == RobotState.Going && AttachedObj is Road r) {
+                if ((CurrentState == RobotState.Going || CurrentState == RobotState.Ready) && AttachedObj is Road r) {
                     Trajectory.Clear();
                     if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position))
                         Trajectory.Add(r.Position);
@@ -112,14 +112,18 @@ public class SnowRemover : Agent {
         d.Add(type);
         Devices = d.ToArray();
     }
+    Vector v = new Vector(0, 0);
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {
         case RobotState.Broken:
         case RobotState.Refuel:
-        case RobotState.Ready:
         case RobotState.Thinking:
         case RobotState.Going:
             base.Simulate(sender, time);
+            break;
+        case RobotState.Ready:
+            if (sender is Director or AgentStation)
+                ActualSpeedRecalculate(time);
             break;
         case RobotState.Working: {
             if (sender is Director or AgentStation) {
@@ -138,9 +142,11 @@ public class SnowRemover : Agent {
                     CurrentState = RobotState.Ready;
             } else if (AttachedObj is Road r) {
                 if (sender is Director or AgentStation) {
-                    Vector v = Trajectory[0] - Position;
-                    v *= r.Height / v.Length;
-                    (v.X, v.Y) = (v.Y, v.X);
+                    if (Trajectory.Any()) {
+                        v = Trajectory[0] - Position;
+                        v *= r.Height / v.Length;
+                        (v.X, v.Y) = (v.Y, v.X);
+                    }
                     if (PathFinder.Distance(Position, r.Position) < MaxStraightRange) {
                         Trajectory.Clear();
                         Trajectory.Add(r.EndPosition + v);
@@ -175,8 +181,10 @@ public class SnowRemover : Agent {
         if (sender is not GlobalMeteo meteo) return;
         if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any() || !Trajectory.Any()) return;
 
-        var v = Trajectory[0] - Position;
-        v *= IntensityControl.IntensityMapScale / v.Length;
+        if (Trajectory.Any()) {
+            v = Trajectory[0] - Position;
+            v *= IntensityControl.IntensityMapScale / v.Length;
+        }
         var vr = v;
         (vr.X, vr.Y) = (-v.Y, v.X);
         (int ix, int iy) = IntensityControl.GetPointIntensityIndex(Position);

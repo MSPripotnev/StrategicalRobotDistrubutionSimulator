@@ -1,4 +1,4 @@
-﻿using System.Windows.Media;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Serialization;
 
@@ -44,9 +44,8 @@ public class AgentStation : Station, IControllable, IRefueller {
         Color = Colors.SandyBrown;
         bitmapImage = new BitmapImage(new Uri(@"../../../Model/Map/Stations/garage.png", UriKind.Relative));
     }
-    public AgentStation(System.Windows.Point pos) : base(pos) {
-        Color = Colors.SandyBrown;
-        bitmapImage = new BitmapImage(new Uri(@"../../../Model/Map/Stations/garage.png", UriKind.Relative));
+    public AgentStation(System.Windows.Point pos) : this() {
+        Position = pos;
     }
     #endregion
 
@@ -64,11 +63,13 @@ public class AgentStation : Station, IControllable, IRefueller {
         a.Remove(agent);
         AssignedAgents = a.ToArray();
     }
-    public void Assign(Road road) {
+    public bool Assign(Road road) {
+        if (AssignedRoads.Contains(road)) return true;
         var a = AssignedRoads.ToList();
         a.Add(road);
         AssignedRoads = a.ToArray();
         road.ReservedStation = this;
+        return true;
     }
     public void Remove(Road road) {
         var a = AssignedRoads.ToList();

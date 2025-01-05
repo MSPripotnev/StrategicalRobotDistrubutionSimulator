@@ -1,4 +1,4 @@
-namespace SRDS.Direct.Strategical;
+﻿namespace SRDS.Direct.Strategical;
 using Agents;
 using Agents.Drones;
 
@@ -84,7 +84,7 @@ public class StrategicQualifier {
             if (action.Subject is AgentStation station)
                 subject = director.Map.Stations.OfType<AgentStation>().First(p => p == station);
             else if (action.Subject is Agent agent)
-                subject = director.Agents.First(p => p == agent);
+                subject = director.Agents.First(p => p.Equals(agent));
             else subject = action.Subject;
         }
 

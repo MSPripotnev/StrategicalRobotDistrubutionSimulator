@@ -123,7 +123,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         case RobotState.Going:
             if (Trajectory.Count > 0)
                 Move();
-            if (PathFinder.Distance(Position, TargetPosition) <= InteractDistance || AttachedObj is null && Home is not null && PathFinder.Distance(Position, Home.Position) <= 15)
+            if (PathFinder.Distance(Position, TargetPosition) <= pathfinder?.Scale / 5)
                 Arrived();
             break;
         case RobotState.Thinking:
@@ -203,7 +203,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         set {
             Trajectory.Clear();
             Trajectory.Add(value);
-            if (CurrentState != RobotState.Working && PathFinder.Distance(TargetPosition, Position) > MaxStraightRange)
+            if (CurrentState != RobotState.Working && PathFinder.Distance(TargetPosition, Position) > pathfinder?.Scale / 5)
                 CurrentState = RobotState.Thinking;
         }
     }
@@ -218,7 +218,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     protected virtual void Move() {
         Point nextPoint = Trajectory[0];
 
-        if (PathFinder.Distance(Position, nextPoint) < MaxStraightRange) {
+        if (PathFinder.Distance(Position, nextPoint) <= ActualSpeed) {
             List<Point> pc = new(Trajectory.Skip(1));
             if (pc.Any()) {
                 TraversedWay += PathFinder.Distance(nextPoint, pc[0]) *
