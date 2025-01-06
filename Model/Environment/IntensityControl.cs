@@ -87,13 +87,13 @@ public class IntensityCell : INotifyPropertyChanged {
 public class IntensityControl {
     #region IntensityMap
     [XmlArray]
-    public IntensityCell[][]? IntensityMap { get; set; }
+    public IntensityCell?[][] IntensityMap { get; set; }
     public const int IntensityMapScale = 25;
     [XmlIgnore]
     private Size Borders { get; init; }
 
-    public IntensityControl(Size borders) {
-        Borders = borders;
+    public IntensityControl(TacticalMap map) {
+        Borders = map.Borders;
         IntensityMap = Array.Empty<IntensityCell[]>();
         if (Borders.Width > 0 && Borders.Height > 0) {
             int wsize = (int)Math.Ceiling(Borders.Width / IntensityMapScale), hsize = (int)Math.Ceiling(Borders.Height / IntensityMapScale);
@@ -101,7 +101,9 @@ public class IntensityControl {
             for (int i = 0; i < wsize; i++) {
                 IntensityMap[i] = new IntensityCell[hsize];
                 for (int j = 0; j < hsize; j++)
-                    IntensityMap[i][j] = new IntensityCell(0, 0, i, j);
+                    if (map.Roads.Any(p => 0 < p.DistanceToRoad(GetIntensityMapPoint(i, j)) && p.DistanceToRoad(GetIntensityMapPoint(i, j)) < p.Height * 6))
+                        IntensityMap[i][j] = new IntensityCell(0, 0, i, j);
+                    else IntensityMap[i][j] = null;
             }
         }
     }
@@ -119,29 +121,30 @@ public class IntensityControl {
         for (int c = flag ? 0 : 1; c < cloudControl.Clouds.Length; c+=2) {
             var cloud = cloudControl.Clouds[c];
             double a = Math.Max(cloud.Width, cloud.Length);
+            double point_icy = 0;
             (int cloudStartPosi, int cloudStartPosj) = GetPointIntensityIndex(cloud.Position - new Vector(a / 2, a / 2));
             (int cloudEndPosi, int cloudEndPosj) = GetPointIntensityIndex(cloud.Position + new Vector(a / 2, a / 2));
             cloudStartPosi = Math.Max(0, cloudStartPosi);
             cloudStartPosj = Math.Max(0, cloudStartPosj);
             cloudEndPosi = Math.Min(cloudEndPosi, IntensityMap.Length);
             cloudEndPosj = Math.Min(cloudEndPosj, IntensityMap[0].Length);
+            if (cloudControl.Coverage < 0.4)
+                point_icy += 0.2 * GlobalMeteo.GetIcyPercent(SnowType.IceSlick) / snowTypes.Count;
 
             for (int i = cloudStartPosi; i < cloudEndPosi; i++) {
                 for (int j = cloudStartPosj; j < cloudEndPosj; j++) {
                     Point pos = GetIntensityMapPoint(i, j);
                     Vector p = (pos - cloud.Position);
                     long iter = 0;
-                    double point_icy = 0, cloud_angle_r = cloud.Angle / 180 * Math.PI;
+                    double cloud_angle_r = cloud.Angle / 180 * Math.PI;
 
                     if ((Math.Pow( (p.X * Math.Cos(cloud_angle_r) + p.Y * Math.Sin(cloud_angle_r)) / cloud.Width, 2) +
                         Math.Pow( (p.X * Math.Sin(cloud_angle_r) - p.Y * Math.Cos(cloud_angle_r)) / cloud.Length, 2)) <= 0.25 &&
                             !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
-                        IntensityMap[i][j].Snow += Math.Min(2 * cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalMinutes, 1e4);
-
-                        if (cloudControl.Coverage < 0.4)
-                            point_icy += 0.2 * GlobalMeteo.GetIcyPercent(SnowType.IceSlick) / snowTypes.Count;
-
-                        IntensityMap[i][j].IcyPercent = IntensityMap[i][j] ^ (mid_icy + point_icy);
+                        if (IntensityMap[i][j] is IntensityCell cell) {
+                            cell.Snow += Math.Min(2 * cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalSeconds, 1e4);
+                            cell.IcyPercent = cell ^ (mid_icy + point_icy);
+                        }
                     }
                 }
             }

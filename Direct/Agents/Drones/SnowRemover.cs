@@ -190,9 +190,11 @@ public class SnowRemover : Agent {
         (int ix, int iy) = IntensityControl.GetPointIntensityIndex(Position);
         if (!(0 < ix && ix < meteo.IntensityControl.IntensityMap.Length && 0 < iy && iy < meteo.IntensityControl.IntensityMap[0].Length))
             return;
+        if (meteo.IntensityControl.IntensityMap[ix][iy] is not IntensityCell currentPositionCell) return;
+
         for (int i = 0; i < Devices.Length; i++) {
             (RemoveSpeed, MashSpeed, double fuelD) = DeviceRemoveSpeed(Devices[i]);
-            double remove_amount = Math.Min(meteo.IntensityControl.IntensityMap[ix][iy].Snow, RemoveSpeed * ActualSpeed * (100.0 - meteo.IntensityControl.IntensityMap[ix][iy].IcyPercent) / 100),
+            double remove_amount = Math.Min(currentPositionCell.Snow, RemoveSpeed * ActualSpeed * (100.0 - currentPositionCell.IcyPercent) / 100),
                    mash_amount = MashSpeed * ActualSpeed;
 
             Fuel -= fuelD;
@@ -201,34 +203,37 @@ public class SnowRemover : Agent {
                 int isx, isy;
                 for (int j = -1; j <= 1; j++) {
                     (isx, isy) = IntensityControl.GetPointIntensityIndex(Position + vr + v * j);
-                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length)
-                        meteo.IntensityControl.IntensityMap[isx][isy].Snow = meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount / 6 + (j == 0 ? remove_amount / 3 : 0);
+                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length &&
+                            meteo.IntensityControl.IntensityMap[isx][isy] is IntensityCell cellv)
+                        cellv.Snow = cellv.Snow + remove_amount / 6 + (j == 0 ? remove_amount / 3 : 0);
                 }
                 (isx, isy) = IntensityControl.GetPointIntensityIndex(Position + 2 * vr);
-                if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length)
-                    meteo.IntensityControl.IntensityMap[isx][isy].Snow = meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount / 6;
+                if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length &&
+                            meteo.IntensityControl.IntensityMap[isx][isy] is IntensityCell cell)
+                    cell.Snow += remove_amount / 6;
                 break;
             }
             case SnowRemoverType.Shovel:
                 for (int j = 0; j < 2; j++) {
                     (int isx, int isy) = IntensityControl.GetPointIntensityIndex(Position + v / 2 + v * j + vr);
-                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length)
-                        meteo.IntensityControl.IntensityMap[isx][isy].Snow = meteo.IntensityControl.IntensityMap[isx][isy].Snow + remove_amount / 2;
+                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length && 
+                            meteo.IntensityControl.IntensityMap[isx][isy] is IntensityCell cell)
+                        cell.Snow += remove_amount / 2;
                 }
                 break;
             case SnowRemoverType.AntiIceDistributor:
-                if (meteo.IntensityControl.IntensityMap[ix][iy].Deicing < 1)
-                    meteo.IntensityControl.IntensityMap[ix][iy].Deicing += mash_amount;
+                if (currentPositionCell.Deicing < 1)
+                    currentPositionCell.Deicing += mash_amount;
                 continue;
             case SnowRemoverType.Cleaver:
                 break;
             case SnowRemoverType.PlowBrush:
                 break;
             }
-            meteo.IntensityControl.IntensityMap[ix][iy].Snow -= remove_amount;
-            meteo.IntensityControl.IntensityMap[ix][iy].IcyPercent -= mash_amount;
+            currentPositionCell.Snow -= remove_amount;
+            currentPositionCell.IcyPercent -= mash_amount;
         }
-        if (meteo.IntensityControl.IntensityMap[ix][iy].Snow < 0)
-            meteo.IntensityControl.IntensityMap[ix][iy].Snow = 0;
+        if (currentPositionCell.Snow < 0)
+            currentPositionCell.Snow = 0;
     }
 }

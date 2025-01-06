@@ -172,12 +172,10 @@ public class Road : ITargetable, ITimeSimulatable {
         Vector rv = (Vector)this;
         double h = Math.Round(Math.Abs(
             (rv.Y * position.X - rv.X * position.Y + EndPosition.X * Position.Y - EndPosition.Y * Position.X) / rv.Length));
-        if (h < 25) {
-            double d1 = (Position - position).Length,
-                   d2 = (EndPosition - position).Length,
-                   L = Math.Sqrt(d1 * d1 - h * h) + Math.Sqrt(d2 * d2 - h * h);
-            if (L - 10 >= rv.Length) return -h;
-        }
+        double d1 = (Position - position).Length,
+               d2 = (EndPosition - position).Length,
+               L = Math.Sqrt(d1 * d1 - h * h) + Math.Sqrt(d2 * d2 - h * h);
+        if (L - 1 >= rv.Length) return -h;
         return h;
     }
     /// <summary>
@@ -273,19 +271,19 @@ public class Road : ITargetable, ITimeSimulatable {
         Deicing = 0;
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
-            if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length) {
-                if (0 < meteo.IntensityControl.IntensityMap[pi][pj].Deicing && meteo.IntensityControl.IntensityMap[pi][pj].Deicing <= 100) {
-                    if (meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent > 0)
-                        meteo.IntensityControl.IntensityMap[pi][pj].Snow += 0.1 * timeFlow.TotalSeconds / 60;
-                    meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent -= timeFlow.TotalSeconds / 12;
+            if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length && meteo.IntensityControl.IntensityMap[pi][pj] is IntensityCell cell) {
+                if (0 < cell.Deicing && cell.Deicing <= 100) {
+                    if (cell.IcyPercent > 0)
+                        cell.Snow += 0.1 * timeFlow.TotalSeconds / 60;
+                    cell.IcyPercent -= timeFlow.TotalSeconds / 12;
                 }
-                meteo.IntensityControl.IntensityMap[pi][pj].Deicing -= timeFlow.TotalSeconds / 12;
+                cell.Deicing -= timeFlow.TotalSeconds / 12;
 
-                Snowness += meteo.IntensityControl.IntensityMap[pi][pj].Snow /
+                Snowness += cell.Snow /
                     (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
-                if (IcyPercent < meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent)
-                    IcyPercent = meteo.IntensityControl.IntensityMap[pi][pj].IcyPercent;
-                Deicing += meteo.IntensityControl.IntensityMap[pi][pj].Deicing;
+                if (IcyPercent < cell.IcyPercent)
+                    IcyPercent = cell.IcyPercent;
+                Deicing += cell.Deicing;
             }
         }
         Deicing /= intensityCells.Count;

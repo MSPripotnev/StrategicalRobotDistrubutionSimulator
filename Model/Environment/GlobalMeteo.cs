@@ -78,7 +78,7 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         this.map = map;
         CloudControl = new CloudControl(Rnd, 0.2, 0.3, 150, 400);
         _time = time;
-        IntensityControl = new IntensityControl(map.Borders);
+        IntensityControl = new IntensityControl(map);
         Simulate(this, _time);
     }
 

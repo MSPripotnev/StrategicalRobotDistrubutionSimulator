@@ -86,7 +86,7 @@ public partial class MapWPF : Window {
     private void DrawMeteoIntensityMap(bool draw) {
         for (int i = 0; i < Director?.Meteo?.IntensityControl.IntensityMap?.Length; i++) {
             for (int j = 0; j < Director.Meteo.IntensityControl.IntensityMap?[0].Length; j++) {
-                var b = Director.Meteo.IntensityControl.IntensityMap?[i][j].UI;
+                var b = Director.Meteo.IntensityControl.IntensityMap[i][j]?.UI;
                 if (b is null) continue;
                 if (draw && !mapCanvas.Children.Contains(b))
                     mapCanvas.Children.Add(b);
@@ -162,7 +162,8 @@ public partial class MapWPF : Window {
                     if (director?.Meteo?.IntensityControl?.IntensityMap?.Any() == true) {
                         for (int i = 0; i < director.Meteo.IntensityControl.IntensityMap.Length; i++)
                             for (int j = 0; j < director.Meteo.IntensityControl.IntensityMap[i].Length; j++)
-                                director.Meteo.IntensityControl.IntensityMap[i][j].PropertyChanged += RefreshMeteo;
+                                if (director.Meteo.IntensityControl.IntensityMap[i][j] is IntensityCell cell)
+                                    cell.PropertyChanged += RefreshMeteo;
                     }
                 }
             }
@@ -826,10 +827,11 @@ public partial class MapWPF : Window {
             t.IsOpen = false;
             int x = (int)Math.Round(p.X), y = (int)Math.Round(p.Y);
             t.Content = $"({x}; {y})";
-            if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap[0].Length > y / IntensityControl.IntensityMapScale)
-                t.Content += $"\nintensity: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].Snow, 4)}\n" +
-                             $"icy: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].IcyPercent, 2)}%\n" +
-                             $"deicing: {Math.Round(Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale].Deicing, 2)}";
+            if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap[0].Length > y / IntensityControl.IntensityMapScale &&
+                    Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale] is IntensityCell cell)
+                t.Content += $"\nintensity: {Math.Round(cell.Snow, 4)}\n" +
+                             $"icy: {Math.Round(cell.IcyPercent, 2)}%\n" +
+                             $"deicing: {Math.Round(cell.Deicing, 2)}";
             t.IsOpen = true;
         } else {
             mapCanvas.ToolTip = new ToolTip();
