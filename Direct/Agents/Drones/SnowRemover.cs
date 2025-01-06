@@ -65,17 +65,20 @@ public class SnowRemover : Agent {
             case RobotState.Working:
                 if ((CurrentState == RobotState.Going || CurrentState == RobotState.Ready) && AttachedObj is Road r) {
                     Trajectory.Clear();
-                    if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position))
+                    Vector v;
+                    if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position)) {
                         Trajectory.Add(r.Position);
-                    else
+                        v = r.EndPosition - r.Position;
+                    } else {
                         Trajectory.Add(r.EndPosition);
+                        v = r.Position - r.EndPosition;
+                    }
                     MaxStraightRange = r.Height;
                     state = RobotState.Working;
-                    Vector v = (Position - Trajectory[0]);
-                    v *= r.Height / v.Length;
-                    (v.X, v.Y) = (v.Y, v.X);
-                    Trajectory[0] += v;
-                    Trajectory.Add(Trajectory[0] - v);
+                    v *= r.Height / 2 / v.Length;
+                    (v.X, v.Y) = (-v.Y, v.X);
+                    Trajectory[0] -= v;
+                    Trajectory.Add(Trajectory[0] + v);
                 }
                 break;
             case RobotState.Ready:
@@ -112,7 +115,6 @@ public class SnowRemover : Agent {
         d.Add(type);
         Devices = d.ToArray();
     }
-    Vector v = new Vector(0, 0);
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {
         case RobotState.Broken:
@@ -142,30 +144,21 @@ public class SnowRemover : Agent {
                     CurrentState = RobotState.Ready;
             } else if (AttachedObj is Road r) {
                 if (sender is Director or AgentStation) {
-                    if (Trajectory.Any()) {
-                        v = Trajectory[0] - Position;
-                        v *= r.Height / v.Length;
-                        (v.X, v.Y) = (v.Y, v.X);
+                    Vector v = r.Position - r.EndPosition;
+                    v *= r.Height / 2 / v.Length;
+                    (v.X, v.Y) = (-v.Y, v.X);
+                    if (PathFinder.Distance(Position, r.Position) < ActualSpeed * 2) {
+                        if (!Trajectory.Contains(r.EndPosition - v))
+                            Trajectory.Add(r.EndPosition - v);
+                        if (!Trajectory.Contains(r.EndPosition + v))
+                            Trajectory.Add(r.EndPosition + v);
+                    } else if (PathFinder.Distance(Position, r.EndPosition) < ActualSpeed * 2) {
+                        v = -v;
+                        if (!Trajectory.Contains(r.Position - v))
+                            Trajectory.Add(r.Position - v);
+                        if (!Trajectory.Contains(r.Position + v))
+                            Trajectory.Add(r.Position + v);
                     }
-                    if (PathFinder.Distance(Position, r.Position) < MaxStraightRange) {
-                        Trajectory.Clear();
-                        Trajectory.Add(r.EndPosition + v);
-                        Trajectory.Add(r.EndPosition - v);
-                    } else if (PathFinder.Distance(Position, r.EndPosition) < MaxStraightRange) {
-                        Trajectory.Clear();
-                        Trajectory.Add(r.Position + v);
-                        Trajectory.Add(r.Position - v);
-                    }
-                    /*
-                    if (PathFinder.Distance(Position, r.Position + v) < r.Height / 2 && PathFinder.Distance(Position, r.Position + v) < PathFinder.Distance(Position, r.Position - v))
-                        Trajectory.Add(r.Position - v);
-                    else if (PathFinder.Distance(Position, r.Position - v) < r.Height / 2 && PathFinder.Distance(Position, r.Position - v) < PathFinder.Distance(Position, r.Position + v))
-                        Trajectory.Add(r.EndPosition + v);
-                    else if (PathFinder.Distance(Position, r.EndPosition - v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition - v) < PathFinder.Distance(Position, r.EndPosition + v))
-                        Trajectory.Add(r.EndPosition + v);
-                    else if (PathFinder.Distance(Position, r.EndPosition + v) < r.Height / 2 && PathFinder.Distance(Position, r.EndPosition + v) < PathFinder.Distance(Position, r.EndPosition - v))
-                        Trajectory.Add(r.Position + v);
-                    */
                     if (Trajectory.Any())
                         Move();
                 }
@@ -179,12 +172,18 @@ public class SnowRemover : Agent {
 
     private void RemoveSnowFromRoad(object? sender) {
         if (sender is not GlobalMeteo meteo) return;
-        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any() || !Trajectory.Any()) return;
+        if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any()) return;
+        if (AttachedObj is not Road road) return;
 
+        Vector v;
         if (Trajectory.Any()) {
             v = Trajectory[0] - Position;
-            v *= IntensityControl.IntensityMapScale / v.Length;
+        } else {
+            v = road.EndPosition - road.Position;
+            if (PathFinder.Distance(Position, road.Position) < PathFinder.Distance(Position, road.EndPosition))
+                v = -v;
         }
+        v *= IntensityControl.IntensityMapScale / v.Length;
         var vr = v;
         (vr.X, vr.Y) = (-v.Y, v.X);
         (int ix, int iy) = IntensityControl.GetPointIntensityIndex(Position);
@@ -216,7 +215,7 @@ public class SnowRemover : Agent {
             case SnowRemoverType.Shovel:
                 for (int j = 0; j < 2; j++) {
                     (int isx, int isy) = IntensityControl.GetPointIntensityIndex(Position + v / 2 + v * j + vr);
-                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length && 
+                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length &&
                             meteo.IntensityControl.IntensityMap[isx][isy] is IntensityCell cell)
                         cell.Snow += remove_amount / 2;
                 }
