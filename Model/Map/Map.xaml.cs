@@ -153,7 +153,6 @@ public partial class MapWPF : Window {
                 }
                 tester.ModelSwitched += director.Recorder.OnModelSwitched;
 
-                director.Scheduler.Scheduled += PlanRefresh;
                 scaleL.Content = $"1 пкс = {director.Map.MapScale} м";
                 planView.ItemsSource = director.Scheduler.Actions;
 
@@ -912,8 +911,6 @@ public partial class MapWPF : Window {
                     wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
             }
         }
-    }
-    public void PlanRefresh(object? sender, SystemAction action) {
     }
     #endregion
 }

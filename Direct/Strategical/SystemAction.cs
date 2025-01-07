@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -28,9 +28,9 @@ public class ActionResult {
 
 public class SystemAction : INotifyPropertyChanged {
     public SystemAction() : this(DateTime.MinValue, DateTime.MinValue, ActionType.GoTo, new ActionResult(), null, null) { }
-    public SystemAction(DateTime startTime, DateTime endTime, ActionType type, ActionResult expectedResult, IControllable? _subject, object? _object, string? header = null) {
-        StartTime = startTime;
-        EndTime = endTime;
+    public SystemAction(DateTime _startTime, DateTime _endTime, ActionType type, ActionResult expectedResult, IControllable? _subject, object? _object, string? header = null) {
+        startTime = _startTime;
+        endTime = _endTime;
         Type = type;
         ExpectedResult = expectedResult;
         RealResult = null;
@@ -41,9 +41,35 @@ public class SystemAction : INotifyPropertyChanged {
         else RefreshHeader();
     }
     public SystemAction(DateTime startTime, DateTime endTime, ActionType type, IControllable? _subject, object? _object) : this(startTime, endTime, type, new ActionResult(), _subject, _object) { }
+    private string status = "";
+    public string Status {
+        get => status;
+        set {
+            status = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Status)));
+        }
+    }
     public ActionType Type { get; set; }
-    public DateTime StartTime { get; set; }
-    public DateTime EndTime { get; set; }
+    private DateTime startTime, endTime;
+    public DateTime StartTime {
+        get => startTime;
+        set {
+            startTime = value;
+            RefreshHeader();
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(StartTime)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Header)));
+        }
+    }
+    public DateTime EndTime {
+        get => endTime;
+        set {
+            if (value > endTime && started && !finished)
+                Status = "delayed";
+            endTime = value;
+            RefreshHeader();
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EndTime)));
+        }
+    }
     [XmlIgnore]
     public ActionResult ExpectedResult { get; init; }
     [XmlIgnore]
@@ -52,6 +78,15 @@ public class SystemAction : INotifyPropertyChanged {
     public object? Object { get; set; }
     public ObservableCollection<SystemAction> Next { get; set; } = new();
     public event PropertyChangedEventHandler? PropertyChanged;
+    private bool started = false;
+    public bool Started {
+        get => started;
+        set {
+            started = value;
+            Status = "";
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Started)));
+        }
+    }
     private bool finished = false;
     public bool Finished {
         get => finished;

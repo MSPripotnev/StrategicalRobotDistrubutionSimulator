@@ -1,4 +1,4 @@
-namespace SRDS.Direct.Strategical;
+﻿namespace SRDS.Direct.Strategical;
 
 using System;
 using System.Collections.ObjectModel;
@@ -7,8 +7,6 @@ using Agents;
 using Model;
 
 public class Scheduler : ITimeSimulatable {
-    public event EventHandler<SystemAction>? Scheduled;
-    public event EventHandler<SystemAction>? Delayed;
     public event EventHandler<SystemAction>? UnitsShortage;
     public ObservableCollection<SystemAction> Actions = new();
     private DateTime currentTime;
@@ -42,21 +40,23 @@ public class Scheduler : ITimeSimulatable {
     public void Remove(SystemAction action) {
         foreach (var act in action.Descendants())
             Actions.Remove(act);
-        Scheduled?.Invoke(null, action);
     }
     public void InterruptSequence(SystemAction action) {
-        foreach (var act in action.Descendants())
-            act.Finished = true;
-        Scheduled?.Invoke(null, action);
+        foreach (var act in action.Descendants()) {
+            if (!act.Finished) {
+                act.Finished = true;
+                act.Status = "interrupted";
+            }
+        }
     }
     public void Delay(SystemAction action) {
         action.EndTime += timeFlow;
-        foreach (var act in action.Descendants())
+        foreach (var act in action.DescendantsRecursive())
             if (act.EndTime < DateTime.MaxValue) {
-                act.StartTime += timeFlow;
+                if (!act.Started)
+                    act.StartTime += timeFlow;
                 act.EndTime += timeFlow;
             }
-        Delayed?.Invoke(this, action);
     }
 
     public void LocalPlansScheduled(object? sender, System.ComponentModel.PropertyChangedEventArgs e) {
@@ -75,8 +75,10 @@ public class Scheduler : ITimeSimulatable {
                 if (action.StartTime <= time && !Actions.Any(p => p.Type == ActionType.GoTo && p.Next.Contains(action) && !p.Finished)) {
                     if (!Executor.Execute(director, action, time))
                         action.StartTime += timeFlow;
+                    else if (!action.Started)
+                        action.Started = true;
                 }
-                if (action.EndTime <= time || action.Finished) {
+                if (action.EndTime <= time) {
                     action.RealResult = Qualifier.Qualify(director, action, time);
                     var recommendation = Qualifier.Recommend(action.Type, action.ExpectedResult, action.RealResult);
                     if (recommendation == ActionRecommendation.Approve) {
@@ -91,6 +93,7 @@ public class Scheduler : ITimeSimulatable {
                             break;
                         }
                         action.Finished = true;
+                        action.Status = "completed";
                         if (action.Next.Any() && action.RealResult is ActionResult realResult) {
                             foreach (var nextAction in action.Next) {
                                 var shiftTime = nextAction.StartTime - (action.StartTime + realResult.EstimatedTime);

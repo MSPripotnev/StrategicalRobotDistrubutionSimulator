@@ -41,7 +41,6 @@ public class ActionExecutor {
                 // Ended earlier
                 agent.CurrentState = RobotState.Ready;
                 action.EndTime = time;
-                action.Finished = true;
             }
             return true;
         }

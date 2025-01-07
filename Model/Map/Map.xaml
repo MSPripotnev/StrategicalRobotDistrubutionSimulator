@@ -79,6 +79,7 @@
                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                          x:Name="propertyGrid" Panel.ZIndex="5"
                          />
+
         <TreeView Grid.Column="1" Grid.Row="1"
                   Name="planView" Panel.ZIndex="4" Visibility="Collapsed" ScrollViewer.CanContentScroll="True">
             <TreeView.ItemTemplate>
@@ -86,7 +87,36 @@
                     <TextBlock Text="{Binding Header}"/>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <Setter Property="IsEnabled" Value="{Binding Started, Mode=OneWay}" />
+                    <Setter Property="IsSelected" Value="{Binding Finished, Mode=OneWay}" />
+                    <Setter Property="FontWeight" Value="Normal"/>
+                    <Setter Property="Tag" Value="{Binding Status, Mode=OneWay}"/>
+                    <Style.Triggers>
+                        <MultiTrigger>
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="True">
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="IsExpanded" Value="True" />
+                            <Setter Property="Background" Value="#500080F0"/>
+                        </Trigger>
+                        <Trigger Property="Tag" Value="completed">
+                            <Setter Property="Background" Value="#3000AA00"/>
+                        </Trigger>
+                        <Trigger Property="Tag" Value="delayed">
+                            <Setter Property="FontWeight" Value="Bold" />
+                            <Setter Property="IsExpanded" Value="True" />
+                            <Setter Property="Background" Value="#30B92A2A"/>
+                        </Trigger>
+                        <Trigger Property="Tag" Value="interrupted">
+                            <Setter Property="Background" Value="#F0FFFF00"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </TreeView.ItemContainerStyle>
         </TreeView>
+
         <Menu x:Name="menu" BorderThickness="2" BorderBrush="Gray" Height="20" Grid.ColumnSpan="2" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" VerticalAlignment="Top" >
             <MenuItem Header="Файл" FlowDirection="LeftToRight" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-5,0,0,0">
                 <MenuItem Header="Создать" Tag="0" Click="FileMenuItem_Click"/>
