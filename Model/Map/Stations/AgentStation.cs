@@ -51,7 +51,7 @@ public class AgentStation : Station, IControllable, IRefueller {
 
         // TODO: replace time.Hour % 6 == 0 by plans correction
         var lastPlan = LocalPlans.Any() ? LocalPlans[0] : null;
-        while (lastPlan?.Next != null) lastPlan = lastPlan.Next;
+        while (lastPlan?.Next.Any() == true) lastPlan = lastPlan.Next[0];
         if ((!LocalPlans.Any() && time.Second == 0 && time.Minute % 30 == 0) ||
             time.Second == 0 && time.Minute == 0 && time.Hour >= lastPlan?.EndTime.Hour) {
             PlannerModule.Simulate(sender, time);

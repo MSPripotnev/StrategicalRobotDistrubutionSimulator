@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 
 namespace SRDS.Direct.Strategical;
 using Agents;
@@ -25,11 +25,11 @@ public class ActionExecutor {
         return true;
     }
 
-    public bool Execute(SystemAction action, DateTime time) {
+    public bool Execute(Director director, SystemAction action, DateTime time) {
         if (action.Subject is AgentStation ags)
             return StationExecute(action, ags);
 
-        if (action.Subject is not Agent agent) throw new NotImplementedException();
+        if (director.Agents.FirstOrDefault(p => p.Equals(action.Subject)) is not Agent agent) throw new NotImplementedException();
 
         switch (action.Type) {
         case ActionType.GoTo: {

@@ -80,7 +80,13 @@
                          x:Name="propertyGrid" Panel.ZIndex="5"
                          />
         <TreeView Grid.Column="1" Grid.Row="1"
-                  Name="planView" Panel.ZIndex="4" Visibility="Collapsed" ScrollViewer.CanContentScroll="True"/>
+                  Name="planView" Panel.ZIndex="4" Visibility="Collapsed" ScrollViewer.CanContentScroll="True">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Path=Next}">
+                    <TextBlock Text="{Binding Header}"/>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
         <Menu x:Name="menu" BorderThickness="2" BorderBrush="Gray" Height="20" Grid.ColumnSpan="2" VerticalContentAlignment="Top" HorizontalAlignment="Stretch" VerticalAlignment="Top" >
             <MenuItem Header="Файл" FlowDirection="LeftToRight" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="-5,0,0,0">
                 <MenuItem Header="Создать" Tag="0" Click="FileMenuItem_Click"/>

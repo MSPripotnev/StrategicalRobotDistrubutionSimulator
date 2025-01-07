@@ -26,7 +26,7 @@ public class Planner {
 
         ActionResult result = new ActionResult() { SubjectAfter = subject, };
         var action = new SystemAction(goAction.EndTime, goAction.EndTime, ActionType.Refuel, agent, station) { ExpectedResult = result };
-        goAction.Next = action;
+        goAction.Next.Add(action);
 
         return (goAction, action);
     }
@@ -38,7 +38,7 @@ public class Planner {
         var action = new SystemAction(goAction.EndTime, goAction.EndTime, ActionType.ChangeDevice, agent, device) {
             ExpectedResult = new ActionResult() { SubjectAfter = new SnowRemover(agent) },
         };
-        goAction.Next = action;
+        goAction.Next.Add(action);
 
         return (goAction, action);
     }
@@ -49,24 +49,22 @@ public class Planner {
         if (goAction is null) return null;
 
         SystemAction? returnAction = null;
-
-        var action = new SystemAction(goAction.EndTime, workEndTime, ActionType.WorkOn, agent, road) {
-            ExpectedResult = new ActionResult() {
-                SubjectAfter = new SnowRemover(agent, RobotState.Working) { Position = roadPosition },
-                ObjectAfter = new Road(road) {
-                    Snowness = snowness,
-                    IcyPercent = icy
-                },
-                EstimatedTime = workEndTime - startTime
-            }
+        var workResult = new ActionResult() {
+            SubjectAfter = new SnowRemover(agent, RobotState.Working) { Position = roadPosition },
+            ObjectAfter = new Road(road) {
+                Snowness = snowness,
+                IcyPercent = icy
+            },
+            EstimatedTime = workEndTime - startTime
         };
-        goAction.Next = action;
+        var action = new SystemAction(goAction.EndTime, workEndTime, ActionType.WorkOn, workResult, agent, road);
+        goAction.Next.Add(action);
 
         if (workEndTime < DateTime.MaxValue) {
             returnAction = GoToPlan(agent, agent.Home is not null ? agent.Home.Position : agent.Position, workEndTime);
             if (returnAction is null) return null;
+            action.Next.Add(returnAction);
         }
-        action.Next = returnAction;
 
         if (action is null) return null;
         return (goAction, action, returnAction);

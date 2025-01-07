@@ -1,4 +1,8 @@
-﻿namespace SRDS.Direct.Strategical;
+namespace SRDS.Direct.Strategical;
+
+using System;
+using System.Collections.ObjectModel;
+
 using Agents;
 using Model;
 
@@ -6,7 +10,7 @@ public class Scheduler : ITimeSimulatable {
     public event EventHandler<SystemAction>? Scheduled;
     public event EventHandler<SystemAction>? Delayed;
     public event EventHandler<SystemAction>? UnitsShortage;
-    private readonly List<SystemAction> _actions = new();
+    public ObservableCollection<SystemAction> Actions = new();
     private DateTime currentTime;
     private TimeSpan timeFlow;
     private DateTime CurrentTime {
@@ -25,30 +29,29 @@ public class Scheduler : ITimeSimulatable {
 
     public bool Add(SystemAction action) {
         if (action.StartTime < CurrentTime) throw new InvalidOperationException($"Could not schedule action in past: {action.StartTime.ToShortTimeString()} < {CurrentTime.ToShortTimeString()}");
-        for (int i = 0; i < _actions.Count; i++) {
-            if (!_actions[i].Finished && _actions[i].Subject == action.Subject && (_actions[i].EndTime < action.StartTime || _actions[i].Type == action.Type && (_actions[i].EndTime == action.EndTime || _actions[i].StartTime == action.StartTime))) {
-                InterruptSequence(_actions[i]);
+        for (int i = 0; i < Actions.Count; i++) {
+            if (!Actions[i].Finished && Actions[i].Subject == action.Subject && (Actions[i].EndTime < action.StartTime || Actions[i].Type == action.Type && (Actions[i].EndTime == action.EndTime || Actions[i].StartTime == action.StartTime))) {
+                InterruptSequence(Actions[i]);
                 i--;
             }
         }
-        for (SystemAction? act = action; act != null; act = act.Next)
-            _actions.Add(act);
-        Scheduled?.Invoke(this, action);
+
+        Actions.Add(action);
         return true;
     }
     public void Remove(SystemAction action) {
-        for (SystemAction? act = action; act != null; act = act.Next)
-            _actions.Remove(act);
+        foreach (var act in action.Descendants())
+            Actions.Remove(act);
         Scheduled?.Invoke(null, action);
     }
     public void InterruptSequence(SystemAction action) {
-        for (SystemAction? act = action; act != null; act = act.Next)
+        foreach (var act in action.Descendants())
             act.Finished = true;
         Scheduled?.Invoke(null, action);
     }
     public void Delay(SystemAction action) {
         action.EndTime += timeFlow;
-        for (SystemAction? act = action.Next; act != null; act = act.Next)
+        foreach (var act in action.Descendants())
             if (act.EndTime < DateTime.MaxValue) {
                 act.StartTime += timeFlow;
                 act.EndTime += timeFlow;
@@ -66,36 +69,40 @@ public class Scheduler : ITimeSimulatable {
     public void Simulate(object? sender, DateTime time) {
         if (sender is not Director director) return;
         CurrentTime = time;
-        for (int i = 0; i < _actions.Count; i++) {
-            if (_actions[i].Finished) continue;
-            if (_actions[i].StartTime <= time && !_actions.Any(p => p.Type == ActionType.GoTo && p.Next == _actions[i] && !p.Finished)) {
-                if (!Executor.Execute(_actions[i], time))
-                    _actions[i].StartTime += timeFlow;
-            }
-            if (_actions[i].EndTime <= time || _actions[i].Finished) {
-                _actions[i].RealResult = Qualifier.Qualify(director, _actions[i], time);
-                var recommendation = Qualifier.Recommend(_actions[i].Type, _actions[i].ExpectedResult, _actions[i].RealResult);
-                if (recommendation == ActionRecommendation.Approve) {
-                    switch (_actions[i].Type) {
-                    case ActionType.WorkOn:
-                        if (_actions[i].Subject is Agent agent)
-                            agent.Unlink();
-                        break;
-                    case ActionType.Refuel:
-                    case ActionType.ChangeDevice:
-                    case ActionType.GoTo:
-                        break;
+        for (int i = 0; i < Actions.Count; i++) {
+            if (!Actions[i].Descendants().Any(p => !p.Finished)) continue;
+            foreach (SystemAction action in Actions[i].Descendants().Where(p => !p.Finished)) {
+                if (action.StartTime <= time && !Actions.Any(p => p.Type == ActionType.GoTo && p.Next.Contains(action) && !p.Finished)) {
+                    if (!Executor.Execute(director, action, time))
+                        action.StartTime += timeFlow;
+                }
+                if (action.EndTime <= time || action.Finished) {
+                    action.RealResult = Qualifier.Qualify(director, action, time);
+                    var recommendation = Qualifier.Recommend(action.Type, action.ExpectedResult, action.RealResult);
+                    if (recommendation == ActionRecommendation.Approve) {
+                        switch (action.Type) {
+                        case ActionType.WorkOn:
+                            if (action.Subject is Agent agent)
+                                agent.Unlink();
+                            break;
+                        case ActionType.Refuel:
+                        case ActionType.ChangeDevice:
+                        case ActionType.GoTo:
+                            break;
+                        }
+                        action.Finished = true;
+                        if (action.Next.Any() && action.RealResult is ActionResult realResult) {
+                            foreach (var nextAction in action.Next) {
+                                var shiftTime = nextAction.StartTime - (action.StartTime + realResult.EstimatedTime);
+                                nextAction.StartTime -= shiftTime;
+                            }
+                        }
+                    } else if (recommendation == ActionRecommendation.Delay) {
+                        Delay(action);
+                    } else {
+                        Delay(action);
+                        UnitsShortage?.Invoke(this, action);
                     }
-                    _actions[i].Finished = true;
-                    if (_actions[i].Next is SystemAction nextAction && _actions[i].RealResult is ActionResult realResult) {
-                        var shiftTime = nextAction.StartTime - (_actions[i].StartTime + realResult.EstimatedTime);
-                        nextAction.StartTime -= shiftTime;
-                    }
-                } else if (recommendation == ActionRecommendation.Delay) {
-                    Delay(_actions[i]);
-                } else {
-                    Delay(_actions[i]);
-                    UnitsShortage?.Invoke(this, _actions[i]);
                 }
             }
         }

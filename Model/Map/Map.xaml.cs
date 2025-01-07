@@ -31,7 +31,7 @@ public partial class MapWPF : Window {
     public MapWPF() {
         InitializeComponent();
         paths.Reload();
-        
+
         RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.LowQuality);
         RenderOptions.ProcessRenderMode = System.Windows.Interop.RenderMode.Default;
 
@@ -155,6 +155,7 @@ public partial class MapWPF : Window {
 
                 director.Scheduler.Scheduled += PlanRefresh;
                 scaleL.Content = $"1 пкс = {director.Map.MapScale} м";
+                planView.ItemsSource = director.Scheduler.Actions;
 
                 if (director.Meteo is not null) {
                     director.Meteo.PropertyChanged += RefreshMeteo;
@@ -276,7 +277,7 @@ public partial class MapWPF : Window {
                 Director = Director.Deserialize(fd.FileName);
                 if (Director is null) return;
                 if (tester.Models.Any() && tester.Models[0] is CopyModel cm && cm.Unpack() != Director)
-                    tester.Models[0] = new CopyModel(Director) { 
+                    tester.Models[0] = new CopyModel(Director) {
                         ModelPath = fd.FileName,
                         Name = fd.SafeFileName.Replace(".xsmod", $"-{nameof(CopyModel)}")
                     };
@@ -679,6 +680,8 @@ public partial class MapWPF : Window {
         mainTask.Start();
 #else
         refreshTimer.Start();
+        if (planView.ItemsSource == null && Director is not null)
+            planView.ItemsSource = Director.Scheduler.Actions;
         MouseWheel -= Window_MouseWheel;
 #endif
     }
@@ -700,7 +703,7 @@ public partial class MapWPF : Window {
         stepB.IsEnabled = false;
         propertyGrid.SelectedObject = null;
         MouseWheel += Window_MouseWheel;
-        planView.Items.Clear();
+        planView.ItemsSource = null;
     }
     private void StartButton_Click(object sender, RoutedEventArgs e) {
         if (startB.Content.ToString() == "▶️") {
@@ -911,12 +914,6 @@ public partial class MapWPF : Window {
         }
     }
     public void PlanRefresh(object? sender, SystemAction action) {
-        if (action.UI?.Parent is not null) return;
-        if (sender is null)
-            planView.Items.Remove(action.UI);
-        else if (action.UI is not null) {
-            planView.Items.Add(action.UI);
-        }
     }
     #endregion
 }
