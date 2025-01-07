@@ -36,7 +36,7 @@ public class StrategicQualifier {
             return ActionRecommendation.Delay;
         }
         case ActionType.WorkOn: {
-            if (expected.SubjectAfter is not Agent agent) throw new InvalidCastException();
+            if (expected.SubjectAfter is not Agent agent || real?.SubjectAfter is not Agent realAgent) throw new InvalidCastException();
 
             if (real?.ObjectAfter is AgentStation station) {
                 if (station.AssignedAgents.Contains(agent))
@@ -45,7 +45,7 @@ public class StrategicQualifier {
             }
             if (expected.ObjectAfter is Road roadExpected && real?.ObjectAfter is Road roadReal && agent is SnowRemover remover) {
                 if (remover.Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
-                    if (roadReal.Deicing > 50)
+                    if (PathFinder.Distance(realAgent.Position, roadReal.Position) < realAgent.ActualSpeed || PathFinder.Distance(realAgent.Position, roadReal.EndPosition) < realAgent.ActualSpeed)
                         return ActionRecommendation.Approve;
                     return ActionRecommendation.Delay;
                 }
