@@ -292,6 +292,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         return true;
     }
     public bool Link(ITargetable target) {
+        if (AttachedObj == target) return true;
         if (target is Road r && PathFinder.Distance(Position, Position ^ r) > 15) return false;
         else if (target is Target t && PathFinder.Distance(Position, t.Position) > 15) return false;
         target.ReservedAgent = this;

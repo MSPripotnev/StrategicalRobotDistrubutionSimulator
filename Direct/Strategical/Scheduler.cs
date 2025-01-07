@@ -94,7 +94,7 @@ public class Scheduler : ITimeSimulatable {
                         }
                         action.Finished = true;
                         action.Status = "completed";
-                        if (action.Next.Any() && action.RealResult is ActionResult realResult) {
+                        if (action.Next.Any() && action.RealResult is ActionResult realResult && realResult.EstimatedTime < action.ExpectedResult.EstimatedTime) {
                             foreach (var nextAction in action.Next) {
                                 var shiftTime = nextAction.StartTime - (action.StartTime + realResult.EstimatedTime);
                                 nextAction.StartTime -= shiftTime;

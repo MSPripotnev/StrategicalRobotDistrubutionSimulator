@@ -36,7 +36,8 @@ public class Planner {
         var goAction = GoToPlan(resultAgent, station.Position, time);
         if (goAction is null) return null;
         var result = new ActionResult() {
-            SubjectAfter = new SnowRemover(agent, RobotState.Ready)
+            SubjectAfter = new SnowRemover(agent, RobotState.Ready),
+            EstimatedTime = time.AddMinutes(1) - time
         };
         var action = new SystemAction(goAction.EndTime, goAction.EndTime, ActionType.ChangeDevice, result, agent, device);
         goAction.Next.Add(action);

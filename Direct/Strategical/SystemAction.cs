@@ -92,12 +92,7 @@ public class SystemAction : INotifyPropertyChanged {
         get => finished;
         set {
             finished = value;
-            if (Header is null) return;
-            const string completedString = "(completed)";
-            if (value && !Header.EndsWith(completedString))
-                Header += completedString;
-            else if (!value && Header.EndsWith(completedString))
-                Header = Header.Replace(completedString, null);
+            RefreshHeader();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Finished)));
         }
     }
@@ -107,29 +102,41 @@ public class SystemAction : INotifyPropertyChanged {
         set { header = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(Header)); }
     }
     private void RefreshHeader() {
-        string is_completed_str = $"{(Finished ? "(completed)" : "")}";
         switch (Type) {
         case ActionType.GoTo: {
             if (Subject is not Agent agent || Object is not Point point) return;
-            Header = $"{agent} go to -> ({Math.Round(point.X)}; {Math.Round(point.Y)}) at {StartTime.ToLongTimeString()} until {EndTime.ToLongTimeString()} {is_completed_str}";
+            Header = $"{agent} go to -> ({Math.Round(point.X)}; {Math.Round(point.Y)}) at {StartTime.ToLongTimeString()} until {EndTime.ToLongTimeString()}";
             break;
         }
         case ActionType.ChangeDevice: {
             if (Subject is not SnowRemover agent || Object is not SnowRemoverType device) return;
-            Header = $"{agent} take {device} at {EndTime.ToLongTimeString()} {is_completed_str}";
+            Header = $"{agent} take {device} at {EndTime.ToLongTimeString()}";
             break;
         }
         case ActionType.WorkOn: {
             if (ExpectedResult.SubjectAfter is not Agent agent || Object is not Road road) return;
-            Header = $"{agent} work on {road} from {StartTime} to {EndTime} {is_completed_str}";
+            Header = $"{agent} work on {road} from {StartTime} to {EndTime}";
             break;
         }
         case ActionType.Refuel: {
             if (ExpectedResult.SubjectAfter is not Agent agent) return;
-            Header = $"{agent} refuel to {agent.Fuel}/{agent.FuelCapacity} {is_completed_str}";
+            Header = $"{agent} refuel to {agent.Fuel}/{agent.FuelCapacity}";
             break;
         }
         }
+        var handicap = RealResult?.EstimatedTime - ExpectedResult.EstimatedTime;
+        string completedString = $" (completed";
+
+        if (handicap.HasValue && handicap != TimeSpan.Zero)
+            completedString += $" {(handicap.Value < TimeSpan.Zero ? $"faster {handicap}" : $"slower {handicap}")})";
+        else if (handicap.HasValue) completedString += ")";
+        else completedString = " (interrupted)";
+
+        if (Header is null) return;
+        if (Finished && !Header.EndsWith(completedString))
+            Header += completedString;
+        else if (!Finished && Header.EndsWith(completedString))
+            Header = Header.Replace(completedString, null);
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Header)));
     }
     public override string? ToString() => Header;
