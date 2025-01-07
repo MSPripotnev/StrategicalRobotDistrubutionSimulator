@@ -222,7 +222,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             List<Point> pc = new(Trajectory.Skip(1));
             if (pc.Any()) {
                 TraversedWay += PathFinder.Distance(nextPoint, pc[0]) *
-                    (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint) : 1);
+                    (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint, CurrentState == RobotState.Working) : 1);
                 nextPoint = pc[0];
             }
             Trajectory = pc;
@@ -230,7 +230,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         Vector V = nextPoint - Position;
         if (V.Length > 0)
             V.Normalize();
-        V *= ActualSpeed / (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint) : 1);
+        V *= ActualSpeed / (Pathfinder is not null ? Pathfinder.GetPointHardness(nextPoint, CurrentState == RobotState.Working) : 1);
         Position = new Point(Position.X + V.X, Position.Y + V.Y);
 
         var angle = Vector.AngleBetween(V, new Vector(0, 1));
