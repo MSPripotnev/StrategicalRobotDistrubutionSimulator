@@ -84,7 +84,8 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
             if (!takeAIDPlan.HasValue) continue;
 
             Road roadToWork = agentsForRoadsAID.First(p => p.Value > 0).Key;
-            var deicingPlan = Planner.WorkOnRoad(agents[i], roadToWork, takeAIDPlan.Value.action.EndTime, takeAIDPlan.Value.action.EndTime + antiIceWorkTime);
+            var deicingPlan = Planner.WorkOnRoad(takeAIDPlan.Value.action.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(), 
+                                                 roadToWork, takeAIDPlan.Value.action.EndTime, takeAIDPlan.Value.action.EndTime + antiIceWorkTime);
             if (!deicingPlan.HasValue) continue;
             agentsForRoadsAID[roadToWork]--;
             takeAIDPlan.Value.action.Next.Add(deicingPlan.Value.goAction);
@@ -98,7 +99,8 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
             else deicingPlan.Value.workAction.Next.Add(takeShovelsPlan.Value.goAction);
 
             agentsForRoadsShove = DistributeAgentsCount(map.Roads, shoveTime, map.MapScale, station.AssignedAgents.Length);
-            var shovePlan = Planner.WorkOnRoad(agents[i], roadToWork, takeShovelsPlan.Value.action.EndTime, takeShovelsPlan.Value.action.EndTime + shoveTime);
+            var shovePlan = Planner.WorkOnRoad(takeShovelsPlan.Value.action.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(),
+                                               roadToWork, takeShovelsPlan.Value.action.EndTime, takeShovelsPlan.Value.action.EndTime + shoveTime);
             if (!shovePlan.HasValue) continue;
             agentsForRoadsShove[roadToWork]--;
             takeShovelsPlan.Value.action.Next.Add(shovePlan.Value.goAction);

@@ -31,13 +31,14 @@ public class Planner {
         return (goAction, action);
     }
     public static (SystemAction goAction, SystemAction action)? ChangeDevicePlan(SnowRemover agent, AgentStation station, SnowRemoverType device, DateTime time) {
-        var resultAgent = new SnowRemover(agent);
+        var resultAgent = new SnowRemover(agent, RobotState.Refuel);
         resultAgent.ChangeDevice(device);
-        var goAction = GoToPlan(agent, station.Position, time);
+        var goAction = GoToPlan(resultAgent, station.Position, time);
         if (goAction is null) return null;
-        var action = new SystemAction(goAction.EndTime, goAction.EndTime, ActionType.ChangeDevice, agent, device) {
-            ExpectedResult = new ActionResult() { SubjectAfter = new SnowRemover(agent) },
+        var result = new ActionResult() {
+            SubjectAfter = new SnowRemover(agent, RobotState.Ready)
         };
+        var action = new SystemAction(goAction.EndTime, goAction.EndTime, ActionType.ChangeDevice, result, agent, device);
         goAction.Next.Add(action);
 
         return (goAction, action);
@@ -61,7 +62,7 @@ public class Planner {
         goAction.Next.Add(action);
 
         if (workEndTime < DateTime.MaxValue) {
-            returnAction = GoToPlan(agent, agent.Home is not null ? agent.Home.Position : agent.Position, workEndTime);
+            returnAction = GoToPlan(new SnowRemover(workResult.SubjectAfter as SnowRemover ?? throw new Exception()), agent.Home is not null ? agent.Home.Position : agent.Position, workEndTime);
             if (returnAction is null) return null;
             action.Next.Add(returnAction);
         }
@@ -83,7 +84,6 @@ public class Planner {
         };
         if (result.SubjectAfter is not Agent ragent) return null;
         ragent.Position = explorer.Result;
-        ragent.CurrentState = RobotState.Ready;
 
         return new SystemAction(startTime, startTime.AddSeconds(explorer.Result.Distance > 10 ? Math.Round(explorer.Result.Distance / agent.Speed) : 0.0), ActionType.GoTo, result, agent, targetPosition);
     }
