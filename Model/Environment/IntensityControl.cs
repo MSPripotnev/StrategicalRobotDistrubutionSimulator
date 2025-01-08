@@ -15,13 +15,13 @@ using System.Xml.Serialization;
 namespace SRDS.Model.Environment;
 public class IntensityMapConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-        if (value is not double density || density < 0)
+        if (value is not double density || density <= 0)
             return new RadialGradientBrush(Color.FromArgb(0, 0, 0, 0), Color.FromArgb(100, 255, 255, 255));
 
         density = density / 10 * 256;
         byte r = (byte)Math.Min(255, Math.Round(density)),
              b = (byte)Math.Max(0, 255 - Math.Round(density));
-        return new RadialGradientBrush(Color.FromArgb((byte)(Math.Abs(r - b) / 3), r, 0, b), Color.FromArgb((byte)(Math.Abs(r - b) / 5), 0, 0, 0));
+        return new RadialGradientBrush(Color.FromArgb((byte)r, r, 0, b), Color.FromArgb((byte)r, 0, 0, 0));
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
