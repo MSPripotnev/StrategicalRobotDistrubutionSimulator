@@ -1,4 +1,7 @@
 namespace SRDS.Direct.Strategical;
+
+using System.Windows;
+
 using Agents;
 using Agents.Drones;
 
@@ -26,7 +29,10 @@ public class StrategicQualifier {
         IcyIncreasePowerThreshold = icyIncrease;
         DistanceThreshold = distance;
     }
-    public ActionRecommendation Recommend(ActionType type, ActionResult expected, ActionResult? real) {
+    public ActionRecommendation RecommendFor(SystemAction action) {
+        ActionType type = action.Type;
+        ActionResult expected = action.ExpectedResult;
+        ActionResult? real = action.RealResult;
         switch (type) {
         case ActionType.GoTo: {
             if (expected.SubjectAfter is not Agent agent || real?.SubjectAfter is not Agent realAgent) throw new InvalidCastException();
@@ -36,33 +42,41 @@ public class StrategicQualifier {
             return ActionRecommendation.Delay;
         }
         case ActionType.WorkOn: {
-            if (expected.SubjectAfter is not Agent agent) throw new InvalidCastException();
-
+            if (expected.SubjectAfter is not Agent agent || real?.SubjectAfter is not Agent realAgent) throw new InvalidCastException();
             if (real?.ObjectAfter is AgentStation station) {
                 if (station.AssignedAgents.Contains(agent))
                     return ActionRecommendation.Approve;
                 else return ActionRecommendation.Delay;
             }
             if (expected.ObjectAfter is Road roadExpected && real?.ObjectAfter is Road roadReal && agent is SnowRemover remover) {
+                ActionRecommendation prior;
                 if (remover.Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
-                    if (roadReal.Deicing > 50)
+                    if (roadReal.Deicing > 40 || roadReal.IcyPercent < IcyDelayThreshold)
+                        prior = ActionRecommendation.Approve;
+                    else prior = ActionRecommendation.Delay;
+                } else if (remover.Devices.Contains(SnowRemoverType.Shovel) || remover.Devices.Contains(SnowRemoverType.Rotor) || remover.Devices.Contains(SnowRemoverType.PlowBrush)) {
+                    if (roadReal.Snowness - roadExpected.Snowness < SnownessDelayThreshold)
+                        prior = ActionRecommendation.Approve;
+                    else if (roadReal.Snowness - roadExpected.Snowness < SnownessIncreasePowerThreshold)
+                        prior = ActionRecommendation.Delay;
+                    else prior = ActionRecommendation.IncreasePower;
+                } else if (remover.Devices.Contains(SnowRemoverType.Cleaver)) {
+                    if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyDelayThreshold)
+                        prior = ActionRecommendation.Approve;
+                    else if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyIncreasePowerThreshold)
+                        prior = ActionRecommendation.Delay;
+                    else prior = ActionRecommendation.IncreasePower;
+                } else prior = ActionRecommendation.Approve;
+
+                if (prior == ActionRecommendation.Approve && action.Next.Any(p => p.Type == ActionType.GoTo)) {
+                    var a = action.Next.First(p => p.Type == ActionType.GoTo);
+                    if (a.Object is not Point p) return ActionRecommendation.Approve;
+                    var d = PathFinder.Distance(realAgent.Position, p ^ roadReal);
+                    if (PathFinder.Distance(realAgent.Position, p ^ roadReal) < roadReal.Height * 4)
                         return ActionRecommendation.Approve;
                     return ActionRecommendation.Delay;
                 }
-                if (remover.Devices.Contains(SnowRemoverType.Shovel) || remover.Devices.Contains(SnowRemoverType.Rotor) || remover.Devices.Contains(SnowRemoverType.PlowBrush)) {
-                    if (roadReal.Snowness - roadExpected.Snowness < SnownessDelayThreshold)
-                        return ActionRecommendation.Approve;
-                    if (roadReal.Snowness - roadExpected.Snowness < SnownessIncreasePowerThreshold)
-                        return ActionRecommendation.Delay;
-                    return ActionRecommendation.IncreasePower;
-                }
-                if (remover.Devices.Contains(SnowRemoverType.Cleaver)) {
-                    if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyDelayThreshold)
-                        return ActionRecommendation.Approve;
-                    if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyIncreasePowerThreshold)
-                        return ActionRecommendation.Delay;
-                    return ActionRecommendation.IncreasePower;
-                }
+                return prior;
             }
 
             if (expected.ObjectAfter is null) return ActionRecommendation.Approve;

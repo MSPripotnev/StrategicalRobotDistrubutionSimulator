@@ -80,11 +80,11 @@ public class Scheduler : ITimeSimulatable {
                 }
                 if (action.EndTime <= time) {
                     action.RealResult = Qualifier.Qualify(director, action, time);
-                    var recommendation = Qualifier.Recommend(action.Type, action.ExpectedResult, action.RealResult);
+                    var recommendation = Qualifier.RecommendFor(action);
                     if (recommendation == ActionRecommendation.Approve) {
                         switch (action.Type) {
                         case ActionType.WorkOn:
-                            if (action.Subject is Agent agent)
+                            if (action.RealResult.SubjectAfter is Agent agent)
                                 agent.Unlink();
                             break;
                         case ActionType.Refuel:
