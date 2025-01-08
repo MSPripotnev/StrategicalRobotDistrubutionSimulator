@@ -108,6 +108,24 @@ public class IntensityControl {
         }
     }
     bool flag = false;
+    public IntensityCell[] GetIntensityArea(Rect rect) {
+        List<IntensityCell> res = new();
+        for (int i = 0; i <= rect.Width; i += IntensityMapScale) {
+            for (int j = 0; j <= rect.Height; j += IntensityMapScale) {
+                var iPoint = new Point(rect.X + i, rect.Y + j);
+                var pii = GetPointIntensityIndex(iPoint);
+                if (0 < pii.i && pii.i < IntensityMap.Length && 0 < pii.j && pii.j < IntensityMap[0].Length && IntensityMap[pii.i][pii.j] is IntensityCell cell)
+                    res.Add(cell);
+                /*
+                 * TODO: try rotate rectangle with something like that:
+                    var u = Rect.Union(rect, iPoint);
+                    if (u.Width * u.Height - rect.Width * rect.Height <= 1) {
+                */
+
+            }
+        }
+        return res.ToArray();
+    }
     public void GenerateIntensity(CloudControl cloudControl, Obstacle[] obstacles, TimeSpan timeFlow, Dictionary<SnowType, double> snowTypes) {
         if (!(IntensityMap is not null && IntensityMap.Any())) return;
         if (!cloudControl.Clouds.Any()) return;

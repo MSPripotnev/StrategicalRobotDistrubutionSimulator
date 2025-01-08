@@ -197,56 +197,52 @@ public class SnowRemover : Agent {
             if (PathFinder.Distance(Position, road.Position) < PathFinder.Distance(Position, road.EndPosition))
                 v = -v;
         }
-        v *= IntensityControl.IntensityMapScale / v.Length;
-        var vr = v;
-        (vr.X, vr.Y) = (-v.Y, v.X);
-        (int ix, int iy) = IntensityControl.GetPointIntensityIndex(Position);
-        if (!(0 < ix && ix < meteo.IntensityControl.IntensityMap.Length && 0 < iy && iy < meteo.IntensityControl.IntensityMap[0].Length))
-            return;
-        if (meteo.IntensityControl.IntensityMap[ix][iy] is not IntensityCell currentPositionCell) return;
+        v *= 20 / v.Length;
+        Vector vr = new Vector(v.Y, Math.Abs(v.X));
+        vr *= road.Height * 2 / v.Length;
+        var rectStartPoint = Position - vr / 2 + v;
+        Rect removingRect = new Rect(rectStartPoint.X, rectStartPoint.Y, Math.Abs(v.Length), Math.Abs(vr.Length));
+        // TODO: rotate rectangle
+        var iArea = meteo.IntensityControl.GetIntensityArea(removingRect);
+
+        Vector vrs = new Vector(v.Y, -v.X);
+        vrs *= road.Height / 2 / v.Length;
 
         for (int i = 0; i < Devices.Length; i++) {
             (RemoveSpeed, MashSpeed, double fuelD) = DeviceRemoveSpeed(Devices[i]);
-            double remove_amount = Math.Min(currentPositionCell.Snow, RemoveSpeed * ActualSpeed * (100.0 - currentPositionCell.IcyPercent) / 100),
-                   mash_amount = MashSpeed * ActualSpeed;
-
+            double remove_amount = 0, mash_amount = MashSpeed * ActualSpeed;
             Fuel -= fuelD;
+
+            for (int c = 0; c < iArea.Length; c++) {
+                double cellRemoveAmount = Math.Min(iArea[c].Snow, RemoveSpeed * ActualSpeed * (100.0 - iArea[c].IcyPercent) / 100);
+                if (Devices[i] != SnowRemoverType.AntiIceDistributor) {
+                    iArea[c].Snow -= cellRemoveAmount;
+                    iArea[c].IcyPercent -= mash_amount;
+                    remove_amount += cellRemoveAmount;
+                } else {
+                    iArea[c].Deicing += mash_amount;
+                }
+                if (iArea[c].Snow < 0)
+                    iArea[c].Snow = 0;
+            }
             switch (Devices[i]) {
             case SnowRemoverType.Rotor: {
-                int isx, isy;
-                for (int j = -1; j <= 1; j++) {
-                    (isx, isy) = IntensityControl.GetPointIntensityIndex(Position + vr + v * j);
-                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length &&
-                            meteo.IntensityControl.IntensityMap[isx][isy] is IntensityCell cellv)
-                        cellv.Snow = cellv.Snow + remove_amount / 6 + (j == 0 ? remove_amount / 3 : 0);
-                }
-                (isx, isy) = IntensityControl.GetPointIntensityIndex(Position + 2 * vr);
-                if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length &&
-                            meteo.IntensityControl.IntensityMap[isx][isy] is IntensityCell cell)
-                    cell.Snow += remove_amount / 6;
+                rectStartPoint = Position - vrs * 4;
+                Rect throwRect = new Rect(rectStartPoint.X, rectStartPoint.Y, Math.Abs(v.Length), Math.Abs(vrs.Length));
+                IntensityCell[] throwArea = meteo.IntensityControl.GetIntensityArea(throwRect);
+                for (int c = 0; c < throwArea.Length; c++)
+                    throwArea[c].Snow += remove_amount / throwArea.Length;
                 break;
             }
-            case SnowRemoverType.Shovel:
-                for (int j = 0; j < 2; j++) {
-                    (int isx, int isy) = IntensityControl.GetPointIntensityIndex(Position + v / 2 + v * j + vr);
-                    if (0 < isx && isx < meteo.IntensityControl.IntensityMap.Length && 0 < isy && isy < meteo.IntensityControl.IntensityMap[0].Length &&
-                            meteo.IntensityControl.IntensityMap[isx][isy] is IntensityCell cell)
-                        cell.Snow += remove_amount / 2;
-                }
-                break;
-            case SnowRemoverType.AntiIceDistributor:
-                if (currentPositionCell.Deicing < 1)
-                    currentPositionCell.Deicing += mash_amount;
-                continue;
-            case SnowRemoverType.Cleaver:
-                break;
-            case SnowRemoverType.PlowBrush:
+            case SnowRemoverType.Shovel: {
+                rectStartPoint = Position - vrs * 4 + v / 4;
+                Rect throwRect = new Rect(rectStartPoint.X, rectStartPoint.Y, Math.Abs(v.Length), Math.Abs(vrs.Length));
+                IntensityCell[] throwArea = meteo.IntensityControl.GetIntensityArea(throwRect);
+                for (int c = 0; c < throwArea.Length; c++)
+                    throwArea[c].Snow += remove_amount / throwArea.Length;
                 break;
             }
-            currentPositionCell.Snow -= remove_amount;
-            currentPositionCell.IcyPercent -= mash_amount;
+            }
         }
-        if (currentPositionCell.Snow < 0)
-            currentPositionCell.Snow = 0;
     }
 }
