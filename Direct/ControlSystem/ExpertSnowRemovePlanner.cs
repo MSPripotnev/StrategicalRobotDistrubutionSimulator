@@ -6,6 +6,8 @@ using Model;
 using Model.Map;
 using Model.Map.Stations;
 
+using SRDS.Direct.Executive;
+
 using Strategical;
 public class ExpertSnowRemovePlanner : ITimeSimulatable {
     private int strength;
@@ -56,7 +58,7 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
     public SystemAction[] PlanPrepare(AgentStation station, TacticalMap map, DateTime time, bool repeat = false) {
         if (Strength == 0) return Array.Empty<SystemAction>();
 
-        SnowRemover[] agents = station.AssignedAgents.OfType<SnowRemover>().ToArray();
+        SnowRemover[] agents = station.FreeAgents.OfType<SnowRemover>().ToArray();
         TimeSpan antiIceWorkTime = new TimeSpan(1, 0, 0),
                  waitTime = new TimeSpan(3, 0, 0),
                  holdTime = TimeSpan.Zero,

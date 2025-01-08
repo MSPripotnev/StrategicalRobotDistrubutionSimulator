@@ -49,11 +49,9 @@ public class AgentStation : Station, IControllable, IRefueller {
 
         if (sender is not Director director) return;
 
-        // TODO: replace time.Hour % 6 == 0 by plans correction
-        var lastPlan = LocalPlans.Any() ? LocalPlans[0] : null;
-        while (lastPlan?.Next.Any() == true) lastPlan = lastPlan.Next[0];
+        // TODO: replace new plan by plans correction
         if ((!LocalPlans.Any() && time.Second == 0 && time.Minute % 30 == 0) ||
-            time.Second == 0 && time.Minute == 0 && time.Hour >= lastPlan?.EndTime.Hour) {
+            time.Second == 0 && time.Minute == 0 && FreeAgents.Length > AssignedAgents.Length / 2) {
             PlannerModule.Simulate(sender, time);
             LocalPlans = PlannerModule.PlanPrepare(this, director.Map, time, LocalPlans.Any());
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LocalPlans)));
