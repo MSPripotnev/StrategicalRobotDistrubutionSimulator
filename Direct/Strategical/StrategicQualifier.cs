@@ -51,17 +51,17 @@ public class StrategicQualifier {
             if (expected.ObjectAfter is Road roadExpected && real?.ObjectAfter is Road roadReal && agent is SnowRemover remover) {
                 ActionRecommendation prior;
                 if (remover.Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
-                    if (roadReal.Deicing > 40 || roadReal.IcyPercent < IcyDelayThreshold)
+                    if (roadReal.Deicing > 40 || roadReal.IcyPercent < IcyDelayThreshold || roadExpected.IcyPercent < 0)
                         prior = ActionRecommendation.Approve;
                     else prior = ActionRecommendation.Delay;
                 } else if (remover.Devices.Contains(SnowRemoverType.Shovel) || remover.Devices.Contains(SnowRemoverType.Rotor) || remover.Devices.Contains(SnowRemoverType.PlowBrush)) {
-                    if (roadReal.Snowness - roadExpected.Snowness < SnownessDelayThreshold)
+                    if (roadReal.Snowness - roadExpected.Snowness < SnownessDelayThreshold || roadExpected.Snowness < 0)
                         prior = ActionRecommendation.Approve;
                     else if (roadReal.Snowness - roadExpected.Snowness < SnownessIncreasePowerThreshold)
                         prior = ActionRecommendation.Delay;
                     else prior = ActionRecommendation.IncreasePower;
                 } else if (remover.Devices.Contains(SnowRemoverType.Cleaver)) {
-                    if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyDelayThreshold)
+                    if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyDelayThreshold || roadExpected.IcyPercent < 0)
                         prior = ActionRecommendation.Approve;
                     else if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyIncreasePowerThreshold)
                         prior = ActionRecommendation.Delay;

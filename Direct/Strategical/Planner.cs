@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 
 namespace SRDS.Direct.Strategical;
 using Agents;
@@ -56,7 +56,7 @@ public class Planner {
 
         return (goAction, action);
     }
-    public static (SystemAction goAction, SystemAction workAction, SystemAction? returnAction)? WorkOnRoad(SnowRemover agent, Road road, DateTime startTime, DateTime workEndTime, double snowness = 0.0, double icy = 0.0) {
+    public static (SystemAction goAction, SystemAction workAction, SystemAction? returnAction)? WorkOnRoad(SnowRemover agent, Road road, DateTime startTime, DateTime workEndTime, double snowness = -1, double icy = -1) {
         var roadPosition = agent.Position ^ road;
         (roadPosition.X, roadPosition.Y) = (Math.Round(roadPosition.X), Math.Round(roadPosition.Y));
         var goAction = GoToPlan(agent, roadPosition, startTime);
