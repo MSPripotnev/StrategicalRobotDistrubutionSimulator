@@ -159,8 +159,22 @@ public class SnowRemover : Agent {
                         if (!Trajectory.Contains(r.Position + v))
                             Trajectory.Add(r.Position + v);
                     }
-                    if (Trajectory.Any())
-                        Move();
+                    if (!Trajectory.Any()) {
+                        if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position)) {
+                            Trajectory.Add(r.Position);
+                            v = r.EndPosition - r.Position;
+                        } else {
+                            Trajectory.Add(r.EndPosition);
+                            v = r.Position - r.EndPosition;
+                        }
+                        MaxStraightRange = r.Height;
+                        state = RobotState.Working;
+                        v *= r.Height / 2 / v.Length;
+                        (v.X, v.Y) = (-v.Y, v.X);
+                        Trajectory[0] -= v;
+                        Trajectory.Add(Trajectory[0] + v);
+                    }
+                    Move();
                 }
                 RemoveSnowFromRoad(sender);
             }
