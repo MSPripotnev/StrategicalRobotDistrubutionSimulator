@@ -9,6 +9,8 @@ using Executive.Explorers.AStar;
 using Model.Map;
 using Model.Map.Stations;
 
+using SRDS.Direct.Executive;
+
 public class Planner {
 
     public static SystemAction DistributePlan(AgentStation ags, Dictionary<Road, double> distributionRecommendation, DateTime start, DateTime end) {
@@ -58,6 +60,20 @@ public class Planner {
     }
     public static (SystemAction goAction, SystemAction workAction, SystemAction? returnAction)? WorkOnRoad(SnowRemover agent, Road road, DateTime startTime, DateTime workEndTime, double snowness = -1, double icy = -1) {
         var roadPosition = agent.Position ^ road;
+        Point roadNearestEndPoint;
+        Vector v;
+        if (PathFinder.Distance(road.Position, agent.Position) < PathFinder.Distance(road.EndPosition, agent.Position)) {
+            v = road.EndPosition - road.Position;
+            roadNearestEndPoint = road.Position;
+        } else {
+            v = road.Position - road.EndPosition;
+            roadNearestEndPoint = road.EndPosition;
+        }
+        v *= road.Height / v.Length;
+        (v.X, v.Y) = (-v.Y, v.X);
+        if (PathFinder.Distance(roadPosition - v, roadNearestEndPoint) < PathFinder.Distance(roadPosition, roadNearestEndPoint))
+            roadPosition -= v;
+
         (roadPosition.X, roadPosition.Y) = (Math.Round(roadPosition.X), Math.Round(roadPosition.Y));
         var goAction = GoToPlan(agent, roadPosition, startTime);
         if (goAction is null) return null;
