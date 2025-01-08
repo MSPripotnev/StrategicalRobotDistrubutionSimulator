@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 
 namespace SRDS.Direct.Strategical;
 using Agents;
@@ -14,18 +14,30 @@ public class Planner {
     public static SystemAction DistributePlan(AgentStation ags, Dictionary<Road, double> distributionRecommendation, DateTime start, DateTime end) {
         return new SystemAction(start, end, ActionType.WorkOn, ags, distributionRecommendation);
     }
-    public static (SystemAction goAction, SystemAction action)? RefuelPlan(Agent agent, TacticalMap map, DateTime time, double? fuel = null) {
+    public static (SystemAction goAction, SystemAction action)? RefuelPlan(Agent agent, TacticalMap map, DateTime start, DateTime? end = null, double? fuel = null) {
         Station? station = FindNearestRefuelStation(agent, map);
         if (station is null) return null;
 
-        var goAction = GoToPlan(agent, station.Position, time);
+        var goAction = GoToPlan(agent, station.Position, start);
         if (goAction is null) return null;
+
         var subjectConstructorInfo = agent.GetType().GetConstructor(new Type[] { agent.GetType(), typeof(RobotState) }) ?? throw new InvalidCastException();
         var subject = (Agent)subjectConstructorInfo.Invoke(new object?[] { agent, RobotState.Ready });
         subject.Fuel = fuel ?? subject.FuelCapacity;
 
-        ActionResult result = new ActionResult() { SubjectAfter = subject, };
-        var action = new SystemAction(goAction.EndTime, goAction.EndTime, ActionType.Refuel, agent, station) { ExpectedResult = result };
+        TimeSpan refuelTime = new TimeSpan(0, 0, (int)Math.Ceiling((subject.Fuel - agent.Fuel) / Agent.FuelIncrease));
+        if (end is DateTime endd && refuelTime > end - goAction.EndTime) {
+            subject.Fuel = (endd - goAction.EndTime).TotalSeconds * Agent.FuelIncrease;
+            refuelTime = endd - goAction.EndTime;
+        }
+        if (refuelTime <= TimeSpan.Zero)
+            return null;
+
+        ActionResult result = new ActionResult() {
+            SubjectAfter = subject,
+            EstimatedTime = refuelTime
+        };
+        var action = new SystemAction(goAction.EndTime, goAction.EndTime + refuelTime, ActionType.Refuel, result, agent, station);
         goAction.Next.Add(action);
 
         return (goAction, action);

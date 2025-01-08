@@ -80,8 +80,15 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
             if (!agentsForRoadsAID.Any(p => p.Value > 0))
                 break;
 
+            var refuelPlan1 = Planner.RefuelPlan(agents[i], map, time, time + holdTime);
+            if (!refuelPlan1.HasValue) continue;
+
             var takeAIDPlan = Planner.ChangeDevicePlan(agents[i], station, SnowRemoverType.AntiIceDistributor, time + holdTime);
             if (!takeAIDPlan.HasValue) continue;
+            if (refuelPlan1.Value.action.ExpectedResult.SubjectAfter is SnowRemover sr && sr.Home is not null && PathFinder.Distance(sr.Home.Position, sr.Position) < sr.Pathfinder?.Scale)
+                refuelPlan1.Value.action.Next.Add(takeAIDPlan.Value.action);
+            else
+                refuelPlan1.Value.action.Next.Add(takeAIDPlan.Value.goAction);
 
             Road roadToWork = agentsForRoadsAID.First(p => p.Value > 0).Key;
             var deicingPlan = Planner.WorkOnRoad(takeAIDPlan.Value.action.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(), 
@@ -90,13 +97,20 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
             agentsForRoadsAID[roadToWork]--;
             takeAIDPlan.Value.action.Next.Add(deicingPlan.Value.goAction);
 
-            if (Strength != 1) waitTime = TimeSpan.Zero;
+            if (Strength != 1 && !repeat) waitTime = TimeSpan.Zero;
             if (deicingPlan.Value.workAction.Subject is not SnowRemover sr2) throw new ArgumentException(nameof(deicingPlan.Value.workAction.Subject));
-            var takeShovelsPlan = Planner.ChangeDevicePlan(sr2, station, SnowRemoverType.Shovel, (deicingPlan.Value.returnAction ?? deicingPlan.Value.workAction).EndTime + waitTime);
+            var lastDeicingAction = deicingPlan.Value.returnAction ?? deicingPlan.Value.workAction;
+
+            var takeShovelsPlan = Planner.ChangeDevicePlan(sr2, station, SnowRemoverType.Shovel, lastDeicingAction.EndTime + waitTime);
             if (!takeShovelsPlan.HasValue) continue;
-            if (deicingPlan.Value.returnAction is not null)
-                deicingPlan.Value.returnAction.Next.Add(takeShovelsPlan.Value.action);
-            else deicingPlan.Value.workAction.Next.Add(takeShovelsPlan.Value.goAction);
+
+            var refuelPlan2 = Planner.RefuelPlan(sr2, map, lastDeicingAction.EndTime, lastDeicingAction.EndTime + waitTime);
+            if (refuelPlan2.HasValue) {
+                lastDeicingAction.Next.Add(refuelPlan2.Value.goAction);
+                refuelPlan2.Value.action.Next.Add(takeShovelsPlan.Value.goAction);
+            } else {
+                lastDeicingAction.Next.Add(takeShovelsPlan.Value.goAction);
+            }
 
             agentsForRoadsShove = DistributeAgentsCount(map.Roads, shoveTime, map.MapScale, station.AssignedAgents.Length);
             var shovePlan = Planner.WorkOnRoad(takeShovelsPlan.Value.action.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(),
@@ -105,7 +119,7 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
             agentsForRoadsShove[roadToWork]--;
             takeShovelsPlan.Value.action.Next.Add(shovePlan.Value.goAction);
 
-            result.Add(takeAIDPlan.Value.goAction);
+            result.Add(refuelPlan1.Value.goAction);
         }
         return result.ToArray();
     }

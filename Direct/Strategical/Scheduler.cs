@@ -73,7 +73,7 @@ public class Scheduler : ITimeSimulatable {
             if (!Actions[i].Descendants().Any(p => !p.Finished)) continue;
             foreach (SystemAction action in Actions[i].Descendants().Where(p => !p.Finished)) {
                 if (action.StartTime <= time && !Actions.Any(p => p.Type == ActionType.GoTo && p.Next.Contains(action) && !p.Finished)) {
-                    if (!Executor.Execute(director, action, time))
+                    if (!Executor.Execute(director, action, time) && !action.Started)
                         action.StartTime += timeFlow;
                     else if (!action.Started)
                         action.Started = true;
@@ -92,6 +92,8 @@ public class Scheduler : ITimeSimulatable {
                         case ActionType.GoTo:
                             break;
                         }
+                        if (!action.Started)
+                            action.Started = true;
                         action.Finished = true;
                         action.Status = "completed";
                         if (action.Next.Any() && action.RealResult is ActionResult realResult && realResult.EstimatedTime < action.ExpectedResult.EstimatedTime) {

@@ -13,6 +13,7 @@ using Drones;
 using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
+using SRDS.Model.Environment;
 
 public enum RobotState {
     Disable = -1,
@@ -33,8 +34,16 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     [Category("Movement")]
     public double FuelCapacity { get; init; } = 350;
+    /// <summary>
+    /// 30 л / 100 км
+    /// </summary>
     [PropertyTools.DataAnnotations.Browsable(false)]
     public const double FuelDecrease = 30.0 / 100 / 1000;
+    /// <summary>
+    /// 40 л/мин
+    /// </summary>
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    public const double FuelIncrease = 40.0 / 60;
     private double fuel = 100;
     [Category("Movement")]
     public double Fuel {
@@ -99,10 +108,11 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     }
 
     public virtual void Simulate(object? sender, DateTime time) {
+        if (sender is GlobalMeteo) return;
         if (CurrentState > RobotState.Thinking) {
             if (FuelShortageCheck())
                 CurrentState = RobotState.Broken;
-            Fuel -= FuelDecrease;
+            Fuel -= FuelDecrease * ActualSpeed * (pathfinder is not null ? pathfinder.Map.MapScale : 1);
         }
         ActualSpeedRecalculate(time);
         switch (CurrentState) {
@@ -111,7 +121,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         case RobotState.Broken:
             break;
         case RobotState.Refuel:
-            if ((Fuel += 40.0 / 60 * timeFlow.TotalSeconds) > FuelCapacity - 1)
+            if ((Fuel += FuelIncrease * timeFlow.TotalSeconds) > FuelCapacity - 1)
                 CurrentState = RobotState.Ready;
             break;
         case RobotState.Ready:
@@ -283,13 +293,12 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public bool Refuel(Station station, double fuel) {
         if (station is not AgentStation or AntiIceStation or GasStation) return false;
         if (PathFinder.Distance(station.Position, Position) > 15) return false;
+        if (Fuel >= fuel) return true;
         if (CurrentState != RobotState.Refuel) {
             CurrentState = RobotState.Refuel;
-            return false;
+            return true;
         }
-        if (Fuel < fuel)
-            return false;
-        return true;
+        return false;
     }
     public bool Link(ITargetable target) {
         if (AttachedObj == target) return true;

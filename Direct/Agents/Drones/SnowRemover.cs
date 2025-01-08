@@ -129,7 +129,7 @@ public class SnowRemover : Agent {
             break;
         case RobotState.Working: {
             if (sender is Director or AgentStation) {
-                Fuel -= FuelDecrease;
+                Fuel -= FuelDecrease * ActualSpeed * (Pathfinder is not null ? Pathfinder.Map.MapScale : 1);
                 ActualSpeedRecalculate(time);
                 if (Home is not null && ActualSpeed > 0 && Fuel < (Position - Home.Position).Length / ActualSpeed * FuelDecrease)
                     CurrentState = RobotState.Broken;
