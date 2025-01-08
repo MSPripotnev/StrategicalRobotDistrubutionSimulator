@@ -212,7 +212,7 @@ public class Road : ITargetable, ITimeSimulatable {
                x4 = x3 - k * (y2 - y1),
                y4 = y3 + k * (x2 - x1);
         var res = new Point(x4, y4);
-        return road.DistanceToRoad(res) > 0 ? res : PathFinder.Distance(res, road.position) < PathFinder.Distance(res, road.endPosition) ? road.position : road.endPosition;
+        return road.DistanceToRoad(res) >= 0 ? res : PathFinder.Distance(res, road.position) < PathFinder.Distance(res, road.endPosition) ? road.position : road.endPosition;
     }
     public static explicit operator Vector(Road self) => self.EndPosition - self.Position;
     public static bool operator ==(Road left, Road right) {
