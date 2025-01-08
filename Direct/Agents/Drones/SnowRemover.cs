@@ -111,7 +111,7 @@ public class SnowRemover : Agent {
     }
     public void ChangeDevice(SnowRemoverType type) {
         var d = Devices.ToList();
-        d.RemoveAll(p => type < SnowRemoverType.Cleaver ? p < SnowRemoverType.Cleaver : p >= SnowRemoverType.Cleaver);
+        d.Clear();
         d.Add(type);
         Devices = d.ToArray();
     }
