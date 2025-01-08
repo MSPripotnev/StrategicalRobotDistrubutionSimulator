@@ -82,7 +82,7 @@ public class SnowRemover : Agent {
                 }
                 break;
             case RobotState.Ready:
-                if (base.CurrentState == RobotState.Working && (AttachedObj is not null && AttachedObj.Finished || AttachedObj is null))
+                if (base.CurrentState == RobotState.Working && (AttachedObj is not null && AttachedObj.Finished) && !Trajectory.Any())
                     state = RobotState.Ready;
                 else if (AttachedObj is null)
                     state = RobotState.Ready;

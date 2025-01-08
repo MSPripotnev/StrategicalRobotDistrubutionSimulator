@@ -41,10 +41,12 @@ internal class AStarExplorer : IExplorer {
     }
     public static void PrevStep() { }
     private void Check() {
-        if (Result.Heuristic < Scale)
+        if (Math.Round(Result.Heuristic) < Scale) {
+            Result = new AnalyzedPoint(Result, end, Result.Distance + Distance(Result, end), 0);
             PathCompleted?.Invoke(this, Result);
-        else if (!OpenedPoints.Any())
+        } else if (!OpenedPoints.Any()) {
             PathFailed?.Invoke(this, EventArgs.Empty);
+        }
     }
     protected virtual bool SelectNextPoint() {
         var v = OpenedPoints.MinBy(p => p.Heuristic + p.Distance);

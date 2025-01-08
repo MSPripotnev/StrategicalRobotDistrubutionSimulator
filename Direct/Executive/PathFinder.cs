@@ -103,7 +103,6 @@ public class PathFinder {
             path.Add(p);
             p = p.Previous;
         }
-        path.Add(p);
         path.Reverse();
         return path;
 #if ZIP_PATH

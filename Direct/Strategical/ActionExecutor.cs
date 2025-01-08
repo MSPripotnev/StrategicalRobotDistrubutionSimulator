@@ -37,7 +37,7 @@ public class ActionExecutor {
             // TODO: check map scale instead hardcode
             if (PathFinder.Distance(agent.TargetPosition, p) > 15) {
                 agent.TargetPosition = p;
-            } else if (PathFinder.Distance(agent.Position, p) < 15) {
+            } else if (PathFinder.Distance(agent.Position, p) < agent.ActualSpeed) {
                 // Ended earlier
                 agent.CurrentState = RobotState.Ready;
                 action.EndTime = time;
