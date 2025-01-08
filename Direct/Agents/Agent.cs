@@ -362,7 +362,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
         Path p = new Path() {
             Data = group,
-            Margin = new Thickness(-20, -10, 0, 0),
+            Margin = new Thickness(-20, -20, 20, 20),
         };
         if (bitmapImage is not null)
             p.Fill = new ImageBrush(bitmapImage);
