@@ -908,7 +908,7 @@ public partial class MapWPF : Window {
             }
             if (drawCB.IsChecked == true) {
                 if (Director.Agents.Any())
-                    wayTimeCountL.Content = $"Время в пути: {Director.WayIterations} it";
+                    wayTimeCountL.Content = $"Fuel = {Math.Round(Director.Agents.Sum(p => p.FuelConsumption))}";
             }
         }
     }

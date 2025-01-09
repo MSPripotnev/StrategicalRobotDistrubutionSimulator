@@ -113,6 +113,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             if (FuelShortageCheck())
                 CurrentState = RobotState.Broken;
             Fuel -= FuelDecrease * ActualSpeed * (pathfinder is not null ? pathfinder.Map.MapScale : 1);
+            FuelConsumption += FuelDecrease * ActualSpeed * (pathfinder is not null ? pathfinder.Map.MapScale : 1);
         }
         ActualSpeedRecalculate(time);
         switch (CurrentState) {
@@ -327,6 +328,9 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
     public double TraversedWay { get; set; } = 0;
+    [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    public double FuelConsumption { get; protected set; }
     [XmlIgnore]
     [Category("Movement")]
     public double DistanceToTarget {
