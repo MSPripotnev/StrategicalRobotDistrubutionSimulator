@@ -76,7 +76,14 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
         }
 
         var agentsForRoadsAID = DistributeAgentsCount(map.Roads, antiIceWorkTime, map.MapScale, station.AssignedAgents.Length);
-        var agentsForRoadsShove = DistributeAgentsCount(map.Roads, antiIceWorkTime, map.MapScale, station.AssignedAgents.Length);
+        var agentsForRoadsShove = DistributeAgentsCount(map.Roads, shoveTime, map.MapScale, station.AssignedAgents.Length);
+        var totalAgentsNeeded = agentsForRoadsAID.Sum(p => p.Value);
+        if (agents.Length < totalAgentsNeeded) {
+            foreach(var road in agentsForRoadsAID.Keys) {
+                agentsForRoadsAID[road] = Math.Round(agentsForRoadsAID[road] * agents.Length / totalAgentsNeeded);
+                agentsForRoadsShove[road] = Math.Round(agentsForRoadsShove[road] * agents.Length / totalAgentsNeeded);
+            }
+        }
         List<SystemAction> result = new List<SystemAction>();
         for (int i = 0; i < agents.Length; i++) {
             if (!agentsForRoadsAID.Any(p => p.Value > 0))
