@@ -6,6 +6,6 @@ public interface IExplorer {
     public List<AnalyzedPoint> ClosedPoints { get; set; }
     public event EventHandler<AnalyzedPoint> PathCompleted;
     public event EventHandler PathFailed;
-
+    public bool FindWaySync();
     public void NextStep();
 }

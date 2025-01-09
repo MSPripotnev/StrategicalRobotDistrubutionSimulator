@@ -31,6 +31,7 @@ internal class AStarExplorer : IExplorer {
             if (!SelectNextPoint() || !OpenedPoints.Any())
                 return false;
         }
+        Result = new AnalyzedPoint(Result, end, Result.Distance + Distance(Result, end), 0);
         return true;
     }
     public void NextStep() {

@@ -78,7 +78,7 @@ public class SnowRemover : Agent {
                     v *= r.Height / 2 / v.Length;
                     (v.X, v.Y) = (-v.Y, v.X);
                     Trajectory[0] -= v;
-                    Trajectory.Add(Trajectory[0] + v * 3);
+                    Trajectory.Add(Trajectory[0] + v);
                 }
                 break;
             case RobotState.Ready:
@@ -151,13 +151,13 @@ public class SnowRemover : Agent {
                         if (!Trajectory.Contains(r.EndPosition - v))
                             Trajectory.Add(r.EndPosition - v);
                         if (!Trajectory.Contains(r.EndPosition + v))
-                            Trajectory.Add(r.EndPosition + v * 3);
+                            Trajectory.Add(r.EndPosition + v);
                     } else if (PathFinder.Distance(Position, r.EndPosition) < ActualSpeed * 2) {
                         v = -v;
                         if (!Trajectory.Contains(r.Position - v))
                             Trajectory.Add(r.Position - v);
                         if (!Trajectory.Contains(r.Position + v))
-                            Trajectory.Add(r.Position + v * 3);
+                            Trajectory.Add(r.Position + v);
                     }
                     if (!Trajectory.Any()) {
                         if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position)) {
@@ -172,7 +172,7 @@ public class SnowRemover : Agent {
                         v *= r.Height / 2 / v.Length;
                         (v.X, v.Y) = (-v.Y, v.X);
                         Trajectory[0] -= v;
-                        Trajectory.Add(Trajectory[0] + v * 3);
+                        Trajectory.Add(Trajectory[0] + v);
                     }
                     Move();
                 }
