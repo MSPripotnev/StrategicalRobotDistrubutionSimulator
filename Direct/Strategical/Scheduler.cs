@@ -70,7 +70,10 @@ public class Scheduler : ITimeSimulatable {
         if (sender is not Director director) return;
         CurrentTime = time;
         for (int i = 0; i < Actions.Count; i++) {
-            if (!Actions[i].Descendants().Any(p => !p.Finished)) continue;
+            if (!Actions[i].Descendants().Any(p => !p.Finished)) {
+                Actions[i].Status = "completed sequence";
+                continue;
+            }
             foreach (SystemAction action in Actions[i].Descendants().Where(p => !p.Finished)) {
                 if (Actions[i].Descendants().Any(p => p.Next.Contains(action) && !p.Finished)) continue;
                 if (action.StartTime <= time) {

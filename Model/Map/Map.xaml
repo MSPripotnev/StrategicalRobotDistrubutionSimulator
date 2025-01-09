@@ -112,6 +112,10 @@
                         <Trigger Property="Tag" Value="interrupted">
                             <Setter Property="Background" Value="#F0FFFF00"/>
                         </Trigger>
+                        <Trigger Property="Tag" Value="completed sequence">
+                            <Setter Property="IsExpanded" Value="False"/>
+                            <Setter Property="Background" Value="#F000AA00"/>
+                        </Trigger>
                     </Style.Triggers>
                 </Style>
             </TreeView.ItemContainerStyle>
