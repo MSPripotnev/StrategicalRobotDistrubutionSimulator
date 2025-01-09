@@ -66,7 +66,7 @@ public class SnowRemover : Agent {
                 if ((CurrentState == RobotState.Going || CurrentState == RobotState.Ready) && AttachedObj is Road r) {
                     Trajectory.Clear();
                     Vector v;
-                    if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position)) {
+                    if (PathFinder.Distance(r.Position, Position) < PathFinder.Distance(r.EndPosition, Position)) {
                         Trajectory.Add(r.Position);
                         v = r.EndPosition - r.Position;
                     } else {
