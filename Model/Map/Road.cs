@@ -115,7 +115,7 @@ public class Road : ITargetable, ITimeSimulatable {
     [Category("Construction")]
     public List<Road> RoadsConnected { get; set; } = new List<Road>();
     [Browsable(false)]
-    public Agent? ReservedAgent { get; set; } = null;
+    public List<Agent> ReservedAgents { get; set; } = new();
     [Browsable(false)]
     public AgentStation? ReservedStation { get; set; } = null;
     [Browsable(false)]

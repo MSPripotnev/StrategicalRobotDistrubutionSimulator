@@ -75,7 +75,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
                 if (CurrentState == RobotState.Working) {
                     if (AttachedObj is not null) {
                         AttachedObj.Finished = true;
-                        AttachedObj.ReservedAgent = null;
+                        AttachedObj.ReservedAgents.Remove(this);
                         AttachedObj = null;
                     }
                 } else if (CurrentState == RobotState.Disable || CurrentState == RobotState.Broken) {
@@ -304,12 +304,13 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         if (AttachedObj == target) return true;
         if (target is Road r && PathFinder.Distance(Position, Position ^ r) > 15) return false;
         else if (target is Target t && PathFinder.Distance(Position, t.Position) > 15) return false;
-        target.ReservedAgent = this;
+        target.ReservedAgents.Add(this);
         AttachedObj = target;
         CurrentState = RobotState.Working;
         return true;
     }
     public void Unlink() {
+        AttachedObj?.ReservedAgents.Remove(this);
         AttachedObj = null;
         Trajectory.Clear();
         CurrentState = RobotState.Ready;

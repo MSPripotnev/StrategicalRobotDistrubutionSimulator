@@ -28,7 +28,7 @@ public class Transporter : Agent {
                 if (CurrentState == RobotState.Working) {
                     if (AttachedObj is Snowdrift) {
                         AttachedObj.Finished = true;
-                        AttachedObj.ReservedAgent = null;
+                        AttachedObj.ReservedAgents.Clear();
                     }
                     AttachedObj = null;
                     if (Home is not null)
@@ -47,7 +47,7 @@ public class Transporter : Agent {
                 break;
             case RobotState.Going:
                 if (CurrentState == RobotState.Thinking && AttachedObj != null) {
-                    AttachedObj.ReservedAgent = this;
+                    AttachedObj.ReservedAgents.Add(this);
                 }
                 var vs = new List<Point>(Trajectory); vs.Reverse();
                 BackTrajectory = vs.ToArray();
@@ -108,16 +108,16 @@ public class Transporter : Agent {
             base.Simulate(sender, time);
             break;
         case RobotState.Thinking:
-            if (AttachedObj is not null && AttachedObj.ReservedAgent is not null && OtherAgents.Contains(AttachedObj.ReservedAgent)) {
+            if (AttachedObj is not null && AttachedObj.ReservedAgents.Any() && OtherAgents.Contains(AttachedObj.ReservedAgents[0])) {
                 CurrentState = RobotState.Ready;
                 break;
             }
 
             if (Pathfinder?.IsCompleted == true) {
                 Pathfinder.IsCompleted = false;
-                if (AttachedObj is null || AttachedObj is not null && AttachedObj.ReservedAgent != this)
+                if (AttachedObj is null || AttachedObj is not null && !AttachedObj.ReservedAgents.Contains(this))
                     CurrentState = RobotState.Going;
-                else if (AttachedObj?.ReservedAgent == this)
+                else if (AttachedObj?.ReservedAgents.Contains(this) == true)
                     CurrentState = RobotState.Working;
                 else
                     CurrentState = RobotState.Ready;

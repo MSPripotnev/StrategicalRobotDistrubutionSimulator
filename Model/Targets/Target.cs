@@ -11,7 +11,7 @@ namespace SRDS.Model.Targets;
 
 public interface ITargetable : IPlaceable {
     [XmlIgnore]
-    public Agent? ReservedAgent { get; set; }
+    public List<Agent> ReservedAgents { get; set; }
     [XmlIgnore]
     public bool Finished { get; set; }
 }
@@ -32,6 +32,7 @@ public abstract class Target : ITargetable {
     public Color Color { get; set; }
     [XmlIgnore]
     public Agent? ReservedAgent { get; set; } = null;
+    public List<Agent> ReservedAgents { get; set; } = new List<Agent>();
     [XmlIgnore]
     public bool Finished { get; set; } = false;
     public Target(Point pos) : this() {

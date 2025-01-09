@@ -156,11 +156,11 @@ public class TaskDistributor {
                         transporter.Trajectory[^1] = nearBase.Position;
                     transporter.BackTrajectory = Array.Empty<System.Windows.Point>();
                     if (transporter.AttachedObj is not null)
-                        transporter.AttachedObj.ReservedAgent = transporter;
+                        transporter.AttachedObj.ReservedAgents.Add(transporter);
                 } else if (PathFinder.Distance(transporter.TargetPosition, nearBase.Position) > transporter.InteractDistance) {
                     transporter.TargetPosition = nearBase.Position;
                     if (transporter.AttachedObj is not null)
-                        transporter.AttachedObj.ReservedAgent = transporter;
+                        transporter.AttachedObj.ReservedAgents.Add(transporter);
                 } else {
                     transporter.CurrentState = RobotState.Ready;
                 }
