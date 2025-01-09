@@ -72,7 +72,8 @@ public class Scheduler : ITimeSimulatable {
         for (int i = 0; i < Actions.Count; i++) {
             if (!Actions[i].Descendants().Any(p => !p.Finished)) continue;
             foreach (SystemAction action in Actions[i].Descendants().Where(p => !p.Finished)) {
-                if (action.StartTime <= time && !Actions.Any(p => p.Type == ActionType.GoTo && p.Next.Contains(action) && !p.Finished)) {
+                if (Actions[i].Descendants().Any(p => p.Next.Contains(action) && !p.Finished)) continue;
+                if (action.StartTime <= time) {
                     if (!Executor.Execute(director, action, time) && !action.Started)
                         action.StartTime += timeFlow;
                     else if (!action.Started)
