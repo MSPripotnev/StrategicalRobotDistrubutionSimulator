@@ -228,7 +228,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     protected virtual void Move() {
         Point nextPoint = Trajectory[0];
 
-        if (PathFinder.Distance(Position, nextPoint) <= ActualSpeed / 2) {
+        if (PathFinder.Distance(Position, nextPoint) <= ActualSpeed / Pathfinder?.GetPointHardness(Position, CurrentState == RobotState.Working)) {
             List<Point> pc = new(Trajectory.Skip(1));
             if (pc.Any()) {
                 TraversedWay += PathFinder.Distance(nextPoint, pc[0]) *

@@ -75,7 +75,7 @@ public class PathFinder {
         IsCompleted = true;
     }
     public double GetPointHardness(Point pos, bool onWork = false) {
-        var road = Map.Roads.Where(p => -p.Height < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height)
+        var road = Map.Roads.Where(p => -p.Height * (onWork ? 2 : 1) < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * (onWork ? 2 : 1))
             .MinBy(p => p.DistanceToRoad(pos));
         double hardness;
         if (road is null)
