@@ -73,7 +73,6 @@ public class AgentStation : Station, IControllable, IRefueller {
     #region Operations
     public bool Assign(Agent agent) {
         if (AssignedAgents.Contains(agent)) return true;
-        if (PathFinder.Distance(agent.Position, Position) < 10) return false;
         var a = AssignedAgents.ToList();
         a.Add(agent);
         AssignedAgents = a.ToArray();
