@@ -173,10 +173,18 @@ public partial class MapWPF : Window {
     Task mainTask;
     CancellationTokenSource tokenSource = new CancellationTokenSource();
 #endif
+    private TimeSpan GetSpeedTs(int stepValue) => stepValue switch {
+        1 => new TimeSpan(0, 0, 1),
+        2 => new TimeSpan(0, 0, 5),
+        3 => new TimeSpan(0, 0, 10),
+        4 => new TimeSpan(0, 0, 30),
+        5 => new TimeSpan(0, 0, 60),
+        _ => new TimeSpan(0, 0, 1),
+    };
     private void RefreshTimer_Tick(object? sender, EventArgs e) {
         refreshTimer.Stop();
         if (d_time.Second == 0 || ts.TotalSeconds == 0)
-            ts = new TimeSpan(0, 0, 60 / (6 - (int)speedSlider.Value));
+            ts = GetSpeedTs((int)speedSlider.Value);
         d_time = d_time.AddSeconds(ts.TotalSeconds);
         var dt = DateTime.Now;
         Work();
