@@ -52,7 +52,8 @@ public class AgentStation : Station, IControllable, IRefueller {
         // TODO: replace new plan by plans correction
         if (time.Second == 0 && time.Minute % 10 == 0) {
             var hasUnfinishedPlans = LocalPlans.Any(p => p.Descendants().Any(p => !p.Finished));
-            if (!hasUnfinishedPlans) {
+            if (!hasUnfinishedPlans && (director.Map.Roads.Any(p => p.Snowness > 0) ||
+                    director.Map.Roads.Any(p => p.IcyPercent > 0))) {
                 LocalPlans = PlannerModule.PlanPrepare(this, director.Map, time, PlannerModule.Strength > 0);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LocalPlans)));
             }
