@@ -52,9 +52,9 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
         };
     }
     public static double GetIcyPercent(SnowType type) => type switch {
-        SnowType.LooseSnow => 0,
-        SnowType.Snowfall => 10,
-        SnowType.IceSlick => 40,
+        SnowType.LooseSnow => 15,
+        SnowType.Snowfall => 25,
+        SnowType.IceSlick => 50,
         SnowType.BlackIce => 70,
         SnowType.Icy => 100,
         _ => throw new NotImplementedException()
@@ -116,23 +116,23 @@ public class GlobalMeteo : INotifyPropertyChanged, ITimeSimulatable {
             res[SnowType.LooseSnow] += 0.23;
 
         if (-10 < Temperature && Temperature < -6 && Humidity > 90)
-            res[SnowType.Snowfall] += 0.5;
+            res[SnowType.Snowfall] += 0.2;
         if (Temperature > 0 && CloudControl.Clouds.Sum(p => p.Intensity) > 0)
-             res[SnowType.Snowfall] += 0.1;
+             res[SnowType.Snowfall] += 0.5;
         if (-6 < Temperature && Temperature < 0)
-            res[SnowType.Snowfall] += 0.4;
+            res[SnowType.Snowfall] += 0.3;
 
-        if (-6 < Temperature && Temperature < -2 && -65 < Humidity && Humidity < 85) {
+        if (-6 < Temperature && Temperature < -2 && 65 < Humidity && Humidity < 85) {
             res[SnowType.IceSlick] += 0.5;
         }
 
         if (95 < Humidity && GetWindDirection(Wind) == WindDirectionType.Calm)
             res[SnowType.BlackIce] = 1.0;
 
-        if (-5 < Temperature && Humidity > 90) {
-            res[SnowType.Icy] += 0.5;
+        if (-5 < Temperature || Humidity > 90) {
+            res[SnowType.Icy] += 0.4;
             if (_time.Hour > 14)
-                res[SnowType.Icy] += 0.2;
+                res[SnowType.Icy] += 0.3;
             if (Math.Abs(h_max - h_min) < 10)
                 res[SnowType.Icy] += 0.05;
             if (CloudControl.Clouds.Sum(p => p.Intensity) > 0 && Temperature > 0)
