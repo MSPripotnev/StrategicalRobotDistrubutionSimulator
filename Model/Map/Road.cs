@@ -267,7 +267,8 @@ public class Road : ITargetable, ITimeSimulatable {
         if (meteo.IntensityControl.IntensityMap is null || !meteo.IntensityControl.IntensityMap.Any() ||
                 (time.Minute + 2) % 5 != 0 || time.Second != 0)
             return;
-        Snowness = IcyPercent = 0;
+        double snownessNew = 0;
+        IcyPercent = 0;
         Deicing = 0;
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
@@ -275,18 +276,24 @@ public class Road : ITargetable, ITimeSimulatable {
                 if (0 < cell.Deicing && cell.Deicing <= 100) {
                     if (cell.IcyPercent > 0)
                         cell.Snow += 0.1 * timeFlow.TotalSeconds / 60;
-                    cell.IcyPercent -= timeFlow.TotalSeconds / 12;
+                    cell.IcyPercent -= timeFlow.TotalSeconds / 6;
+                } else if (cell.Deicing == 0 && cell.Snow > 10 && cell.IcyPercent > GlobalMeteo.GetIcyPercent(SnowType.LooseSnow) && meteo.Temperature < 0) {
+                    cell.IcyPercent += (GlobalMeteo.GetIcyPercent(SnowType.Icy) - GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) / 6 * Category / 3600 * timeFlow.TotalSeconds;
+                } else if (cell.Snow <= 10 && cell.Snow > 0) {
+                    cell.Snow -= 0.1 * timeFlow.TotalSeconds / 60;
+                    if (meteo.Temperature > 0)
+                        cell.Snow -= 0.1 * meteo.Temperature * timeFlow.TotalSeconds / 60;
                 }
-                cell.Deicing -= timeFlow.TotalSeconds / 12;
+                cell.Deicing -= timeFlow.TotalSeconds / 6;
 
-                Snowness += cell.Snow /
-                    (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
+                snownessNew += cell.Snow / (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
                 if (IcyPercent < cell.IcyPercent)
                     IcyPercent = cell.IcyPercent;
                 Deicing += cell.Deicing;
             }
         }
         Deicing /= intensityCells.Count;
+        Snowness = snownessNew / intensityCells.Count / IntensityControl.IntensityMapScale;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Snowness)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IcyPercent)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Deicing)));
