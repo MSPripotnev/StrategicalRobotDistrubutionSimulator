@@ -251,6 +251,18 @@ public class Director : INotifyPropertyChanged, IDisposable {
             if (Targets[i].Finished)
                 Remove(Targets[i]);
         MergeSnowdrifts();
+
+        var strategics = Recorder.StrategicReadings.ToList();
+        strategics.Add(new StrategicSituationReading() {
+            Seconds = (long)(time - DateTime.MinValue).TotalSeconds,
+            CurrentSnow = Map.Roads.Sum(p => p.Snowness),
+            CurrentIcy = Map.Roads.Sum(p => p.IcyPercent),
+            RemovedSnow = Map.Roads.Sum(p => p.SnownessRemoved),
+            SummarySnow = Map.Roads.Sum(p => p.SnownessTotal),
+            SnowIntensity = Map.Stations.OfType<Meteostation>().Sum(p => p.PrecipitationIntensity),
+            FuelConsumption = Agents.Sum(p => p.FuelConsumption)
+        });
+        Recorder.StrategicReadings = strategics.ToArray();
     }
 
     public void RefreshMeteo(object? sender, PropertyChangedEventArgs e) {

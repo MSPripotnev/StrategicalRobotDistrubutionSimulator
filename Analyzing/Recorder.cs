@@ -3,10 +3,11 @@ using System.Xml;
 using System.Xml.Serialization;
 
 namespace SRDS.Analyzing;
-using SRDS.Direct;
-using SRDS.Direct.Tactical;
-using SRDS.Direct.Executive;
-using SRDS.Model.Targets;
+using Direct;
+using Direct.Executive;
+using Direct.Strategical;
+using Direct.Tactical;
+using Model.Targets;
 
 public class Recorder : IDisposable {
     public int Epoch { get => SystemQuality.Count; }
@@ -21,6 +22,17 @@ public class Recorder : IDisposable {
         set {
             qualifyReadings = new List<List<DistributionQualifyReading>>(value.Select(p => p.ToList()));
             SystemQuality.Add(value.Last().Sum(p => (p.TakedLevel - (p.TakedTarget as Snowdrift).Level)));
+        }
+    }
+    List<StrategicSituationReading> strategicReadings = new List<StrategicSituationReading>();
+    [XmlArray(ElementName = "StrategyReadings")]
+    [XmlArrayItem(ElementName = "StrategyReading")]
+    public StrategicSituationReading[] StrategicReadings {
+        get {
+            return strategicReadings.ToArray();
+        }
+        set {
+            strategicReadings = new List<StrategicSituationReading>(value);
         }
     }
     List<ModelReading> readings = new List<ModelReading>();
@@ -114,6 +126,36 @@ public class Recorder : IDisposable {
                 $"SumLevel = {QualifyReadings.Last().Sum(p => p.TakedLevel)}\n" +
                 $"LeavedLevel = {QualifyReadings.Last().Sum(p => (p.TakedTarget as Snowdrift).Level)}\n");
         }
+    }
+
+    public void SaveStrategy(string resFileName) {
+        resFileName.Replace(".xml", "-strategy.xml");
+        XmlSerializer serializer = new XmlSerializer(typeof(StrategicSituationReading));
+        if (!File.Exists(resFileName))
+            using (FileStream fs = new FileStream(resFileName, FileMode.Create)) {
+                XmlWriterSettings settings = new XmlWriterSettings() {
+                    Indent = true,
+                    ConformanceLevel = ConformanceLevel.Auto,
+                    WriteEndDocumentOnClose = false
+                };
+                var writer = XmlWriter.Create(fs, settings);
+                writer.WriteStartDocument();
+                writer.WriteStartElement(nameof(StrategicReadings));
+                writer.Close();
+            }
+        for (int i = 0; i < StrategicReadings.Length; i++)
+            using (FileStream fs = new FileStream(resFileName, FileMode.Append)) {
+                XmlWriterSettings settings = new XmlWriterSettings {
+                    OmitXmlDeclaration = true,
+                    Indent = true,
+                    CloseOutput = true,
+                    IndentChars = "\t",
+                    ConformanceLevel = ConformanceLevel.Auto
+                };
+                XmlWriter xmlWriter = XmlWriter.Create(fs, settings);
+                serializer.Serialize(xmlWriter, StrategicReadings[i], null);
+            }
+        File.AppendAllLines(resFileName, new string[] { "</" + nameof(StrategicReadings) + ">" });
     }
 
     public void Dispose() {

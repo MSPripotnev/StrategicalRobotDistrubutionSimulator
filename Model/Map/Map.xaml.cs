@@ -696,6 +696,7 @@ public partial class MapWPF : Window {
 #if PARALLEL
         tokenSource.Cancel();
 #endif
+        Director?.Recorder.SaveStrategy(System.IO.Path.GetFileName(tester.Models[0].Path) + ".xml");
         if (testingCB.IsChecked == false) {
             Director = tester.ReloadModel();
             meteoCB.IsEnabled = true;

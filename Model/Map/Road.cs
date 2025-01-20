@@ -55,9 +55,24 @@ public class Crossroad : IPlaceable {
 }
 
 public class Road : ITargetable, ITimeSimulatable {
+    [XmlIgnore]
+    [Browsable(false)]
+    public double SnownessTotal { get; set; } = 0;
+    [XmlIgnore]
+    [Browsable(false)]
+    public double SnownessRemoved { get; set; } = 0;
+    private double snowness;
     [XmlAttribute("Snowness")]
     [Category("Environment")]
-    public double Snowness { get; set; } = 0;
+    public double Snowness {
+        get => snowness;
+        set {
+            if (value > snowness)
+                SnownessTotal += value - snowness;
+            else SnownessRemoved += snowness - value;
+            snowness = value;
+        }
+    }
     [XmlAttribute(nameof(IcyPercent))]
     [Category("Environment")]
     public double IcyPercent { get; set; } = 0;
