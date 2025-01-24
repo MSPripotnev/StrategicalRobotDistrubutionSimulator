@@ -60,6 +60,16 @@ public class Planner {
     }
     public static (SystemAction goAction, SystemAction workAction, SystemAction? returnAction)? WorkOnRoad(SnowRemover agent, Road road, DateTime startTime, DateTime workEndTime, double snowness = -1, double icy = -1) {
         var roadPosition = agent.Position ^ road;
+        if (agent.Pathfinder is not null) {
+            AStarExplorer explorer = new AStarExplorer(agent.Position, roadPosition, agent.Pathfinder.Scale, agent.Pathfinder.Map, agent.InteractDistance);
+            if (explorer.FindWaySync()) {
+                var path = PathFinder.CreatePathFromLastPoint(explorer.Result);
+                var p = path?.FirstOrDefault(p => road.DistanceToRoad(p) < road.Height * 2, new Point(0, 0));
+                if (p.HasValue && p.Value.X != 0 && p.Value.Y != 0)
+                    roadPosition = p.Value ^ road;
+            }
+        }
+
         Point roadNearestEndPoint;
         Vector v;
         if (PathFinder.Distance(road.Position, agent.Position) < PathFinder.Distance(road.EndPosition, agent.Position)) {

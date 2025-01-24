@@ -92,7 +92,7 @@ public class PathFinder {
     public static double Heuristic(Point currentPosition, Point targetPosition) {
         return Distance(currentPosition, targetPosition);
     }
-    private static List<Point>? CreatePathFromLastPoint(AnalyzedPoint p) {
+    public static List<Point>? CreatePathFromLastPoint(AnalyzedPoint p) {
         if (p is null) return null;
         List<Point> path = new List<Point> { p };
         while (p.Previous is not null) {

@@ -42,7 +42,7 @@ internal class AStarExplorer : IExplorer {
     }
     public static void PrevStep() { }
     private void Check() {
-        if (Math.Round(Result.Heuristic) < Scale) {
+        if (Math.Round(Result.Heuristic) <= Scale) {
             Result = new AnalyzedPoint(Result, end, Result.Distance + Distance(Result, end), 0);
             PathCompleted?.Invoke(this, Result);
         } else if (!OpenedPoints.Any()) {
