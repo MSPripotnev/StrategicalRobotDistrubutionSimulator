@@ -35,11 +35,10 @@ public class ActionExecutor {
         case ActionType.GoTo: {
             if (action.Object is not Point p) throw new InvalidOperationException();
             // TODO: check map scale instead hardcode
-            if (PathFinder.Distance(agent.TargetPosition, p) > 15) {
+            if (PathFinder.Distance(agent.TargetPosition, p) > agent.Pathfinder?.Scale || agent.CurrentState == RobotState.Ready) {
                 agent.TargetPosition = p;
-            } else if (PathFinder.Distance(agent.Position, p) < agent.ActualSpeed || agent.CurrentState == RobotState.Ready) {
+            } else if (PathFinder.Distance(agent.Position, p) < agent.ActualSpeed) {
                 // Ended earlier
-                agent.CurrentState = RobotState.Ready;
                 action.EndTime = time;
             }
             return true;

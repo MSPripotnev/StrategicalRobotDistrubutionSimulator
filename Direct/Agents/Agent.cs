@@ -134,7 +134,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         case RobotState.Going:
             if (Trajectory.Count > 0)
                 Move();
-            if (PathFinder.Distance(Position, TargetPosition) <= pathfinder?.Scale / 5)
+            if (PathFinder.Distance(Position, TargetPosition) <= pathfinder?.Scale * ActualSpeed / 15)
                 Arrived();
             break;
         case RobotState.Thinking:
@@ -293,7 +293,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     public bool Refuel(Station station, double fuel) {
         if (station is not AgentStation or AntiIceStation or GasStation) return false;
-        if (PathFinder.Distance(station.Position, Position) > 15) return false;
+        if (PathFinder.Distance(station.Position, Position) > pathfinder?.Scale * ActualSpeed / 15) return false;
         if (Fuel >= fuel) return true;
         if (CurrentState != RobotState.Refuel) {
             CurrentState = RobotState.Refuel;
@@ -303,8 +303,8 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     }
     public bool Link(ITargetable target) {
         if (AttachedObj == target) return true;
-        if (target is Road r && PathFinder.Distance(Position, Position ^ r) > 15) return false;
-        else if (target is Target t && PathFinder.Distance(Position, t.Position) > 15) return false;
+        if (target is Road r && PathFinder.Distance(Position, Position ^ r) > pathfinder?.Scale * ActualSpeed / 15) return false;
+        else if (target is Target t && PathFinder.Distance(Position, t.Position) > pathfinder?.Scale * ActualSpeed / 15) return false;
         target.ReservedAgents.Add(this);
         AttachedObj = target;
         CurrentState = RobotState.Working;

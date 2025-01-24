@@ -37,7 +37,7 @@ public class StrategicQualifier {
         case ActionType.GoTo: {
             if (expected.SubjectAfter is not Agent agent || real?.SubjectAfter is not Agent realAgent) throw new InvalidCastException();
 
-            if (PathFinder.Distance(agent.Position, realAgent.Position) < DistanceThreshold)
+            if (PathFinder.Distance(agent.Position, realAgent.Position) < realAgent.ActualSpeed)
                 return ActionRecommendation.Approve;
             return ActionRecommendation.Delay;
         }
