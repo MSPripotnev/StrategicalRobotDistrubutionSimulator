@@ -88,7 +88,7 @@ public class IntensityControl {
     #region IntensityMap
     [XmlArray]
     public IntensityCell?[][] IntensityMap { get; set; }
-    public const int IntensityMapScale = 25;
+    public const int IntensityMapScale = 10;
     [XmlIgnore]
     private Size Borders { get; init; }
 
