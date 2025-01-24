@@ -189,7 +189,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             pathfinder = value;
             if (state == RobotState.Thinking)
                 CurrentState = RobotState.Thinking;
-            Speed = 90 / 3.6 / (pathfinder?.Map.MapScale ?? 1);
+            Speed = 36 / 3.6 / (pathfinder?.Map.MapScale ?? 1);
         }
     }
     [PropertyTools.DataAnnotations.Browsable(false)]
@@ -420,7 +420,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         Color = Colors.Red;
         CurrentState = RobotState.Ready;
         AttachedObj = null;
-        Speed = 90 / 3.6;
+        Speed = 36 / 3.6;
         InteractDistance = 30;
         BlockedTargets = new List<ITargetable>();
         MaxStraightRange = 30;
