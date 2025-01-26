@@ -62,13 +62,14 @@ internal class AStarExplorer : IExplorer {
     private void OpenPoints(AnalyzedPoint currentPoint) {
         long iterations = 0;
         List<Point> result = new List<Point>();
-        for (int i = 1; i < 9; i += 2, iterations++) {
+        for (int i = 0; i < 9; i++, iterations++) {
             //выбор направления
-            Point pos = new Point(Math.Round(
-                    currentPoint.Position.X + (i / 3 - 1) * Scale),// * (i % 2 - 1),
-                                                                   //+ (i%2) * (i / 3 - 1) * Scale/Math.Sqrt(2),
-                    Math.Round(currentPoint.Position.Y + (i % 3 - 1) * Scale));// * (i % 2 - 1));
-                                                                               //+ (i % 2) * (i % 3 - 1) * Scale / Math.Sqrt(2));
+            //Point pos = new Point(Math.Round(
+            //        currentPoint.Position.X + (i / 3 - 1) * Scale),
+            //        Math.Round(currentPoint.Position.Y + (i % 3 - 1) * Scale));
+            Point pos = new Point(
+                    currentPoint.Position.X + (i / 3 - 1) * Scale * (i % 2 - 1) + (i % 2) * (i / 3 - 1) * Scale,
+                    currentPoint.Position.Y + (i % 3 - 1) * Scale * (i % 2 - 1) + (i % 2) * (i % 3 - 1) * Scale);
             var road = Map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
                 .MinBy(p => p.DistanceToRoad(pos));
             double hardness;

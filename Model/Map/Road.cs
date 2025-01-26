@@ -113,7 +113,7 @@ public class Road : ITargetable, ITimeSimulatable {
     public double Length { get => (EndPosition - Position).Length; }
     [XmlIgnore]
     [Category("Construction")]
-    public int Height { get; private set; }
+    public int Height { get; private set; } = 10;
     private int category;
     [XmlAttribute("Category")]
     [Category("Construction")]
@@ -121,7 +121,6 @@ public class Road : ITargetable, ITimeSimulatable {
         get => category;
         set {
             category = value;
-            Height = (category - 1) * 10 + 5;
             Type = (RoadType)((category - 1) % 5);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Category)));
         }
@@ -190,7 +189,7 @@ public class Road : ITargetable, ITimeSimulatable {
         double d1 = (Position - position).Length,
                d2 = (EndPosition - position).Length,
                L = Math.Sqrt(d1 * d1 - h * h) + Math.Sqrt(d2 * d2 - h * h);
-        if (L - 1 >= rv.Length) return -h;
+        if (L - 1 >= rv.Length) return h > 0 ? -h : -(d1 < d2 ? d1 : d2);
         return h;
     }
     /// <summary>
