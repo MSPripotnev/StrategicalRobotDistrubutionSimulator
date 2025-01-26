@@ -62,6 +62,7 @@ public class Road : ITargetable, ITimeSimulatable {
     [Browsable(false)]
     public double SnownessRemoved { get; set; } = 0;
     private double snowness;
+    [XmlIgnore]
     [XmlAttribute("Snowness")]
     [Category("Environment")]
     public double Snowness {
@@ -73,9 +74,11 @@ public class Road : ITargetable, ITimeSimulatable {
             snowness = value;
         }
     }
+    [XmlIgnore]
     [XmlAttribute(nameof(IcyPercent))]
     [Category("Environment")]
     public double IcyPercent { get; set; } = 0;
+    [XmlIgnore]
     [XmlAttribute(nameof(Deicing))]
     [Category("Environment")]
     public double Deicing { get; set; } = 0;
@@ -129,9 +132,12 @@ public class Road : ITargetable, ITimeSimulatable {
     [Category("Construction")]
     public List<Road> RoadsConnected { get; set; } = new List<Road>();
     [Browsable(false)]
+    [XmlIgnore]
     public List<Agent> ReservedAgents { get; set; } = new();
     [Browsable(false)]
+    [XmlIgnore]
     public AgentStation? ReservedStation { get; set; } = null;
+    [XmlIgnore]
     [Browsable(false)]
     public bool Finished { get; set; } = false;
 
