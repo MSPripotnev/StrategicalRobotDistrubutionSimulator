@@ -67,7 +67,7 @@ public class CloudControl : INotifyPropertyChanged {
     }
     public UIElement[] CloudsUI { get => clouds.Select(p => p.Build()).ToArray(); }
     private SnowCloud GenerateCloud(TacticalMap map, Vector Wind, DateTime _time) {
-        double min_r = Math.Min(map.Borders.Height, map.Borders.Width);
+        double min_r = 10000 / map.MapScale;
         int rMin = (int)Math.Round(Math.Min(4 * min_r / 3, 6 / 2 * min_r)),
             rMax = (int)Math.Round(Math.Min(rMin, 7 * min_r / 2));
         double width = rnd.Next(rMin, rMax), length = rnd.Next((int)(width/4), rMax);

@@ -37,7 +37,7 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
     [Category("Wind")]
     public double WindSpeed { get; private set; }
     /// <summary>
-    /// Summary clouds fallout in mm/h
+    /// Summary clouds fallout in mm/h = (kg/m^2)/h
     /// </summary>
     [XmlIgnore]
     [Category("Wind")]
