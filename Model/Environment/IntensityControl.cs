@@ -82,7 +82,7 @@ public class IntensityCell : INotifyPropertyChanged {
         }
     }
     public static double operator^(IntensityCell cell, double icy) =>
-        Math.Max(0, Math.Min((cell.IcyPercent + icy) / 2, 100));
+        cell.icyPercent < 0.1 ? icy : Math.Max(0, Math.Min((cell.IcyPercent + icy) / 2, 100));
 }
 public class IntensityControl {
     #region IntensityMap
