@@ -116,7 +116,7 @@ public class Road : ITargetable, ITimeSimulatable {
     public double Length { get => (EndPosition - Position).Length; }
     [XmlIgnore]
     [Category("Construction")]
-    public int Height { get; private set; } = 10;
+    public double Height { get; private set; }
     private int category;
     [XmlAttribute("Category")]
     [Category("Construction")]
@@ -124,7 +124,25 @@ public class Road : ITargetable, ITimeSimulatable {
         get => category;
         set {
             category = value;
-            Type = (RoadType)((category - 1) % 5);
+            switch(category) {
+            case 1:
+                Height = 15;
+                Type = RoadType.Asphalt;
+                break;
+            case 2:
+            case 3:
+                Height = 7.5;
+                Type = RoadType.Asphalt;
+                break;
+            case 4:
+                Height = 6;
+                Type = RoadType.Gravel;
+                break;
+            case 5:
+                Height = 4.5;
+                Type = RoadType.Dirt;
+                break;
+            }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Category)));
         }
     }
@@ -298,7 +316,7 @@ public class Road : ITargetable, ITimeSimulatable {
                         cell.Snow += 0.1 * timeFlow.TotalSeconds / 60;
                     cell.IcyPercent -= timeFlow.TotalSeconds / 6;
                 } else if (cell.Deicing == 0 && cell.Snow > 10 && cell.IcyPercent > GlobalMeteo.GetIcyPercent(SnowType.LooseSnow) && meteo.Temperature < 0) {
-                    cell.IcyPercent += (GlobalMeteo.GetIcyPercent(SnowType.Icy) - GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) / 6 * Category / 3600 * timeFlow.TotalSeconds;
+                    cell.IcyPercent += (GlobalMeteo.GetIcyPercent(SnowType.Icy) - GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) / 6 / Category / 3600 * timeFlow.TotalSeconds;
                 } else if (cell.Snow <= 10 && cell.Snow > 0) {
                     cell.Snow -= 0.1 * timeFlow.TotalSeconds / 60;
                     if (meteo.Temperature > 0)
