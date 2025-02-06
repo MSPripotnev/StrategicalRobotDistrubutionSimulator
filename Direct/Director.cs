@@ -256,7 +256,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
         strategics.Add(new StrategicSituationReading() {
             Seconds = (long)(time - DateTime.MinValue).TotalSeconds,
             CurrentSnow = Map.Roads.Sum(p => p.Snowness),
-            CurrentIcy = Map.Roads.Sum(p => p.IcyPercent),
+            CurrentIcy = Map.Roads.Average(p => p.IcyPercent),
             RemovedSnow = Map.Roads.Sum(p => p.SnownessRemoved),
             SummarySnow = Map.Roads.Sum(p => p.SnownessTotal),
             SnowIntensity = Map.Stations.OfType<Meteostation>().Sum(p => p.PrecipitationIntensity),
