@@ -904,10 +904,10 @@ public partial class MapWPF : Window {
 
     public void Refresh() {
         if (Director != null) {
-            double quality = Math.Round(Director.Map.Roads.Sum(p => p.Snowness) +
-                    Director.Map.Roads.Sum(p => p.IcyPercent) * 4);
+            double snow = Math.Round(Director.Map.Roads.Sum(p => p.Snowness)),
+                   icy = Math.Round(Director.Map.Roads.Max(p => p.IcyPercent));
             localTimeL.Content = $"Местное время: {Director.Time.ToLongTimeString()} {Director.Time.ToLongDateString()}";
-            systemQualityL.Content = $"Q = {quality}        Эпоха: {Director.Recorder.Epoch}";
+            systemQualityL.Content = $"CurrentSnow = {snow}\t\tCurrrentIcy = {icy}";
             if (Director.Recorder.SystemQuality.Any()) {
                 double best_qualitity = Director.Recorder.SystemQuality.Max();
                 int best_quality_epoch = Director.Recorder.SystemQuality.IndexOf(best_qualitity) + 1;
