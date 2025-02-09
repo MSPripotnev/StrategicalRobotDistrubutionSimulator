@@ -139,6 +139,8 @@ public partial class MapWPF : Window {
                 SizeChanged -= Window_SizeChanged;
                 Width = Math.Max(800, 1.7 * director.Map.Borders.Width);
                 Height = Math.Max(600, 1.1 * director.Map.Borders.Height);
+                mapCanvas.Width = director.Map.Borders.Width;
+                mapCanvas.Height = director.Map.Borders.Height;
                 if (Width > 1800 && Height > 1000)
                     WindowState = WindowState.Maximized;
                 else
@@ -313,8 +315,10 @@ public partial class MapWPF : Window {
     Point lastClickPos = new(0, 0);
     Point prevLastClickPos = new(0, 0);
     private Polygon? new_obstacle = null;
-    private void Window_MouseDown(object sender, MouseButtonEventArgs e) {
-        Point clickPos = e.GetPosition(this);
+    private void MapCanvas_MouseDown(object sender, MouseButtonEventArgs e) {
+        if (e.MiddleButton == MouseButtonState.Pressed || onPan || onResize)
+            return;
+        Point clickPos = e.GetPosition(mapCanvas);
         //if (e.RightButton == MouseButtonState.Pressed) {
         lastClickPos = new Point(Math.Round(clickPos.X, 2),
                                  Math.Round(clickPos.Y, 2));
@@ -602,7 +606,7 @@ public partial class MapWPF : Window {
             mapCanvas.Children.Clear();
             systemQualityL.Content = "";
             bestQualityL.Content = "";
-            wayTimeCountL.Content = "";
+            fuelCountL.Content = "";
             allTimeCountL.Content = "";
         }
         meteoCB.IsEnabled = !(nextModelB.IsEnabled = testingCB.IsChecked == true);
@@ -612,7 +616,7 @@ public partial class MapWPF : Window {
             Director.PathScale = scale;
     }
     private void Window_SizeChanged(object sender, SizeChangedEventArgs e) {
-        if (Director != null)
+        if (Pause && Director != null)
             Director.Map.Borders = mapCanvas.RenderSize;
     }
     private void Window_MouseWheel(object sender, MouseWheelEventArgs e) {
@@ -837,6 +841,7 @@ public partial class MapWPF : Window {
         if (mapCanvas.ToolTip is ToolTip t) {
             t.IsOpen = false;
             int x = (int)Math.Round(p.X), y = (int)Math.Round(p.Y);
+            if (x < 0 || y < 0) return;
             t.Content = $"({x}; {y})";
             if (Director?.Meteo?.IntensityControl.IntensityMap?.Length > x / IntensityControl.IntensityMapScale && Director.Meteo.IntensityControl.IntensityMap[0].Length > y / IntensityControl.IntensityMapScale &&
                     Director.Meteo.IntensityControl.IntensityMap[x / IntensityControl.IntensityMapScale][y / IntensityControl.IntensityMapScale] is IntensityCell cell)
@@ -897,6 +902,58 @@ public partial class MapWPF : Window {
         }
     }
 
+    private void GridSplitter_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e) {
+        if (!Pause && Director is not null)
+            Director.Map.Borders = mapCanvas.RenderSize;
+    }
+
+    private void GridSplitter_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) {
+        if (!Pause && Director is not null && Director.Map.Borders.Width > 0 && Director.Map.Borders.Height > 0)
+            mapCanvas.RenderSize = new(Director.Map.Borders.Width + e.HorizontalChange, Director.Map.Borders.Height + e.VerticalChange);
+    }
+
+    bool onPan = false, onResize = false;
+    private void Window_MouseMove(object sender, MouseEventArgs e) {
+        if (e.MiddleButton == MouseButtonState.Pressed) {
+            onPan = true;
+            Cursor = Cursors.SizeAll;
+            lastClickPos = e.GetPosition(this);
+            var diffPos = prevLastClickPos - lastClickPos;
+            if (diffPos.X > 0 && mapCanvas.Margin.Left < -mapCanvas.Width / 2 || diffPos.X < 0 && mapCanvas.Margin.Left > mapCanvas.Width / 2)
+                diffPos.X = 0;
+            if (diffPos.Y > 0 && mapCanvas.Margin.Top < -mapCanvas.Height / 2 || diffPos.Y < 0 && mapCanvas.Margin.Top > mapCanvas.Height / 2)
+                diffPos.Y = 0;
+            if (prevLastClickPos.X != 0 && prevLastClickPos.Y != 0)
+                mapCanvas.Margin = new Thickness(mapCanvas.Margin.Left - diffPos.X, mapCanvas.Margin.Top - diffPos.Y, 0, 0);
+            prevLastClickPos = lastClickPos;
+        } else if (onPan) {
+            Cursor = default;
+            prevLastClickPos = new Point(0, 0);
+            onPan = false;
+        } 
+        if ((e.GetPosition(mapCanvas) - new Point(mapCanvas.Width, mapCanvas.Height)).Length < 5 || onResize) {
+            Cursor = Cursors.SizeNWSE;
+            lastClickPos = e.GetPosition(this);
+            if (e.LeftButton == MouseButtonState.Pressed) {
+                onResize = true;
+                var diffPos = prevLastClickPos - lastClickPos;
+                if (prevLastClickPos.X != 0 && prevLastClickPos.Y != 0) {
+                    mapCanvas.Width -= diffPos.X;
+                    mapCanvas.Height -= diffPos.Y;
+                    if (Pause && Director != null)
+                        Director.Map.Borders = mapCanvas.RenderSize;
+                }
+                prevLastClickPos = lastClickPos;
+            } else {
+                onResize = false;
+                prevLastClickPos = new Point(0, 0);
+            }
+        } else {
+            Cursor = default;
+            onResize = false;
+        }
+    }
+
     private void MapCanvas_MouseLeave(object sender, MouseEventArgs e) {
         if (mapCanvas.ToolTip is ToolTip t)
             t.IsOpen = false;
@@ -917,7 +974,7 @@ public partial class MapWPF : Window {
             }
             if (drawCB.IsChecked == true) {
                 if (Director.Agents.Any())
-                    wayTimeCountL.Content = $"Fuel = {Math.Round(Director.Agents.Sum(p => p.FuelConsumption))}";
+                    fuelCountL.Content = $"Fuel = {Math.Round(Director.Agents.Sum(p => p.FuelConsumption))}";
             }
         }
     }

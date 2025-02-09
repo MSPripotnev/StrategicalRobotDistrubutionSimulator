@@ -6,6 +6,7 @@ using System.Windows.Shapes;
 namespace SRDS.Model.Map.Stations;
 
 using System.ComponentModel;
+using System.Windows.Controls;
 using System.Xml.Serialization;
 
 using SRDS.Model;
@@ -145,6 +146,7 @@ public class Meteostation : Station, IPlaceableWithArea, ITimeSimulatable {
         binding = new Binding(nameof(Position) + ".Y");
         binding.Source = this;
         workZone.SetBinding(System.Windows.Controls.Canvas.TopProperty, binding);
+        Canvas.SetZIndex(workZone, 0);
         return workZone;
     }
 }
