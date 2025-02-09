@@ -62,7 +62,7 @@ public class ActionExecutor {
             return true;
         }
         case ActionType.ChangeDevice: {
-            if (agent is not SnowRemover snowRemover || action.Object is not SnowRemoverType device) throw new NotImplementedException();
+            if (agent is not SnowRemover snowRemover || action.Object is not SnowRemoveDevice device) throw new NotImplementedException();
             if (snowRemover.Home is null || PathFinder.Distance(snowRemover.Position, snowRemover.Home.Position) > 15) return false;
             snowRemover.ChangeDevice(device);
             break;

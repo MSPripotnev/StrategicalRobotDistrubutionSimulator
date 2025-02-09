@@ -430,7 +430,7 @@ public partial class MapWPF : Window {
             if (button.Tag.ToString() == "11")
                 obj = new Transporter(lastClickPos);
             else if (button.Tag.ToString() == "12") {
-                List<SnowRemoverType> snowRemovers = new List<SnowRemoverType>();
+                List<SnowRemoveDevice> snowRemovers = new();
                 Random rnd = new Random();
                 if (rnd.NextDouble() < 0.3)
                     snowRemovers.Add(SnowRemoverType.Rotor);

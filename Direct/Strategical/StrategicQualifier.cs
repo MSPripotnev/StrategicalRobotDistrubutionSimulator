@@ -83,7 +83,7 @@ public class StrategicQualifier {
             return ActionRecommendation.Delay;
         }
         case ActionType.ChangeDevice: {
-            if (real?.SubjectAfter is not SnowRemover remover || real?.ObjectAfter is not SnowRemoverType device) throw new InvalidCastException();
+            if (real?.SubjectAfter is not SnowRemover remover || real?.ObjectAfter is not SnowRemoveDevice device) throw new InvalidCastException();
             if (remover.Devices.Contains(device))
                 return ActionRecommendation.Approve;
             return ActionRecommendation.Delay;

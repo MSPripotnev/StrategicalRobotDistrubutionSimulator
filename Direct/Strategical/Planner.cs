@@ -44,7 +44,7 @@ public class Planner {
 
         return (goAction, action);
     }
-    public static (SystemAction goAction, SystemAction action)? ChangeDevicePlan(SnowRemover agent, AgentStation station, SnowRemoverType device, DateTime time) {
+    public static (SystemAction goAction, SystemAction action)? ChangeDevicePlan(SnowRemover agent, AgentStation station, SnowRemoveDevice device, DateTime time) {
         var resultAgent = new SnowRemover(agent, RobotState.Refuel);
         resultAgent.ChangeDevice(device);
         var goAction = GoToPlan(resultAgent, station.Position, time);

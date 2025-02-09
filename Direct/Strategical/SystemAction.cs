@@ -1,15 +1,13 @@
 ﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-
-namespace SRDS.Direct.Strategical;
-
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Xml.Serialization;
 
+namespace SRDS.Direct.Strategical;
+
 using Agents;
 using Agents.Drones;
+using Executive;
 
 using Model.Map;
 public enum ActionType {
@@ -109,7 +107,7 @@ public class SystemAction : INotifyPropertyChanged {
             break;
         }
         case ActionType.ChangeDevice: {
-            if (Subject is not SnowRemover agent || Object is not SnowRemoverType device) return;
+            if (Subject is not SnowRemover agent || Object is not SnowRemoveDevice device) return;
             Header = $"{agent} take {device} at {EndTime.ToLongTimeString()}";
             break;
         }
