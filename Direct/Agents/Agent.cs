@@ -40,10 +40,10 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [PropertyTools.DataAnnotations.Browsable(false)]
     public const double FuelDecrease = 30.0 / 100 / 1000;
     /// <summary>
-    /// 40 л/мин
+    /// 150 л/мин
     /// </summary>
     [PropertyTools.DataAnnotations.Browsable(false)]
-    public const double FuelIncrease = 40.0 / 60;
+    public const double FuelIncrease = 150.0 / 60;
     private double fuel = 100;
     [Category("Movement")]
     public double Fuel {
@@ -291,10 +291,14 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [PropertyTools.DataAnnotations.Browsable(false)]
     public List<Agent> OtherAgents { get; set; } = new List<Agent>();
 
-    public bool Refuel(Station station, double fuel) {
+    public bool Refuel(Station station, double fuel, double deicing = 0.0) {
         if (station is not AgentStation or AntiIceStation or GasStation) return false;
-        if (PathFinder.Distance(station.Position, Position) > pathfinder?.Scale * ActualSpeed / 15) return false;
-        if (Fuel >= fuel) return true;
+        if (PathFinder.Distance(station.Position, Position) > pathfinder?.Scale * ActualSpeed / 15)
+            return false;
+        if (Fuel >= fuel &&
+                (this is not SnowRemover remover || remover.Devices.Contains(SnowRemoverType.AntiIceDistributor) &&
+                remover.Devices.First(p => p.Type == SnowRemoverType.AntiIceDistributor).DeicingCurrent >= deicing))
+            return true;
         if (CurrentState != RobotState.Refuel) {
             CurrentState = RobotState.Refuel;
             return true;

@@ -20,6 +20,9 @@ public class SnowRemover : Agent {
     [XmlIgnore]
     [Category("Work")]
     public double MashSpeed { get; private set; }
+    [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    public double DeicingConsumption { get; set; } = 0;
     private SnowRemoveDevice[] devices;
     [XmlArray("Devices")]
     [XmlArrayItem("Device")]
@@ -103,10 +106,16 @@ public class SnowRemover : Agent {
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {
         case RobotState.Broken:
-        case RobotState.Refuel:
         case RobotState.Thinking:
         case RobotState.Going:
             base.Simulate(sender, time);
+            break;
+        case RobotState.Refuel:
+            if (sender is Director or AgentStation)
+                ActualSpeedRecalculate(time);
+            var d = Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null);
+            if ((Fuel += FuelIncrease * timeFlow.TotalSeconds) > FuelCapacity - 1 && (d is null || (d.DeicingCurrent += FuelIncrease * timeFlow.TotalSeconds) >= d.DeicingCapacity))
+                CurrentState = RobotState.Ready;
             break;
         case RobotState.Ready:
             if (sender is Director or AgentStation)

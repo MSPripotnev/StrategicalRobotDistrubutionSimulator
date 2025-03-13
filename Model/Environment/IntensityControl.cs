@@ -77,7 +77,7 @@ public class IntensityCell : INotifyPropertyChanged {
     public double Deicing {
         get => deicing;
         set {
-            deicing = Math.Max(0, Math.Min(value, 130));
+            deicing = Math.Max(0, value);
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Deicing)));
         }
     }

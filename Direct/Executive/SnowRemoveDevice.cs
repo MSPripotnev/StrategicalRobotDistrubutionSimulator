@@ -19,11 +19,11 @@ public enum SnowRemoverType {
 }
 public class SnowRemoveDevice : ITimeSimulatable, INotifyPropertyChanged {
     public static (double remove, double mash, double fuelDecrease) DeviceRemoveSpeed(SnowRemoverType device) => device switch {
-        SnowRemoverType.Rotor => (5.0, 0.2, 0.05),
-        SnowRemoverType.Shovel => (100.0, 0.2, 0.0),
-        SnowRemoverType.AntiIceDistributor => (0.0, 200.0, 0.0),
-        SnowRemoverType.Cleaver => (0.0, 5.0, 0.01),
-        SnowRemoverType.PlowBrush => (1.0, 0.2, 0.02),
+        SnowRemoverType.Rotor => (5.0, 0.1, 0.05),
+        SnowRemoverType.Shovel => (100.0, 0.0, 0.0),
+        SnowRemoverType.AntiIceDistributor => (0.0, 0.015, 0.01),
+        SnowRemoverType.Cleaver => (0.0, 0.01, 0.02),
+        SnowRemoverType.PlowBrush => (1.0, 0.005, 0.03),
         _ => (0.0, 0.0, 0.0)
     };
 
@@ -31,7 +31,11 @@ public class SnowRemoveDevice : ITimeSimulatable, INotifyPropertyChanged {
     public SnowRemoverType Type {
         get => type;
         set {
-            (RemoveSpeed, MashSpeed, FuelRate) = DeviceRemoveSpeed(type);
+            (RemoveSpeed, MashSpeed, FuelRate) = DeviceRemoveSpeed(value);
+            const double bodyVolume = 5.0, deicingDensity = 1200;
+            if (value == SnowRemoverType.AntiIceDistributor)
+                DeicingCapacity = bodyVolume * deicingDensity;
+            else DeicingCapacity = 0;
             type = value;
         }
     }
@@ -64,6 +68,31 @@ public class SnowRemoveDevice : ITimeSimulatable, INotifyPropertyChanged {
         private set {
             fuelRate = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FuelRate)));
+        }
+    }
+
+    public double deicingCapacity = 0.0;
+    /// <summary>
+    /// Capacity as volume multiplied by density (kg)
+    /// </summary>
+    [XmlIgnore]
+    public double DeicingCapacity {
+        get => deicingCapacity;
+        set {
+            deicingCapacity = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DeicingCapacity)));
+        }
+    }
+    private double deicingCurrent = 0.0;
+    /// <summary>
+    /// Current deicing level in volume (kg)
+    /// </summary>
+    [XmlIgnore]
+    public double DeicingCurrent {
+        get => deicingCurrent;
+        set {
+            deicingCurrent = Math.Round(Math.Min(Math.Max(0, value), DeicingCapacity), 4);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DeicingCurrent)));
         }
     }
     public SnowRemoveDevice(SnowRemoverType _type) {
@@ -102,6 +131,8 @@ public class SnowRemoveDevice : ITimeSimulatable, INotifyPropertyChanged {
                 iArea[c].IcyPercent -= mash_amount;
             } else {
                 iArea[c].Deicing += mash_amount;
+                agent.DeicingConsumption += mash_amount;
+                DeicingCurrent -= mash_amount;
             }
         }
 

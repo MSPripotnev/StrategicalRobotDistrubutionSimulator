@@ -119,6 +119,8 @@ public class SystemAction : INotifyPropertyChanged {
         case ActionType.Refuel: {
             if (ExpectedResult.SubjectAfter is not Agent agent) return;
             Header = $"{agent} refuel to {agent.Fuel}/{agent.FuelCapacity}";
+            if (agent is SnowRemover remover && remover.Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null) is SnowRemoveDevice d)
+                Header += $", deicing {d.DeicingCurrent}/{d.DeicingCapacity}";
             break;
         }
         }

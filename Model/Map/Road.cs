@@ -308,21 +308,26 @@ public class Road : ITargetable, ITimeSimulatable {
         double snownessNew = 0;
         IcyPercent = 0;
         Deicing = 0;
+        const double icyMeltRate = 1 / 10;
         for (int i = 0; i < intensityCells.Count; i++) {
             (int pi, int pj) = intensityCells[i];
             if (0 < pi && pi < meteo.IntensityControl.IntensityMap.Length && 0 < pj && pj < meteo.IntensityControl.IntensityMap[0].Length && meteo.IntensityControl.IntensityMap[pi][pj] is IntensityCell cell) {
-                if (0 < cell.Deicing && cell.Deicing <= 100) {
+                if (cell.Deicing > 0) {
+                    // melt snow by anti ice deicing
                     if (cell.IcyPercent > 0)
-                        cell.Snow += 0.1 * timeFlow.TotalSeconds / 60;
-                    cell.IcyPercent -= timeFlow.TotalSeconds / 6;
-                } else if (cell.Deicing == 0 && cell.Snow > 10 && cell.IcyPercent > GlobalMeteo.GetIcyPercent(SnowType.LooseSnow) && meteo.Temperature < 0) {
-                    cell.IcyPercent += (GlobalMeteo.GetIcyPercent(SnowType.Icy) - GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) / 6 / Category / 3600 * timeFlow.TotalSeconds;
-                } else if (cell.Snow <= 10 && cell.Snow > 0) {
+                        cell.Deicing -= icyMeltRate * timeFlow.TotalSeconds / (cell.IcyPercent > 0 ? 1 : 10);
+                    cell.Snow += icyMeltRate * timeFlow.TotalSeconds;
+                    cell.IcyPercent -= icyMeltRate * timeFlow.TotalSeconds;
+                }
+                if (cell.Snow > 0) {
+                    // melt snow on wheels and temperature
                     cell.Snow -= 0.1 * timeFlow.TotalSeconds / 60;
+                    if (cell.IcyPercent > GlobalMeteo.GetIcyPercent(SnowType.LooseSnow))
+                        cell.IcyPercent += (GlobalMeteo.GetIcyPercent(SnowType.Icy) - GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) / 6 / Category / 3600 * timeFlow.TotalSeconds;
                     if (meteo.Temperature > 0)
                         cell.Snow -= 0.1 * meteo.Temperature * timeFlow.TotalSeconds / 60;
                 }
-                cell.Deicing -= timeFlow.TotalSeconds / 6;
+
 
                 snownessNew += cell.Snow / (DistanceToRoad(IntensityControl.GetIntensityMapPoint(pi, pj)) + 1);
                 if (IcyPercent < cell.IcyPercent)

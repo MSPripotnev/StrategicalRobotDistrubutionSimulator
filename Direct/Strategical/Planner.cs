@@ -16,7 +16,7 @@ public class Planner {
     public static SystemAction DistributePlan(AgentStation ags, Dictionary<Road, double> distributionRecommendation, DateTime start, DateTime end) {
         return new SystemAction(start, end, ActionType.WorkOn, ags, distributionRecommendation);
     }
-    public static (SystemAction goAction, SystemAction action)? RefuelPlan(Agent agent, TacticalMap map, DateTime start, DateTime? end = null, double? fuel = null) {
+    public static (SystemAction goAction, SystemAction action)? RefuelPlan(Agent agent, TacticalMap map, DateTime start, DateTime? end = null, double? fuel = null, double? deicing = null) {
         Station? station = FindNearestRefuelStation(agent, map);
         if (station is null) return null;
 
@@ -28,8 +28,15 @@ public class Planner {
         subject.Fuel = fuel ?? subject.FuelCapacity;
 
         TimeSpan refuelTime = new TimeSpan(0, 0, (int)Math.Ceiling((subject.Fuel - agent.Fuel) / Agent.FuelIncrease));
+        if (subject is SnowRemover remover && remover.Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null) is SnowRemoveDevice antiIceDevice) {
+            var antiIceFuelTime = new TimeSpan(0, 0, (int)Math.Ceiling((antiIceDevice.DeicingCapacity - antiIceDevice.DeicingCurrent) / Agent.FuelIncrease));
+            refuelTime = refuelTime.TotalSeconds > antiIceFuelTime.TotalSeconds ? refuelTime : antiIceFuelTime;
+            antiIceDevice.DeicingCurrent = deicing ?? antiIceDevice.DeicingCapacity;
+        }
         if (end is DateTime endd && refuelTime > end - goAction.EndTime) {
             subject.Fuel = (endd - goAction.EndTime).TotalSeconds * Agent.FuelIncrease;
+            if (agent is SnowRemover r && r.Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null) is SnowRemoveDevice antiIceDevice2)
+                antiIceDevice2.DeicingCurrent = (endd - goAction.EndTime).TotalSeconds * Agent.FuelIncrease;
             refuelTime = endd - goAction.EndTime;
         }
         if (refuelTime <= TimeSpan.Zero)
@@ -50,7 +57,7 @@ public class Planner {
         var goAction = GoToPlan(resultAgent, station.Position, time);
         if (goAction is null) return null;
         var result = new ActionResult() {
-            SubjectAfter = new SnowRemover(agent, RobotState.Ready),
+            SubjectAfter = new SnowRemover(resultAgent, RobotState.Ready),
             EstimatedTime = time.AddMinutes(1) - time
         };
         var action = new SystemAction(goAction.EndTime, goAction.EndTime, ActionType.ChangeDevice, result, agent, device);
