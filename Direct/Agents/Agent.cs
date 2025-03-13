@@ -295,9 +295,8 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         if (station is not AgentStation or AntiIceStation or GasStation) return false;
         if (PathFinder.Distance(station.Position, Position) > pathfinder?.Scale * ActualSpeed / 15)
             return false;
-        if (Fuel >= fuel &&
-                (this is not SnowRemover remover || remover.Devices.Contains(SnowRemoverType.AntiIceDistributor) &&
-                remover.Devices.First(p => p.Type == SnowRemoverType.AntiIceDistributor).DeicingCurrent >= deicing))
+        if (Fuel >= fuel && (this is not SnowRemover remover ||
+                remover.Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null)?.DeicingCurrent >= deicing))
             return true;
         if (CurrentState != RobotState.Refuel) {
             CurrentState = RobotState.Refuel;

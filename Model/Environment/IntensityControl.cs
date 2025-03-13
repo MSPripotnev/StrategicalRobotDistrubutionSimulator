@@ -35,6 +35,11 @@ public class IntensityCell : INotifyPropertyChanged {
         get => snow;
         set {
             snow = Math.Max(Math.Min(value, 1e4), 0);
+            if (snow < 0.0001) {
+                snow = 0;
+                icyPercent = 0;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IcyPercent)));
+            }
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Snow)));
         }
     }
@@ -161,7 +166,10 @@ public class IntensityControl {
                             !Obstacle.IsPointOnAnyObstacle(pos, obstacles, ref iter)) {
                         if (IntensityMap[i][j] is IntensityCell cell) {
                             cell.Snow += Math.Min(2 * cloud.Intensity * Math.Sqrt(cloud.Width * cloud.Length) / p.Length * timeFlow.TotalSeconds, 1e4);
-                            cell.IcyPercent = cell ^ (mid_icy + point_icy);
+                            if (cell.IcyPercent < GlobalMeteo.GetIcyPercent(SnowType.LooseSnow) / 4)
+                                cell.IcyPercent = mid_icy + point_icy;
+                            else
+                                cell.IcyPercent = cell ^ (mid_icy + point_icy);
                         }
                     }
                 }
