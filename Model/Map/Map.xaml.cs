@@ -49,7 +49,7 @@ public partial class MapWPF : Window {
             try {
                 Director = tester.Models[0].Unpack();
                 attemptsCountL.Content = $"Измерений осталось: {tester.AttemptsN}\n" +
-                    $"Транспортеров: {Director.Agents.Length}\n" +
+                    $"Агентов: {Director.Agents.Length}\n" +
                     $"Моделей: {tester.Models.Length}";
             } catch (FileNotFoundException) {
                 mapCanvas.Children.Clear();
@@ -961,10 +961,10 @@ public partial class MapWPF : Window {
 
     public void Refresh() {
         if (Director != null) {
-            double snow = Math.Round(Director.Map.Roads.Sum(p => p.Snowness)),
+            double snow = Math.Round(Director.Map.Roads.Sum(p => p.Snowness) * 1000),
                    icy = Math.Round(Director.Map.Roads.Max(p => p.IcyPercent));
             localTimeL.Content = $"Местное время: {Director.Time.ToLongTimeString()} {Director.Time.ToLongDateString()}";
-            systemQualityL.Content = $"CurrentSnow = {snow}\t\tCurrrentIcy = {icy}";
+            systemQualityL.Content = $"Заснеженность дорог: {snow} мм\t\nУровень гололёда: {icy}%";
             if (Director.Recorder.SystemQuality.Any()) {
                 double best_qualitity = Director.Recorder.SystemQuality.Max();
                 int best_quality_epoch = Director.Recorder.SystemQuality.IndexOf(best_qualitity) + 1;
@@ -974,7 +974,8 @@ public partial class MapWPF : Window {
             }
             if (drawCB.IsChecked == true) {
                 if (Director.Agents.Any())
-                    fuelCountL.Content = $"Fuel = {Math.Round(Director.Agents.Sum(p => p.FuelConsumption))}";
+                    fuelCountL.Content = $"\nРасход топлива = {Math.Round(Director.Agents.Sum(p => p.FuelConsumption))} л\n" +
+                                         $"Расход реагента: {Math.Round(Director.Agents.OfType<SnowRemover>().Sum(p => p.DeicingConsumption) / 1000.0, 2)} т";
             }
         }
     }

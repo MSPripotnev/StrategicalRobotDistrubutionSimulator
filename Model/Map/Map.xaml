@@ -67,8 +67,8 @@
             </Grid.ColumnDefinitions>
             <Label Grid.Column="0" x:Name="localTimeL" MaxHeight="50" Margin="5,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
             <Label Grid.Column="1" x:Name="attemptsCountL" MaxHeight="80" Margin="5,20,0,0" VerticalAlignment="Top" HorizontalAlignment="Right"/>
-            <Label Grid.Column="0" x:Name="systemQualityL" MaxHeight="60" Margin="5,45,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
-            <Label Grid.Column="0" x:Name="fuelCountL" MaxHeight="50" Margin="5,70,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+            <Label Grid.Column="0" x:Name="systemQualityL" MaxHeight="80" Margin="5,45,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+            <Label Grid.Column="0" x:Name="fuelCountL" MaxHeight="80" Margin="5,70,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
             <Label Grid.Column="0" x:Name="bestQualityL" MaxHeight="50" Margin="5,100,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
             <Label Grid.Column="0" x:Name="allTimeCountL" MaxHeight="50" Margin="5,120,0,0" VerticalAlignment="Top" HorizontalAlignment="Left"/>
         </Grid>
