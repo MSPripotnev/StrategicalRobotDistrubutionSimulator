@@ -74,10 +74,10 @@
         </Grid>
 
         <pt:PropertyGrid Grid.Column="1" Grid.Row="1" VerticalAlignment="Stretch"
-                         x:Name="propertyGrid" Panel.ZIndex="5"
+                         x:Name="propertyGrid" Panel.ZIndex="6"
                          />
         <TreeView Grid.Column="1" Grid.Row="1"
-                  Name="planView" Panel.ZIndex="4" Visibility="Collapsed" ScrollViewer.CanContentScroll="True">
+                  Name="planView" Panel.ZIndex="5" Visibility="Collapsed" ScrollViewer.CanContentScroll="True">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Path=Next}">
                     <TextBlock Text="{Binding Header}"/>
