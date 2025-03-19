@@ -170,14 +170,27 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     }
     [PropertyTools.DataAnnotations.Browsable(false)]
     public double MaxStraightRange { get; set; }
+    /// <summary>
+    /// Speed on map, px/s
+    /// </summary>
     [XmlIgnore]
     [Category("Movement")]
     public double Speed { get; set; }
     [PropertyTools.DataAnnotations.Browsable(false)]
     public double WorkSpeed { get => Speed * 0.8; }
+    /// <summary>
+    /// Speed per frame, px/s * timeflow
+    /// </summary>
     [XmlIgnore]
     [Category("Movement")]
     public double ActualSpeed { get; set; }
+    /// <summary>
+    /// Speed in real scale after move, km/h
+    /// </summary>
+    [XmlIgnore]
+    [Category("Movement")]
+    [DisplayName(nameof(RealSpeed) + ", km/h")]
+    public double RealSpeed { get; private set; }
     [XmlIgnore]
     private List<Point> trajectory = new List<Point>();
     private PathFinder? pathfinder;
@@ -243,6 +256,8 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             V.Normalize();
         V *= ActualSpeed / (Pathfinder is not null ? PathFinder.GetPointHardness(Position, Pathfinder.Map, CurrentState == RobotState.Working) : 1);
         Position = new Point(Position.X + V.X, Position.Y + V.Y);
+        RealSpeed = V.Length * 3.6 / timeFlow.TotalSeconds * (Pathfinder?.Map.MapScale ?? 0.0);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RealSpeed)));
 
         var angle = Vector.AngleBetween(V, new Vector(0, 1));
         angle = angle < 180 && angle > -180 ? -angle : angle;
