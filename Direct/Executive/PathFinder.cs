@@ -74,18 +74,18 @@ public class PathFinder {
         Result = null;
         IsCompleted = true;
     }
-    public double GetPointHardness(Point pos, bool onWork = false) {
-        var road = Map.Roads.Where(p => -p.Height * (onWork ? 2 : 1) < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * (onWork ? 2 : 1))
+
+    #region StaticFunc
+    public static double GetPointHardness(Point pos, TacticalMap map, bool onWork = false) {
+        var road = map.Roads.Where(p => -p.Height * (onWork ? 2 : 1) < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * (onWork ? 2 : 1))
             .MinBy(p => p.DistanceToRoad(pos));
         double hardness;
         if (road is null)
-            hardness = 4.0;
+            hardness = 6.0;
         else
             hardness = Road.DistanceHardness(road.Type) + (onWork ? Math.Min(road.Snowness / 5, 1) : 0);
         return hardness;
     }
-
-    #region StaticFunc
     public static double Distance(Point p1, Point p2) {
         return AStarExplorer.Distance(p1, p2);
     }
@@ -117,6 +117,5 @@ public class PathFinder {
         }
 #endif
     }
-
-#endregion
+    #endregion
 }

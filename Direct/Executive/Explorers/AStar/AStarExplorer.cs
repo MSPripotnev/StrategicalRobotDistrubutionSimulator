@@ -61,7 +61,6 @@ internal class AStarExplorer : IExplorer {
     }
     private void OpenPoints(AnalyzedPoint currentPoint) {
         long iterations = 0;
-        List<Point> result = new List<Point>();
         for (int i = 0; i < 9; i++, iterations++) {
             //выбор направления
             //Point pos = new Point(Math.Round(
@@ -70,13 +69,8 @@ internal class AStarExplorer : IExplorer {
             Point pos = new Point(
                     currentPoint.Position.X + (i / 3 - 1) * Scale * (i % 2 - 1) + (i % 2) * (i / 3 - 1) * Scale,
                     currentPoint.Position.Y + (i % 3 - 1) * Scale * (i % 2 - 1) + (i % 2) * (i % 3 - 1) * Scale);
-            var road = Map.Roads.Where(p => 0 < p.DistanceToRoad(pos) && p.DistanceToRoad(pos) < p.Height * 2)
-                .MinBy(p => p.DistanceToRoad(pos));
-            double hardness;
-            if (road is null)
-                hardness = 4.0;
-            else
-                hardness = Road.DistanceHardness(road.Type) + Math.Min(road.Snowness, 2);
+
+            double hardness = PathFinder.GetPointHardness(pos, Map);
             AnalyzedPoint interimP = new AnalyzedPoint(currentPoint, pos,
                 currentPoint.Distance + Distance(currentPoint, pos) * hardness, Distance(pos, end));
             if (ClosedPoints.Contains(interimP) || interimP == currentPoint)
