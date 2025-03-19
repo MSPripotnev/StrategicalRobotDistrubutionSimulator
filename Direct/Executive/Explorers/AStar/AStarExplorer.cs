@@ -71,6 +71,7 @@ internal class AStarExplorer : IExplorer {
                     currentPoint.Position.Y + (i % 3 - 1) * Scale * (i % 2 - 1) + (i % 2) * (i % 3 - 1) * Scale);
 
             double hardness = PathFinder.GetPointHardness(pos, Map);
+            hardness = hardness > Road.DistanceHardness(RoadType.Dirt) ? hardness * 3.0 : hardness;
             AnalyzedPoint interimP = new AnalyzedPoint(currentPoint, pos,
                 currentPoint.Distance + Distance(currentPoint, pos) * hardness, Distance(pos, end));
             if (ClosedPoints.Contains(interimP) || interimP == currentPoint)
