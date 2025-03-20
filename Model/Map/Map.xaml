@@ -155,12 +155,12 @@
             <Button x:Name="startB" Grid.Column="1" Grid.Row="1" Content="▶️" HorizontalAlignment="Center" IsEnabled="False"
                     Width="25" Height="20" VerticalAlignment="Center" Click="StartButton_Click" Margin="0,0,70,0"/>
             <Button x:Name="stopB" Grid.Column="1" Grid.Row="1" Content="■" HorizontalAlignment="Center" IsEnabled="False"
-                Width="25" Height="20" VerticalAlignment="Center" Click="StopB_Click" Margin="0,0,0,0"/>
+                Width="25" Height="20" VerticalAlignment="Center" Click="StopB_Click" Margin="0,0,0,0" IsTabStop="False" Focusable="False"/>
             <Button x:Name="stepB" Grid.Column="1" Content="▶️|" HorizontalAlignment="Center" IsEnabled="False"
-                Width="25" Height="20" Grid.Row="1" VerticalAlignment="Center" Click="StepB_Click" Margin="70,0,0,0"/>
+                Width="25" Height="20" Grid.Row="1" VerticalAlignment="Center" Click="StepB_Click" Margin="70,0,0,0" IsTabStop="False" Focusable="False"/>
             <Button x:Name="nextModelB" Grid.Column="1" Content="След. модель" HorizontalAlignment="Center" IsEnabled="True"
-                Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="NextModelB_Click" Margin="0,0,0,0"/>
-            <Button x:Name="testsB" Grid.Column="2" Grid.Row="2" Content="Модели" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center" Height="30" Width="69" Click="TestsB_Click"/>
+                Width="80" Height="30" Grid.Row="2" VerticalAlignment="Center" Click="NextModelB_Click" Margin="0,0,0,0" Focusable="False" IsTabStop="False"/>
+            <Button x:Name="testsB" Grid.Column="2" Grid.Row="2" Content="Модели" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center" Height="30" Width="69" Click="TestsB_Click" IsTabStop="False" Focusable="False"/>
             <CheckBox x:Name="meteoCB" Grid.Column="0" Grid.Row="1" Content="Погода" HorizontalAlignment="Left" Margin="5,5,0,0" VerticalAlignment="Center" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked"/>
             <CheckBox x:Name="cloudsLevelCB" Grid.Column="0" Grid.Row="2" Content="Слой облаков" HorizontalAlignment="Left" Margin="5,5,0,0" VerticalAlignment="Top" IsChecked="True" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked"/>
             <CheckBox x:Name="intensityMapCB" Grid.Column="0" Grid.Row="2" Content="Слой осадков" HorizontalAlignment="Left" Margin="5,25,0,0" VerticalAlignment="Top" IsChecked="False" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked"/>
