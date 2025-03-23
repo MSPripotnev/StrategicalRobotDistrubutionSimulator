@@ -71,8 +71,7 @@ public class StrategicQualifier {
                 if (prior == ActionRecommendation.Approve && action.Next.Any(p => p.Type == ActionType.GoTo)) {
                     var a = action.Next.First(p => p.Type == ActionType.GoTo);
                     if (a.Object is not Point p) return ActionRecommendation.Approve;
-                    var d = PathFinder.Distance(realAgent.Position, p ^ roadReal);
-                    if (PathFinder.Distance(realAgent.Position, p ^ roadReal) < roadReal.Height * 4)
+                    if (agent.Pathfinder?.IsNear(realAgent, roadReal, roadReal.Height * 4 / agent.Pathfinder.Scale * agent.ActualSpeed) ?? false)
                         return ActionRecommendation.Approve;
                     return ActionRecommendation.Delay;
                 }

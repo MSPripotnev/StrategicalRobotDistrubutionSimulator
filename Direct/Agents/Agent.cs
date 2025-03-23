@@ -134,7 +134,8 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         case RobotState.Going:
             if (Trajectory.Count > 0)
                 Move();
-            if (PathFinder.Distance(Position, TargetPosition) <= pathfinder?.Scale * ActualSpeed / 15)
+            if (Pathfinder?.IsNear(this, TargetPosition, ActualSpeed / PathFinder.GetPointHardness(
+                Position, Pathfinder.Map, CurrentState == RobotState.Working) / Pathfinder.Scale) ?? false)
                 Arrived();
             break;
         case RobotState.Thinking:
@@ -227,8 +228,11 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         set {
             Trajectory.Clear();
             Trajectory.Add(value);
-            if (CurrentState != RobotState.Working && PathFinder.Distance(TargetPosition, Position) > pathfinder?.Scale / 5)
+            if (CurrentState != RobotState.Working && !(Pathfinder?.IsNear(this, TargetPosition, ActualSpeed) ?? true)) {
                 CurrentState = RobotState.Thinking;
+            } else if (CurrentState != RobotState.Working && CurrentState != RobotState.Ready) {
+                CurrentState = RobotState.Going;
+            }
         }
     }
 
@@ -242,7 +246,8 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     protected virtual void Move() {
         Point nextPoint = Trajectory[0];
 
-        if (Pathfinder is not null && PathFinder.Distance(Position, nextPoint) <= ActualSpeed / PathFinder.GetPointHardness(Position, Pathfinder.Map, CurrentState == RobotState.Working)) {
+        if (Pathfinder is not null && (Pathfinder?.IsNear(this, nextPoint, ActualSpeed / PathFinder.GetPointHardness(
+                Position, Pathfinder.Map, CurrentState == RobotState.Working) / Pathfinder.Scale) ?? false)) {
             List<Point> pc = new(Trajectory.Skip(1));
             if (pc.Any()) {
                 TraversedWay += PathFinder.Distance(nextPoint, pc[0]) *
@@ -308,7 +313,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     public bool Refuel(Station station, double fuel, double deicing = 0.0) {
         if (station is not AgentStation or AntiIceStation or GasStation) return false;
-        if (PathFinder.Distance(station.Position, Position) > pathfinder?.Scale * ActualSpeed / 15)
+        if (!Pathfinder?.IsNear(this, station, ActualSpeed) ?? false)
             return false;
         if (Fuel >= fuel && (this is not SnowRemover remover ||
                 remover.Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null)?.DeicingCurrent >= deicing))
@@ -321,8 +326,10 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     }
     public bool Link(ITargetable target) {
         if (AttachedObj == target) return true;
-        if (target is Road r && PathFinder.Distance(Position, Position ^ r) > pathfinder?.Scale * ActualSpeed / 15) return false;
-        else if (target is Target t && PathFinder.Distance(Position, t.Position) > pathfinder?.Scale * ActualSpeed / 15) return false;
+        if (target is Road r && !(Pathfinder?.IsNear(this, r, ActualSpeed) ?? true))
+            return false;
+        else if (target is Target t && !(Pathfinder?.IsNear(this, t, ActualSpeed) ?? true))
+            return false;
         target.ReservedAgents.Add(this);
         AttachedObj = target;
         CurrentState = RobotState.Working;
@@ -470,8 +477,8 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public override int GetHashCode() => base.GetHashCode();
     public override bool Equals(object? obj) => obj is Agent a && obj.GetType() == this.GetType() && a.ID == ID;
     public static bool operator ==(Agent? a, Agent? b) {
-        return a is not null && b is not null && a.AttachedObj == b.AttachedObj && a.CurrentState == b.CurrentState && a.Home == b.Home
-            && PathFinder.Distance(a.Position, b.Position) < 15 || a?.ui == b?.ui || a is null && b is null;
+        return a is not null && b is not null && a.AttachedObj == b.AttachedObj && a.CurrentState == b.CurrentState &&
+            a.Home == b.Home && (a.Pathfinder?.IsNear(a, b) ?? false) || a?.ui == b?.ui || a is null && b is null;
     }
     public static bool operator !=(Agent? a, Agent? b) => !(a == b);
 }

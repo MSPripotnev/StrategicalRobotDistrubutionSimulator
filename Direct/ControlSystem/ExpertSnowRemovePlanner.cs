@@ -95,12 +95,12 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
                 break;
             Road roadToWork = agentsForRoadsAID.First(p => p.Value > 0).Key;
 
-            var takeAIDPlan = Planner.ChangeDevicePlan(agents[i], station, 
+            var takeAIDPlan = Planner.ChangeDevicePlan(agents[i], station,
                 new SnowRemoveDevice(SnowRemoverType.AntiIceDistributor) { MashSpeed = (15 + 10 * TemperatureStrength) / 1000.0 }, time);
             if (!takeAIDPlan.HasValue || takeAIDPlan.Value.action.ExpectedResult.SubjectAfter is not Agent aidAgent) continue;
 
             var refuelPlan1 = Planner.RefuelPlan(aidAgent, map, takeAIDPlan.Value.action.EndTime, takeAIDPlan.Value.action.EndTime + queueForRoads[roadToWork] + holdTime);
-            if (refuelPlan1.HasValue && refuelPlan1.Value.action.ExpectedResult.SubjectAfter is SnowRemover sr && sr.Home is not null && PathFinder.Distance(sr.Home.Position, sr.Position) < sr.Pathfinder?.Scale)
+            if (refuelPlan1.HasValue && refuelPlan1.Value.action.ExpectedResult.SubjectAfter is SnowRemover sr && sr.Home is not null && (sr.Pathfinder?.IsNear(sr, sr.Home) ?? false))
                 takeAIDPlan.Value.action.Next.Add(refuelPlan1.Value.action);
             else if (refuelPlan1.HasValue)
                 takeAIDPlan.Value.action.Next.Add(refuelPlan1.Value.goAction);

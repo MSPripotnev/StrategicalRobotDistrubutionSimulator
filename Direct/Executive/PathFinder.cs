@@ -89,6 +89,17 @@ public class PathFinder {
     public static double Distance(Point p1, Point p2) {
         return AStarExplorer.Distance(p1, p2);
     }
+    public bool IsNear(IPlaceable i1, IPlaceable i2, double actualSpeed = 1.0) {
+        if (i2 is Road road)
+            return road.DistanceToRoad(i1.Position) <= road.Height / 2 + actualSpeed;
+        return IsNear(i1.Position, i2.Position, actualSpeed);
+    }
+    public bool IsNear(IPlaceable i1, Point i2, double actualSpeed = 1.0) {
+        return IsNear(i1.Position, i2, actualSpeed);
+    }
+    public bool IsNear(Point i1, Point i2, double actualSpeed = 1.0) {
+        return Distance(i1, i2) < Scale + actualSpeed;
+    }
     public static double Heuristic(Point currentPosition, Point targetPosition) {
         return Distance(currentPosition, targetPosition);
     }

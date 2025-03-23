@@ -142,12 +142,12 @@ public class SnowRemover : Agent {
                     Vector v = r.Position - r.EndPosition;
                     v *= r.Height / v.Length;
                     (v.X, v.Y) = (-v.Y, v.X);
-                    if (PathFinder.Distance(Position, r.Position) < ActualSpeed * 2) {
+                    if (Pathfinder?.IsNear(this, r.Position, ActualSpeed) ?? false) {
                         if (!Trajectory.Contains(r.EndPosition - v))
                             Trajectory.Add(r.EndPosition - v);
                         if (!Trajectory.Contains(r.EndPosition + v))
                             Trajectory.Add(r.EndPosition + v);
-                    } else if (PathFinder.Distance(Position, r.EndPosition) < ActualSpeed * 2) {
+                    } else if (Pathfinder?.IsNear(this, r.EndPosition, ActualSpeed) ?? false) {
                         v = -v;
                         if (!Trajectory.Contains(r.Position - v))
                             Trajectory.Add(r.Position - v);

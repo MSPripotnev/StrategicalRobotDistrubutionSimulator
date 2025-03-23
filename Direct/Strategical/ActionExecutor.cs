@@ -34,19 +34,23 @@ public class ActionExecutor {
         switch (action.Type) {
         case ActionType.GoTo: {
             if (action.Object is not Point p) throw new InvalidOperationException();
-            // TODO: check map scale instead hardcode
-            if (PathFinder.Distance(agent.TargetPosition, p) > agent.Pathfinder?.Scale || agent.CurrentState == RobotState.Ready) {
+            if (!(agent.Pathfinder?.IsNear(agent.TargetPosition, p) ?? true) || agent.CurrentState == RobotState.Ready) {
                 agent.TargetPosition = p;
-            } else if (PathFinder.Distance(agent.Position, p) < agent.ActualSpeed) {
+            } else if (agent.Pathfinder?.IsNear(agent, p, agent.ActualSpeed) ?? false) {
                 // Ended earlier
                 action.EndTime = time;
+                agent.CurrentState = RobotState.Ready;
             }
             return true;
         }
         case ActionType.Refuel: {
             if (action.Object is not Station station || station is not AgentStation and not GasStation and not AntiIceStation || action.ExpectedResult.SubjectAfter is not Agent futureAgent)
                 throw new InvalidOperationException();
-            return agent.Refuel(station, futureAgent.Fuel);
+            if (agent.Refuel(station, futureAgent.Fuel, (futureAgent as SnowRemover)?.Devices[0].DeicingCurrent ?? 0)) {
+                action.EndTime = time;
+                return true;
+            }
+            return false;
         }
         case ActionType.WorkOn: {
             if (action.Object is AgentStation station && !station.Assign(agent)) {
@@ -63,7 +67,8 @@ public class ActionExecutor {
         }
         case ActionType.ChangeDevice: {
             if (agent is not SnowRemover snowRemover || action.Object is not SnowRemoveDevice device) throw new NotImplementedException();
-            if (snowRemover.Home is null || PathFinder.Distance(snowRemover.Position, snowRemover.Home.Position) > 15) return false;
+            if (snowRemover.Home is null || !(snowRemover.Pathfinder?.IsNear(snowRemover, snowRemover.Home, snowRemover.ActualSpeed) ?? true))
+                return false;
             snowRemover.ChangeDevice(device);
             break;
         }
