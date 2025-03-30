@@ -71,9 +71,9 @@ public class Planner {
             AStarExplorer explorer = new AStarExplorer(agent.Position, roadPosition, agent.Pathfinder.Scale, agent.Pathfinder.Map, agent.InteractDistance);
             if (explorer.FindWaySync()) {
                 var path = PathFinder.CreatePathFromLastPoint(explorer.Result);
-                var p = path?.FirstOrDefault(p => road.DistanceToRoad(p) < road.Height * 2, new Point(0, 0));
+                var p = path?.FirstOrDefault(i => Math.Abs(road.DistanceToRoad(i)) < road.Height / 2, roadPosition);
                 if (p.HasValue && p.Value.X != 0 && p.Value.Y != 0)
-                    roadPosition = p.Value ^ road;
+                    roadPosition = p.Value;
             }
         }
 
