@@ -11,6 +11,7 @@ using Model.Environment;
 using Model.Map;
 using Model.Map.Stations;
 using PropertyTools.DataAnnotations;
+using SRDS.Direct.Tactical;
 
 public class SnowRemover : Agent {
     public new event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;

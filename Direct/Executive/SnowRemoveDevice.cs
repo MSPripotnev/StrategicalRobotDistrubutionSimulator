@@ -7,6 +7,7 @@ using System.Windows;
 using Model;
 
 using SRDS.Direct.Agents.Drones;
+using SRDS.Direct.Tactical;
 using SRDS.Model.Environment;
 using SRDS.Model.Map;
 

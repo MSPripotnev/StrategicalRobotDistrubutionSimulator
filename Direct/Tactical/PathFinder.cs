@@ -5,9 +5,10 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace SRDS.Direct.Executive;
+namespace SRDS.Direct.Tactical;
 using Explorers;
 using Explorers.AStar;
+
 using Model;
 using Model.Map;
 

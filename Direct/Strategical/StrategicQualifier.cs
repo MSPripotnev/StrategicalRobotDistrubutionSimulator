@@ -10,6 +10,8 @@ using Executive;
 using Model.Map;
 using Model.Map.Stations;
 
+using Tactical;
+
 public enum ActionRecommendation {
     Approve,
     Delay,
@@ -115,7 +117,7 @@ public class StrategicQualifier {
             else _object = action.Object;
         }
 
-       return new ActionResult() {
+        return new ActionResult() {
             SubjectAfter = subject,
             ObjectAfter = _object,
             EstimatedTime = time - action.StartTime

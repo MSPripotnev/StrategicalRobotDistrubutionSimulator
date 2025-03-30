@@ -14,6 +14,8 @@ using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
 using SRDS.Model.Environment;
+using SRDS.Direct.Strategical;
+using SRDS.Direct.Tactical;
 
 public enum RobotState {
     Disable = -1,

@@ -9,7 +9,6 @@ using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
 using SRDS.Direct.Tactical.Qualifiers;
-using SRDS.Direct.Executive;
 using System.Drawing;
 
 public class TaskDistributor {

@@ -2,7 +2,7 @@
 using Agents;
 using Direct.Executive;
 using Model.Targets;
-
+using SRDS.Direct.Tactical;
 using SRDS.Model.Map;
 
 public class DistanceQualifier : IQualifier {

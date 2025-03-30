@@ -12,6 +12,7 @@ using Direct.Agents.Drones;
 using Direct.ControlSystem;
 using Direct.Executive;
 using Direct.Strategical;
+using SRDS.Direct.Tactical;
 
 public enum SystemState {
 

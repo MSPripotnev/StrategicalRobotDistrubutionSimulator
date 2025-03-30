@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace SRDS.Direct.Executive.Explorers;
+namespace SRDS.Direct.Tactical.Explorers;
 public class AnalyzedPoint {
     public Point Position { get; init; }
     public AnalyzedPoint? Previous { get; init; }

@@ -6,12 +6,13 @@ using System.Xml.Serialization;
 
 namespace SRDS.Model.Map;
 
-using SRDS.Direct.Agents;
-using SRDS.Direct.Executive;
-using SRDS.Model;
-using SRDS.Model.Environment;
-using SRDS.Model.Map.Stations;
-using SRDS.Model.Targets;
+using Direct.Agents;
+using Direct.Tactical;
+
+using Model;
+using Model.Environment;
+using Model.Map.Stations;
+using Model.Targets;
 
 public enum RoadType {
     Dirt,
@@ -124,7 +125,7 @@ public class Road : ITargetable, ITimeSimulatable {
         get => category;
         set {
             category = value;
-            switch(category) {
+            switch (category) {
             case 1:
                 Height = 15;
                 Type = RoadType.Asphalt;

@@ -5,8 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
-
-using SRDS.Direct.Executive;
+using SRDS.Direct.Tactical;
 
 namespace SRDS.Model.Map.Stations;
 [XmlInclude(typeof(AgentStation))]

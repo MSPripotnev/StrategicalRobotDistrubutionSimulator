@@ -1,8 +1,10 @@
-﻿using SRDS.Model.Map;
+﻿using SRDS.Direct.Tactical;
+using SRDS.Direct.Tactical.Explorers;
+using SRDS.Model.Map;
 
 using System.Windows;
 
-namespace SRDS.Direct.Executive.Explorers.AStar;
+namespace SRDS.Direct.Tactical.Explorers.AStar;
 internal class AStarExplorer : IExplorer {
     protected Point start;
     protected Point end;
@@ -52,7 +54,7 @@ internal class AStarExplorer : IExplorer {
     protected virtual bool SelectNextPoint() {
         var v = OpenedPoints.MinBy(p => p.Heuristic + p.Distance);
         if (v is null) return false;
-        if (ClosedPoints.Count < 2 && Result.Heuristic < Scale) 
+        if (ClosedPoints.Count < 2 && Result.Heuristic < Scale)
             return true;
         Result = v;
         ClosedPoints.Add(Result);
@@ -67,8 +69,8 @@ internal class AStarExplorer : IExplorer {
             //        currentPoint.Position.X + (i / 3 - 1) * Scale),
             //        Math.Round(currentPoint.Position.Y + (i % 3 - 1) * Scale));
             Point pos = new Point(
-                    currentPoint.Position.X + (i / 3 - 1) * Scale * (i % 2 - 1) + (i % 2) * (i / 3 - 1) * Scale,
-                    currentPoint.Position.Y + (i % 3 - 1) * Scale * (i % 2 - 1) + (i % 2) * (i % 3 - 1) * Scale);
+                    currentPoint.Position.X + (i / 3 - 1) * Scale * (i % 2 - 1) + i % 2 * (i / 3 - 1) * Scale,
+                    currentPoint.Position.Y + (i % 3 - 1) * Scale * (i % 2 - 1) + i % 2 * (i % 3 - 1) * Scale);
 
             double hardness = PathFinder.GetPointHardness(pos, Map);
             hardness = hardness > Road.DistanceHardness(RoadType.Dirt) ? hardness * 3.0 : hardness;

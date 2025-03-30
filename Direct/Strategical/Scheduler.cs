@@ -1,8 +1,6 @@
-namespace SRDS.Direct.Strategical;
-
-using System;
 using System.Collections.ObjectModel;
 
+namespace SRDS.Direct.Strategical;
 using Agents;
 using Model;
 

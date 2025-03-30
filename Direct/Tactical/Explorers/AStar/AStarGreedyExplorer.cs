@@ -2,7 +2,7 @@
 
 using System.Windows;
 
-namespace SRDS.Direct.Executive.Explorers.AStar;
+namespace SRDS.Direct.Tactical.Explorers.AStar;
 internal class AStarGreedyExplorer : AStarExplorer {
     public AStarGreedyExplorer(Point _start, Point _end, double scale, TacticalMap map, double interactDistance)
         : base(_start, _end, scale, map, interactDistance) { }

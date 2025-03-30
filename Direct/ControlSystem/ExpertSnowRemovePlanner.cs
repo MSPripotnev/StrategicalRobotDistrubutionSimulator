@@ -1,15 +1,15 @@
 namespace SRDS.Direct.ControlSystem;
 
+using Direct.Agents;
 using Direct.Agents.Drones;
+using Direct.Executive;
 
 using Model;
 using Model.Map;
 using Model.Map.Stations;
 
-using SRDS.Direct.Agents;
-using SRDS.Direct.Executive;
-
 using Strategical;
+
 public class ExpertSnowRemovePlanner : ITimeSimulatable {
     private int strength;
     public int Strength {
@@ -80,7 +80,7 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
         var agentsForRoadsShove = DistributeAgentsCount(map.Roads, shoveTime, map.MapScale, station.AssignedAgents.Length);
         var totalAgentsNeeded = agentsForRoadsAID.Sum(p => p.Value);
         if (agents.Length < totalAgentsNeeded) {
-            foreach(var road in agentsForRoadsAID.Keys) {
+            foreach (var road in agentsForRoadsAID.Keys) {
                 agentsForRoadsAID[road] = Math.Round(agentsForRoadsAID[road] * agents.Length / totalAgentsNeeded);
                 agentsForRoadsShove[road] = Math.Round(agentsForRoadsShove[road] * agents.Length / totalAgentsNeeded);
             }

@@ -4,12 +4,12 @@ namespace SRDS.Direct.Strategical;
 using Agents;
 using Agents.Drones;
 
-using Executive.Explorers.AStar;
-
 using Model.Map;
 using Model.Map.Stations;
 
-using SRDS.Direct.Executive;
+using Executive;
+using Tactical;
+using Tactical.Explorers.AStar;
 
 public class Planner {
 

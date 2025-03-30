@@ -6,16 +6,12 @@ using System.Xml.Serialization;
 namespace SRDS.Direct;
 using Agents;
 using Analyzing;
-using Executive;
-
 using Model;
 using Model.Environment;
 using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
-
 using Strategical;
-
 using Tactical;
 using Tactical.Qualifiers;
 
@@ -283,7 +279,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
             if (nearSnow is null || merged.Contains(snow[i]) || nearSnow.Length < 2 || snow[i].Level > 50)
                 continue;
 
-            Point center = new Point(0,0);
+            Point center = new Point(0, 0);
             double level = 0, mash = 0;
 
             for (int j = 0; j < nearSnow.Length; j++) {

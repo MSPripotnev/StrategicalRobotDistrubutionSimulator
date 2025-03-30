@@ -22,6 +22,7 @@ using Stations;
 using Targets;
 using PropertyTools.Wpf;
 using System;
+using SRDS.Direct.Tactical;
 
 /// <summary>
 /// Логика взаимодействия для Map.xaml
