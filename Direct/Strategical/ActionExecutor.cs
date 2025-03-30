@@ -39,7 +39,6 @@ public class ActionExecutor {
             } else if (agent.Pathfinder?.IsNear(agent, p, agent.ActualSpeed) ?? false) {
                 // Ended earlier
                 action.EndTime = time;
-                agent.CurrentState = RobotState.Ready;
             }
             return true;
         }

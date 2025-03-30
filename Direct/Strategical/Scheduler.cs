@@ -1,4 +1,4 @@
-﻿namespace SRDS.Direct.Strategical;
+namespace SRDS.Direct.Strategical;
 
 using System;
 using System.Collections.ObjectModel;
@@ -74,26 +74,30 @@ public class Scheduler : ITimeSimulatable {
                 Actions[i].Status = "completed sequence";
                 continue;
             }
-            foreach (SystemAction action in Actions[i].Descendants().Where(p => !p.Finished)) {
+            foreach (SystemAction action in Actions[i].Descendants().Where(p => !p.Finished && p.StartTime <= time)) {
                 if (Actions[i].Descendants().Any(p => p.Next.Contains(action) && !p.Finished)) continue;
-                if (action.StartTime <= time) {
-                    if (!Executor.Execute(director, action, time) && !action.Started)
-                        action.StartTime += timeFlow;
-                    else if (!action.Started)
-                        action.Started = true;
+                if (!action.Started) {
+                    action.Started = Executor.Execute(director, action, time);
+                    if (!action.Started) {
+                        Delay(action);
+                        continue;
+                    }
                 }
                 if (action.EndTime <= time) {
                     action.RealResult = Qualifier.Qualify(director, action, time);
                     var recommendation = Qualifier.RecommendFor(action);
                     if (recommendation == ActionRecommendation.Approve) {
+                        if (action.RealResult.SubjectAfter is not Agent agent)
+                            continue;
                         switch (action.Type) {
                         case ActionType.WorkOn:
-                            if (action.RealResult.SubjectAfter is Agent agent)
-                                agent.Unlink();
+                            agent.Unlink();
                             break;
                         case ActionType.Refuel:
                         case ActionType.ChangeDevice:
                         case ActionType.GoTo:
+                            break;
+                        default:
                             break;
                         }
                         if (!action.Started)
@@ -106,7 +110,10 @@ public class Scheduler : ITimeSimulatable {
                                 nextAction.StartTime -= shiftTime;
                             }
                         }
+                        agent.CurrentState = RobotState.Ready;
                     } else if (recommendation == ActionRecommendation.Delay) {
+                        if (action.Type == ActionType.Refuel || action.Type == ActionType.ChangeDevice)
+                            action.Started = false;
                         Delay(action);
                     } else {
                         Delay(action);
