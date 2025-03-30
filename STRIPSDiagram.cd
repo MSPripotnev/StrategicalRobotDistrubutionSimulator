@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="SRDS.Direct.Director">
+    <Position X="7.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>DAoAkAgAADBEQYAQAEsABAAKkGBIAESAgwBAAAAAgQA=</HashCode>
+      <FileName>Direct\Director.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Distributor" />
+      <Property Name="Planner" />
+      <Property Name="Scheduler" />
+      <Property Name="Map" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="SRDS.Direct.Tactical.TaskDistributor">
+    <Position X="5.25" Y="10" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAAAQAAEABEoAACACAEAAIAAAQEAAEhAACAAAAAEAgA=</HashCode>
+      <FileName>Direct\Tactical\TaskDistrubutor.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="DistributionQualifyReadings" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="SRDS.Direct.Strategical.Planner">
+    <Position X="11" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAARAAAQAAAAAAAAAAAIAAAAAAAAIAAAAAAAA=</HashCode>
+      <FileName>Direct\Strategical\Planner.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SRDS.Direct.Strategical.Scheduler">
+    <Position X="11" Y="6.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIgAAAAIAAAAAQACAAxBAIAAAAIAACAAAAAgAAAAAA=</HashCode>
+      <FileName>Direct\Strategical\Scheduler.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Executor" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="SRDS.Direct.Strategical.ActionExecutor">
+    <Position X="13.75" Y="7.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAQQAAACAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Direct\Strategical\ActionExecutor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SRDS.Direct.Agents.Drones.SnowRemover">
+    <Position X="5" Y="5.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AgAAAQAAAAAAAAAAAAABACIAwAAAAEAAAAAIAAAAAAA=</HashCode>
+      <FileName>Direct\Agents\Drones\SnowRemover.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="CurrentState" />
+    </ShowAsAssociation>
+    <ShowAsCollectionAssociation>
+      <Property Name="Devices" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="SRDS.Direct.Executive.SnowRemoveDevice">
+    <Position X="0.5" Y="5.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAIwAQACAAAoAAAEAAARAQIAgAAHAAAABQAAAAAAIAA=</HashCode>
+      <FileName>Direct\Executive\SnowRemoveDevice.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Type" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="SRDS.Direct.Tactical.DistributionQualifyReading" Collapsed="true">
+    <Position X="8.75" Y="14.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAABIAASAAAAAAAAAAAAAAAQAAAAACAAAAgABBg=</HashCode>
+      <FileName>Direct\Tactical\DistributionQualifyReading.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SRDS.Model.Map.TacticalMap">
+    <Position X="16.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CgAQCIoAAAwCAAIAAAABAAQAgQAAAAAABAAAAAIAAAA=</HashCode>
+      <FileName>Model\Map\TacticalMap.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Stations" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="SRDS.Model.Map.Stations.Station" Collapsed="true">
+    <Position X="18.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAggAABIAAAgAAAgIAAAAAAgAAAAiA=</HashCode>
+      <FileName>Model\Map\Stations\Station.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Enum Name="SRDS.Direct.Agents.RobotState">
+    <Position X="5.25" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAABAEAAAAABAAAAAAAAAgIAAAoAAAAAAA=</HashCode>
+      <FileName>Direct\Agents\Agent.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="SRDS.Direct.Executive.SnowRemoverType" Collapsed="true">
+    <Position X="0.75" Y="3" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AgAAAQAAAAAAAAAAAAABAAAAAAAAgAAAAAAAAAAAAQA=</HashCode>
+      <FileName>Direct\Executive\SnowRemoveDevice.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
