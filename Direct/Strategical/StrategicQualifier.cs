@@ -96,7 +96,7 @@ public class StrategicQualifier {
         default: throw new ArgumentException($"Action type '{type}' not found");
         }
     }
-    public ActionResult Qualify(Director director, SystemAction action, DateTime time) {
+    public static ActionResult Qualify(Director director, SystemAction action, DateTime time) {
         IControllable? subject;
         {
             if (action.Subject is AgentStation station)

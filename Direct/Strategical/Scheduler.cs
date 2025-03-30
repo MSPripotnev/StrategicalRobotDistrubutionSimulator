@@ -41,7 +41,7 @@ public class Scheduler : ITimeSimulatable {
         foreach (var act in action.Descendants())
             Actions.Remove(act);
     }
-    public void InterruptSequence(SystemAction action) {
+    public static void InterruptSequence(SystemAction action) {
         foreach (var act in action.Descendants()) {
             if (!act.Finished) {
                 act.Finished = true;
@@ -84,7 +84,7 @@ public class Scheduler : ITimeSimulatable {
                     }
                 }
                 if (action.EndTime <= time) {
-                    action.RealResult = Qualifier.Qualify(director, action, time);
+                    action.RealResult = StrategicQualifier.Qualify(director, action, time);
                     var recommendation = Qualifier.RecommendFor(action);
                     if (recommendation == ActionRecommendation.Approve) {
                         if (action.RealResult.SubjectAfter is not Agent agent)
