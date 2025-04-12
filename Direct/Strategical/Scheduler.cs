@@ -4,6 +4,8 @@ namespace SRDS.Direct.Strategical;
 using Agents;
 using Model;
 
+using SRDS.Model.Map.Stations;
+
 public class Scheduler : ITimeSimulatable {
     public event EventHandler<SystemAction>? UnitsShortage;
     public ObservableCollection<SystemAction> Actions = new();
@@ -17,10 +19,8 @@ public class Scheduler : ITimeSimulatable {
         }
     }
     public StrategicQualifier Qualifier { get; set; }
-    public ActionExecutor Executor { get; set; }
     public Scheduler() {
         Qualifier = new StrategicQualifier(1, 5, 5, 10);
-        Executor = new ActionExecutor();
     }
 
     public bool Add(SystemAction action) {
@@ -72,21 +72,26 @@ public class Scheduler : ITimeSimulatable {
                 Actions[i].Status = "completed sequence";
                 continue;
             }
-            foreach (SystemAction action in Actions[i].Descendants().Where(p => !p.Finished && p.StartTime <= time)) {
+            var actionDescendants = Actions[i].Descendants().Where(p => p.RealResult is null && p.StartTime <= time && Actions[i].Descendants().Where(q => q.Next.Contains(p)).All(q => q.Finished)).ToArray();
+            for (int j = 0; j < actionDescendants.Length; j++) {
+                SystemAction action = actionDescendants[j];
                 if (Actions[i].Descendants().Any(p => p.Next.Contains(action) && !p.Finished)) continue;
                 if (!action.Started) {
-                    action.Started = Executor.Execute(director, action, time);
+                    var agent = director.Agents.FirstOrDefault(p => p?.ID == (action.Subject as Agent)?.ID, null) ?? throw new NullReferenceException();
+                    var res = agent.Execute(ref action);
+                    action.Started = agent.Reaction(res);
                     if (!action.Started) {
                         Delay(action);
                         continue;
                     }
                 }
-                if (action.EndTime <= time) {
+                if (action.Finished || action.EndTime <= time) {
                     action.RealResult = StrategicQualifier.Qualify(director, action, time);
-                    var recommendation = Qualifier.RecommendFor(action);
+                    var recommendation = ActionRecommendation.Approve; // Qualifier.RecommendFor(action);
                     if (recommendation == ActionRecommendation.Approve) {
                         if (action.RealResult.SubjectAfter is not Agent agent)
                             continue;
+
                         switch (action.Type) {
                         case ActionType.WorkOn:
                             agent.Unlink();
@@ -98,8 +103,10 @@ public class Scheduler : ITimeSimulatable {
                         default:
                             break;
                         }
+
                         if (!action.Started)
                             action.Started = true;
+                        action.EndTime = time;
                         action.Finished = true;
                         action.Status = "completed";
                         if (action.Next.Any() && action.RealResult is ActionResult realResult && realResult.EstimatedTime < action.ExpectedResult.EstimatedTime) {

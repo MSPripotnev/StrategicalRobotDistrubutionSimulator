@@ -66,6 +66,7 @@ public class SystemAction : INotifyPropertyChanged {
             endTime = value;
             RefreshHeader();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EndTime)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Finished)));
         }
     }
     [XmlIgnore]
@@ -91,6 +92,7 @@ public class SystemAction : INotifyPropertyChanged {
         set {
             finished = value;
             RefreshHeader();
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EndTime)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Finished)));
         }
     }

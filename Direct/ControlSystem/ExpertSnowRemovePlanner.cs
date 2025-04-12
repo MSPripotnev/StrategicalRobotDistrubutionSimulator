@@ -95,52 +95,48 @@ public class ExpertSnowRemovePlanner : ITimeSimulatable {
                 break;
             Road roadToWork = agentsForRoadsAID.First(p => p.Value > 0).Key;
 
-            var takeAIDPlan = Planner.ChangeDevicePlan(agents[i], station,
+            var takeAIDPlan = Planner.ChangeDevicePlan(agents[i],
                 new SnowRemoveDevice(SnowRemoverType.AntiIceDistributor) { MashSpeed = (15 + 10 * TemperatureStrength) / 1000.0 }, time);
-            if (!takeAIDPlan.HasValue || takeAIDPlan.Value.action.ExpectedResult.SubjectAfter is not Agent aidAgent) continue;
+            if (takeAIDPlan is null || takeAIDPlan.ExpectedResult.SubjectAfter is not Agent aidAgent) continue;
 
-            var refuelPlan1 = Planner.RefuelPlan(aidAgent, map, takeAIDPlan.Value.action.EndTime, takeAIDPlan.Value.action.EndTime + queueForRoads[roadToWork] + holdTime);
-            if (refuelPlan1.HasValue && refuelPlan1.Value.action.ExpectedResult.SubjectAfter is SnowRemover sr && sr.Home is not null && (sr.Pathfinder?.IsNear(sr, sr.Home) ?? false))
-                takeAIDPlan.Value.action.Next.Add(refuelPlan1.Value.action);
-            else if (refuelPlan1.HasValue)
-                takeAIDPlan.Value.action.Next.Add(refuelPlan1.Value.goAction);
+            var refuelPlan1 = Planner.RefuelPlan(aidAgent, map, takeAIDPlan.EndTime, takeAIDPlan.EndTime + queueForRoads[roadToWork] + holdTime);
+            if (refuelPlan1 is not null && refuelPlan1.ExpectedResult.SubjectAfter is SnowRemover sr)
+                takeAIDPlan.Next.Add(refuelPlan1);
 
-            var deicingPlan = Planner.WorkOnRoad(takeAIDPlan.Value.action.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(),
-                                                 roadToWork, takeAIDPlan.Value.action.EndTime, takeAIDPlan.Value.action.EndTime + antiIceWorkTime);
-            if (!deicingPlan.HasValue) continue;
+            var deicingPlan = Planner.WorkOnRoad(takeAIDPlan.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(),
+                                                 roadToWork, takeAIDPlan.EndTime, takeAIDPlan.EndTime + antiIceWorkTime);
+            if (deicingPlan is null) continue;
             agentsForRoadsAID[roadToWork]--;
-            if (refuelPlan1.HasValue)
-                refuelPlan1.Value.action.Next.Add(deicingPlan.Value.goAction);
-            else
-                takeAIDPlan.Value.action.Next.Add(deicingPlan.Value.goAction);
+            if (refuelPlan1 is not null)
+                refuelPlan1.Next.Add(deicingPlan);
+            else takeAIDPlan?.Next.Add(deicingPlan);
 
             if (Strength != 1 && !repeat) waitTime = TimeSpan.Zero;
-            if (deicingPlan.Value.workAction.Subject is not SnowRemover sr2) throw new ArgumentException(nameof(deicingPlan.Value.workAction.Subject));
-            var lastDeicingAction = deicingPlan.Value.returnAction ?? deicingPlan.Value.workAction;
+            if (deicingPlan.Subject is not SnowRemover sr2) throw new ArgumentException(nameof(deicingPlan.Subject));
 
-            var takeShovelsPlan = Planner.ChangeDevicePlan(sr2, station, SnowRemoverType.Shovel, lastDeicingAction.EndTime + waitTime + queueForRoads[roadToWork]);
-            if (!takeShovelsPlan.HasValue) continue;
+            var takeShovelsPlan = Planner.ChangeDevicePlan(sr2, SnowRemoverType.Shovel, deicingPlan.EndTime + waitTime + queueForRoads[roadToWork]);
+            if (takeShovelsPlan is null) continue;
 
-            var refuelPlan2 = Planner.RefuelPlan(sr2, map, lastDeicingAction.EndTime, lastDeicingAction.EndTime + waitTime + queueForRoads[roadToWork]);
-            if (refuelPlan2.HasValue) {
-                lastDeicingAction.Next.Add(refuelPlan2.Value.goAction);
-                refuelPlan2.Value.action.Next.Add(takeShovelsPlan.Value.goAction);
+            var refuelPlan2 = Planner.RefuelPlan(sr2, map, deicingPlan.EndTime, deicingPlan.EndTime + waitTime + queueForRoads[roadToWork]);
+            if (refuelPlan2 is not null) {
+                deicingPlan.Next.Add(refuelPlan2);
+                refuelPlan2.Next.Add(takeShovelsPlan);
             } else {
-                lastDeicingAction.Next.Add(takeShovelsPlan.Value.goAction);
+                deicingPlan.Next.Add(takeShovelsPlan);
             }
 
             agentsForRoadsShove = DistributeAgentsCount(map.Roads, shoveTime, map.MapScale, station.AssignedAgents.Length);
-            var shovePlan = Planner.WorkOnRoad(takeShovelsPlan.Value.action.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(),
-                                               roadToWork, takeShovelsPlan.Value.action.EndTime, takeShovelsPlan.Value.action.EndTime + shoveTime);
-            if (!shovePlan.HasValue) continue;
+            var shovePlan = Planner.WorkOnRoad(takeShovelsPlan.ExpectedResult.SubjectAfter as SnowRemover ?? throw new Exception(),
+                                               roadToWork, takeShovelsPlan.EndTime, takeShovelsPlan.EndTime + shoveTime);
+            if (shovePlan is null) continue;
             agentsForRoadsShove[roadToWork]--;
-            takeShovelsPlan.Value.action.Next.Add(shovePlan.Value.goAction);
+            takeShovelsPlan.Next.Add(shovePlan);
 
-            if (takeAIDPlan.HasValue)
-                result.Add(takeAIDPlan.Value.goAction);
-            else if (refuelPlan1.HasValue)
-                result.Add(refuelPlan1.Value.goAction);
-            else continue;
+            if (takeAIDPlan is not null)
+                result.Add(takeAIDPlan);
+            else if (refuelPlan1 is not null)
+                result.Add(refuelPlan1);
+            else result.Add(deicingPlan);
             queueForRoads[roadToWork] += new TimeSpan(0, 30, 0);
         }
         return result.ToArray();

@@ -12,6 +12,7 @@ using Model.Map;
 using Model.Map.Stations;
 using PropertyTools.DataAnnotations;
 using SRDS.Direct.Tactical;
+using SRDS.Direct.Strategical;
 
 public class SnowRemover : Agent {
     public new event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
@@ -63,7 +64,6 @@ public class SnowRemover : Agent {
                         v = r.Position - r.EndPosition;
                     }
                     MaxStraightRange = r.Height;
-                    state = RobotState.Working;
                     v *= r.Height / 2 / v.Length;
                     (v.X, v.Y) = (-v.Y, v.X);
                     Trajectory[0] -= v;
@@ -71,17 +71,12 @@ public class SnowRemover : Agent {
                 }
                 break;
             case RobotState.Ready:
-                if (base.CurrentState == RobotState.Working && (AttachedObj is not null && AttachedObj.Finished) && !Trajectory.Any())
-                    state = RobotState.Ready;
-                else if (AttachedObj is null)
-                    state = RobotState.Ready;
                 break;
             default:
-                if (CurrentState != RobotState.Working)
-                    base.CurrentState = value;
-                MaxStraightRange = 30;
+                base.CurrentState = value;
                 break;
             }
+            state = value;
             PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(CurrentState)));
         }
     }
@@ -104,19 +99,45 @@ public class SnowRemover : Agent {
         d.Add(type);
         Devices = d.ToArray();
     }
+    public override TaskNotExecutedReason? Execute(ref SystemAction action) {
+        var reason = base.Execute(ref action);
+        if (reason != TaskNotExecutedReason.Busy && action.Type == ActionType.ChangeDevice) {
+            if (this is not SnowRemover snowRemover || action.Object is not SnowRemoveDevice device) return TaskNotExecutedReason.Unknown;
+            if (snowRemover.Home is null || !(snowRemover.Pathfinder?.IsNear(snowRemover, snowRemover.Home, snowRemover.ActualSpeed) ?? true))
+                return TaskNotExecutedReason.NotReached;
+            if (snowRemover.Devices.Contains(device)) return TaskNotExecutedReason.AlreadyCompleted;
+            snowRemover.ChangeDevice(device);
+            return null;
+        }
+        return reason;
+    }
+    public override TaskNotExecutedReason? CanRefuel(Station station, SystemAction action) {
+        var reason = base.CanRefuel(station, action);
+        if (reason == TaskNotExecutedReason.AlreadyCompleted) {
+            var device = Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null);
+            if (device is null || action.ExpectedResult.SubjectAfter is not SnowRemover remover) return TaskNotExecutedReason.AlreadyCompleted;
+            var futureDevice = remover.Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null);
+            if (device.DeicingCurrent >= futureDevice?.DeicingCurrent) return TaskNotExecutedReason.AlreadyCompleted;
+            return null;
+        }
+        return reason;
+    }
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {
         case RobotState.Broken:
         case RobotState.Thinking:
         case RobotState.Going:
             base.Simulate(sender, time);
-            break;
+            return;
         case RobotState.Refuel:
             if (sender is Director or AgentStation)
                 ActualSpeedRecalculate(time);
             var d = Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null);
-            if ((Fuel += FuelIncrease * timeFlow.TotalSeconds) > FuelCapacity - 1 && (d is null || (d.DeicingCurrent += FuelIncrease * timeFlow.TotalSeconds) >= d.DeicingCapacity))
+            if ((Fuel += FuelIncrease * timeFlow.TotalSeconds) > FuelCapacity - 1 && (d is null || (d.DeicingCurrent += FuelIncrease * timeFlow.TotalSeconds) >= d.DeicingCapacity)) {
+                if (CurrentAction?.Type == ActionType.Refuel)
+                    CurrentAction.Finished = true;
                 CurrentState = RobotState.Ready;
+            }
             break;
         case RobotState.Ready:
             if (sender is Director or AgentStation)
@@ -164,7 +185,6 @@ public class SnowRemover : Agent {
                             v = r.Position - r.EndPosition;
                         }
                         MaxStraightRange = r.Height;
-                        state = RobotState.Working;
                         v *= r.Height / 2 / v.Length;
                         (v.X, v.Y) = (-v.Y, v.X);
                         Trajectory[0] -= v;
@@ -181,6 +201,8 @@ public class SnowRemover : Agent {
                     Devices[i].Simulate((this, meteo), time);
                 }
             }
+            if (CurrentAction?.Type == ActionType.WorkOn && CurrentAction.EndTime <= time)
+                CurrentAction.Finished = true;
             break;
         }
         }

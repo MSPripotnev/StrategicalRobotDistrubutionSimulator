@@ -40,6 +40,8 @@ public class AgentStation : Station, IControllable, IRefueller {
     public SystemAction[] LocalPlans { get; set; } = Array.Empty<SystemAction>();
     [XmlIgnore]
     public ExpertSnowRemovePlanner PlannerModule { get; set; } = new();
+    [XmlIgnore]
+    public SystemAction? CurrentAction { get; set; }
     #endregion
 
     public void Simulate(object? sender, DateTime time) {
@@ -63,6 +65,21 @@ public class AgentStation : Station, IControllable, IRefueller {
         }
     }
 
+    public TaskNotExecutedReason? Execute(ref SystemAction action) {
+        if (action.Type != ActionType.WorkOn)
+            throw new NotImplementedException();
+
+        if (action.Object is Agent n_agent)
+            Assign(n_agent);
+        else if (action.Object is Road n_road)
+            Assign(n_road);
+        else return TaskNotExecutedReason.Unknown;
+        return TaskNotExecutedReason.AlreadyCompleted;
+    }
+    public bool Reaction(TaskNotExecutedReason? reason, SystemAction? action = null) {
+        return true;
+    }
+    
     #region Constructors
     public AgentStation() : base() {
         Color = Colors.SandyBrown;

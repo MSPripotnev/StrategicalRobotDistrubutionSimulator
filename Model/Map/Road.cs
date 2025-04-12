@@ -14,6 +14,8 @@ using Model.Environment;
 using Model.Map.Stations;
 using Model.Targets;
 
+using SRDS.Direct.Tactical.Explorers.AStar;
+
 public enum RoadType {
     Dirt,
     Gravel,
@@ -342,7 +344,41 @@ public class Road : ITargetable, ITimeSimulatable {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IcyPercent)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Deicing)));
     }
+    public Point? GetWayToNearestRoadEntryPoint(Agent agent, out List<Point> trajectory) {
+        var roadPosition = agent.Position ^ this;
+        trajectory = new List<Point>();
+        if (agent.Pathfinder is null) return null;
 
+        AStarExplorer explorer = new AStarExplorer(agent.Position, roadPosition, agent.Pathfinder.Scale, agent.Pathfinder.Map, agent.InteractDistance);
+        if (!explorer.FindWaySync())
+            return null;
+
+        List<Point>? path = PathFinder.CreatePathFromLastPoint(explorer.Result);
+        if (path is null) return null;
+
+        var p = path.FirstOrDefault(i => Math.Abs(DistanceToRoad(i)) < Height / 2, roadPosition);
+        if (p.X != 0 && p.Y != 0)
+            roadPosition = p;
+        trajectory = path.TakeWhile(i => i != roadPosition).ToList();
+        trajectory.Add(roadPosition);
+
+        Point roadNearestEndPoint;
+        Vector v;
+        if (PathFinder.Distance(Position, agent.Position) < PathFinder.Distance(EndPosition, agent.Position)) {
+            v = EndPosition - Position;
+            roadNearestEndPoint = Position;
+        } else {
+            v = Position - EndPosition;
+            roadNearestEndPoint = EndPosition;
+        }
+        v *= Height / v.Length;
+        (v.X, v.Y) = (-v.Y, v.X);
+        if (PathFinder.Distance(roadPosition - v, roadNearestEndPoint) < PathFinder.Distance(roadPosition, roadNearestEndPoint))
+            roadPosition -= v;
+
+        (roadPosition.X, roadPosition.Y) = (Math.Round(roadPosition.X), Math.Round(roadPosition.Y));
+        return roadPosition;
+    }
     public override bool Equals(object? obj) => obj is Road r && r == this;
     public override int GetHashCode() => base.GetHashCode();
     public override string ToString() => $"Road ({Math.Round(Position.X)};" +

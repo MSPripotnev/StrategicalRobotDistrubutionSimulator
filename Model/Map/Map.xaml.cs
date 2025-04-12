@@ -382,35 +382,28 @@ public partial class MapWPF : Window {
         if (propertyGrid.SelectedObject is not Agent agent) throw new AccessViolationException();
         switch (button.Tag) {
         case "ap": {
-            var action = Planner.GoToPlan(agent, lastClickPos, d_time);
-            if (action is null) return;
-
-            director?.Scheduler.Add(action);
+            agent.TargetPosition = lastClickPos;
             break;
         }
         case "ar": {
             if (FindObject(lastClickPos) is not Road road || agent is not SnowRemover remover) throw new AccessViolationException();
-            var actions = Planner.WorkOnRoad(remover, road, d_time, DateTime.MaxValue, 0.0, 0.0);
-            if (!actions.HasValue) throw new InvalidOperationException();
-
-            director?.Scheduler.Add(actions.Value.goAction);
+            var action = Planner.WorkOnRoad(remover, road, d_time, DateTime.MaxValue, 0.0, 0.0) ?? throw new InvalidOperationException();
+            director?.Scheduler.Add(action);
             break;
         }
         case "af": {
             if (director is null || director.Map is null) return;
-            var actions = Planner.RefuelPlan(agent, director.Map, d_time);
-            if (!actions.HasValue) throw new InvalidOperationException();
-
-            director?.Scheduler.Add(actions.Value.goAction);
+            var action = Planner.RefuelPlan(agent, director.Map, d_time) ?? throw new InvalidOperationException();
+            director?.Scheduler.Add(action);
             break;
         }
         }
         if (button.Tag is SnowRemoverType device) {
             if (FindObject(lastClickPos) is not AgentStation station || agent is not SnowRemover remover) throw new AccessViolationException();
-            var actions = Planner.ChangeDevicePlan(remover, station, device, d_time);
-            if (!actions.HasValue) return;
+            var action = Planner.ChangeDevicePlan(remover, device, d_time);
+            if (action is null) return;
 
-            director?.Scheduler.Add(actions.Value.goAction);
+            director?.Scheduler.Add(action);
         }
     }
     private void MenuItem_Click(object sender, RoutedEventArgs e) {

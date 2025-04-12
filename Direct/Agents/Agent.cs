@@ -16,6 +16,7 @@ using Model.Targets;
 using SRDS.Model.Environment;
 using SRDS.Direct.Strategical;
 using SRDS.Direct.Tactical;
+using SRDS.Model;
 
 public enum RobotState {
     Disable = -1,
@@ -124,8 +125,11 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         case RobotState.Broken:
             break;
         case RobotState.Refuel:
-            if ((Fuel += FuelIncrease * timeFlow.TotalSeconds) > FuelCapacity - 1)
+            if ((Fuel += FuelIncrease * timeFlow.TotalSeconds) > FuelCapacity - 1) {
                 CurrentState = RobotState.Ready;
+                if (CurrentAction?.Type == ActionType.Refuel)
+                    CurrentAction.Finished = true;
+            }
             break;
         case RobotState.Ready:
             if (AttachedObj is not null && !FuelShortageCheck()) {
@@ -186,6 +190,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     /// </summary>
     [XmlIgnore]
     [Category("Movement")]
+    [PropertyTools.DataAnnotations.Editable(false)]
     public double ActualSpeed { get; set; }
     /// <summary>
     /// Speed in real scale after move, km/h
@@ -193,6 +198,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     [Category("Movement")]
     [DisplayName(nameof(RealSpeed) + ", km/h")]
+    [PropertyTools.DataAnnotations.Editable(false)]
     public double RealSpeed { get; private set; }
     [XmlIgnore]
     private List<Point> trajectory = new List<Point>();
@@ -213,6 +219,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public Point[] BackTrajectory { get; set; }
     [XmlIgnore]
     [Category("Movement")]
+    [PropertyTools.DataAnnotations.Editable(false)]
     public List<Point> Trajectory {
         get { return trajectory; }
         set {
@@ -235,6 +242,20 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             } else if (CurrentState != RobotState.Working && CurrentState != RobotState.Ready) {
                 CurrentState = RobotState.Going;
             }
+        }
+    }
+    private SystemAction? currentAction = null;
+    [XmlIgnore]
+    [PropertyTools.DataAnnotations.Category("Control")]
+    [PropertyTools.DataAnnotations.Editable(false)]
+    [PropertyTools.DataAnnotations.FormatString("{0}")]
+    public SystemAction? CurrentAction {
+        get => currentAction;
+        set {
+            if (value is null)
+                CurrentState = RobotState.Ready;
+            currentAction = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentAction)));
         }
     }
 
@@ -312,37 +333,6 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
     public List<Agent> OtherAgents { get; set; } = new List<Agent>();
-
-    public bool Refuel(Station station, double fuel, double deicing = 0.0) {
-        if (station is not AgentStation or AntiIceStation or GasStation) return false;
-        if (!Pathfinder?.IsNear(this, station, ActualSpeed) ?? false)
-            return false;
-        if (Fuel >= fuel && (this is not SnowRemover remover ||
-                remover.Devices.FirstOrDefault(p => p?.Type == SnowRemoverType.AntiIceDistributor, null)?.DeicingCurrent >= deicing))
-            return true;
-        if (CurrentState != RobotState.Refuel) {
-            CurrentState = RobotState.Refuel;
-            return true;
-        }
-        return false;
-    }
-    public bool Link(ITargetable target) {
-        if (AttachedObj == target) return true;
-        if (target is Road r && !(Pathfinder?.IsNear(this, r, ActualSpeed) ?? true))
-            return false;
-        else if (target is Target t && !(Pathfinder?.IsNear(this, t, ActualSpeed) ?? true))
-            return false;
-        target.ReservedAgents.Add(this);
-        AttachedObj = target;
-        CurrentState = RobotState.Working;
-        return true;
-    }
-    public void Unlink() {
-        AttachedObj?.ReservedAgents.Remove(this);
-        AttachedObj = null;
-        Trajectory.Clear();
-        CurrentState = RobotState.Ready;
-    }
     #endregion
 
     #region Debug Info
@@ -469,6 +459,125 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         OtherAgents = agent.OtherAgents;
     }
 
+    #endregion
+
+    #region Action
+    public virtual TaskNotExecutedReason? Execute(ref SystemAction action) {
+        if (CurrentAction != action) {
+            if (CurrentAction is not null && !CurrentAction.Finished)
+                return TaskNotExecutedReason.Busy;
+            CurrentAction = action;
+        }
+
+        TaskNotExecutedReason? reason = null;
+        switch (action.Type) {
+        case ActionType.Refuel:
+            if (action.Object is not Station station || station is not AgentStation and not GasStation and not AntiIceStation)
+                throw new InvalidOperationException();
+            reason = CanRefuel(station, action);
+            if (reason is null) {
+                Refuel();
+                return null;
+            }
+            return reason;
+        case ActionType.WorkOn:
+            if (action.Object is null) {
+                Unlink();
+                return null;
+            }
+            if (action.Object is not ITargetable target)
+                return TaskNotExecutedReason.Unknown;
+            if (!action.Started)
+                reason = CanLink(target);
+
+            if (reason is null) {
+                Link(target);
+                return null;
+            }
+            return reason;
+        default:
+            return TaskNotExecutedReason.Unknown;
+        }
+    }
+
+    public bool Reaction(TaskNotExecutedReason? reason, SystemAction? action = null) {
+        if (CurrentAction is null) return true;
+        action ??= CurrentAction;
+        switch (reason) {
+        case TaskNotExecutedReason.NotReached: {
+            if (CurrentState == RobotState.Going)
+                break;
+
+            if (action.Object is ITargetable target) {
+                Point goalPosition;
+                List<Point> trajectory = new List<Point>() { target.Position };
+                if (target is Road road)
+                    goalPosition = road.GetWayToNearestRoadEntryPoint(this, out trajectory) ?? new Point(0, 0);
+                else goalPosition = target.Position;
+                TargetPosition = goalPosition;
+                Trajectory = trajectory;
+                if (target is Road)
+                    CurrentState = RobotState.Going;
+            } else if (action.Object is IPlaceable p) {
+                TargetPosition = p.Position;
+                CurrentState = RobotState.Thinking;
+            } else if (action.Type == ActionType.ChangeDevice) {
+                if (Home is not null) {
+                    TargetPosition = Home.Position;
+                    CurrentState = RobotState.Thinking;
+                } else {
+                    CurrentAction = null;
+                }
+            }
+            break;
+        }
+        case TaskNotExecutedReason.AlreadyCompleted:
+            action.Finished = true;
+            return true;
+        case null:
+            return true;
+        }
+        return false;
+    }
+    public TaskNotExecutedReason? CanLink(ITargetable target) {
+        // else if (AttachedObj == target) return TaskNotExecutedReason.AlreadyCompleted;
+        if (target is Road r && !(Pathfinder?.IsNear(this, r, ActualSpeed) ?? true))
+            return TaskNotExecutedReason.NotReached;
+        else if (target is Target t && !(Pathfinder?.IsNear(this, t, ActualSpeed) ?? true))
+            return TaskNotExecutedReason.NotReached;
+        return null;
+    }
+
+    public virtual TaskNotExecutedReason? CanRefuel(Station station, SystemAction action) {
+        if (station is not AgentStation or AntiIceStation or GasStation || action.ExpectedResult.SubjectAfter is not Agent agent)
+            return TaskNotExecutedReason.Unknown;
+        if (!Pathfinder?.IsNear(this, station, ActualSpeed) ?? false)
+            return TaskNotExecutedReason.NotReached;
+        if (Fuel >= agent.Fuel)
+            return TaskNotExecutedReason.AlreadyCompleted;
+        return null;
+    }
+    public bool Refuel() {
+        if (CurrentState != RobotState.Refuel) {
+            CurrentState = RobotState.Refuel;
+            if (CurrentAction?.Type == ActionType.Refuel && !CurrentAction.Started)
+                CurrentAction.Started = true;
+            return true;
+        }
+        return false;
+    }
+    public bool Link(ITargetable target) {
+        target.ReservedAgents.Add(this);
+        AttachedObj = target;
+        CurrentState = RobotState.Working;
+        return true;
+    }
+    public void Unlink() {
+        AttachedObj?.ReservedAgents.Remove(this);
+        AttachedObj = null;
+        Trajectory.Clear();
+        CurrentState = RobotState.Ready;
+    }
     #endregion
 
     public event PropertyChangedEventHandler? PropertyChanged;
