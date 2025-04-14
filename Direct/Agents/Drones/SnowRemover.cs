@@ -64,7 +64,7 @@ public class SnowRemover : Agent {
                         v = r.Position - r.EndPosition;
                     }
                     MaxStraightRange = r.Height;
-                    v *= r.Height / 2 / v.Length;
+                    v *= r.Height / 2.5 / v.Length;
                     (v.X, v.Y) = (-v.Y, v.X);
                     Trajectory[0] -= v;
                     Trajectory.Add(Trajectory[0] + v);

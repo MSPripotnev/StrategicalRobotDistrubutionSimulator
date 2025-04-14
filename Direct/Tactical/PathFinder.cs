@@ -78,7 +78,7 @@ public class PathFinder {
 
     #region StaticFunc
     public static double GetPointHardness(Point pos, TacticalMap map, bool onWork = false) {
-        var roads = map.Roads.Where(p => Math.Abs(p.DistanceToRoad(pos)) < p.Height / 2);
+        var roads = map.Roads.Where(p => Math.Abs(p.DistanceToRoad(pos)) < p.Height / (onWork ? 1 : 2));
         var road = roads.MaxBy(p => Road.DistanceHardness(p.Type));
         double hardness;
         if (road is null)

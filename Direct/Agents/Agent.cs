@@ -270,7 +270,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         Point nextPoint = Trajectory[0];
 
         if (Pathfinder is not null && (Pathfinder?.IsNear(this, nextPoint, ActualSpeed / PathFinder.GetPointHardness(
-                Position, Pathfinder.Map, CurrentState == RobotState.Working) / Pathfinder.Scale) ?? false)) {
+                Position, Pathfinder.Map, CurrentState == RobotState.Working) / Pathfinder.Scale / 2) ?? false)) {
             List<Point> pc = new(Trajectory.Skip(1));
             if (pc.Any()) {
                 TraversedWay += PathFinder.Distance(nextPoint, pc[0]) *

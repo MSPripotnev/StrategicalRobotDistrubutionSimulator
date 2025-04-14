@@ -349,7 +349,7 @@ public class Road : ITargetable, ITimeSimulatable {
         trajectory = new List<Point>();
         if (agent.Pathfinder is null) return null;
 
-        AStarExplorer explorer = new AStarExplorer(agent.Position, roadPosition, agent.Pathfinder.Scale, agent.Pathfinder.Map, agent.InteractDistance);
+        AStarExplorer explorer = new AStarExplorer(agent.Position, roadPosition, agent.Pathfinder.Scale, agent.Pathfinder.Map, agent.ActualSpeed);
         if (!explorer.FindWaySync())
             return null;
 
