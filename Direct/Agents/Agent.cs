@@ -290,7 +290,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
         var angle = Vector.AngleBetween(V, new Vector(0, 1));
         angle = angle < 180 && angle > -180 ? -angle : angle;
         if (ui is not null)
-            ui.RenderTransform = new RotateTransform(angle, 20, 20);
+            ui.RenderTransform = new RotateTransform(angle, Size / 2, Size / 2);
 
         WayIterations++;
     }
@@ -370,11 +370,14 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     [PropertyTools.DataAnnotations.Browsable(false)]
     public Color Color { get; set; } = Colors.Red;
     protected BitmapImage? bitmapImage = null;
+    [XmlIgnore]
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    public int Size {get; set;} = 20;
     public virtual UIElement Build() {
         if (ui is not null)
             return ui;
 
-        var r = new RectangleGeometry(new Rect(0, 0, 40, 40), 20, 20);
+        var r = new RectangleGeometry(new Rect(0, 0, Size, Size), Size / 2, Size / 2);
         var t = new RectangleGeometry(new Rect(8, 2, 5, 5));
         GeometryGroup group = new GeometryGroup();
         group.Children.Add(r);
@@ -384,7 +387,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
         Path p = new Path() {
             Data = group,
-            Margin = new Thickness(-20, -20, 20, 20),
+            Margin = new Thickness(-Size / 2, -Size / 2, Size / 2, Size / 2),
         };
         if (bitmapImage is not null)
             p.Fill = new ImageBrush(bitmapImage);
