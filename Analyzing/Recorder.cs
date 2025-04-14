@@ -129,7 +129,7 @@ public class Recorder : IDisposable {
     }
 
     public void SaveStrategy(string resFileName) {
-        resFileName.Replace(".xml", "-strategy.xml");
+        resFileName = resFileName.Replace(".xml", "-strategy.xml");
         XmlSerializer serializer = new XmlSerializer(typeof(StrategicSituationReading));
         if (!File.Exists(resFileName))
             using (FileStream fs = new FileStream(resFileName, FileMode.Create)) {
