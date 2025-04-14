@@ -4,7 +4,7 @@ namespace SRDS.Direct.Strategical;
 using Agents;
 using Model;
 
-using SRDS.Model.Map.Stations;
+using SRDS.Direct.Agents.Drones;
 
 public class Scheduler : ITimeSimulatable {
     public event EventHandler<SystemAction>? UnitsShortage;
@@ -87,13 +87,16 @@ public class Scheduler : ITimeSimulatable {
                 }
                 if (action.Finished || action.EndTime <= time) {
                     action.RealResult = StrategicQualifier.Qualify(director, action, time);
+                    if (action.RealResult.SubjectAfter is not Agent agent)
+                        continue;
                     var recommendation = ActionRecommendation.Approve; // Qualifier.RecommendFor(action);
                     if (recommendation == ActionRecommendation.Approve) {
-                        if (action.RealResult.SubjectAfter is not Agent agent)
-                            continue;
-
                         switch (action.Type) {
                         case ActionType.WorkOn:
+                            if (agent is SnowRemover remover && remover.TimesReachedRoadEndPoint < 2) {
+                                Delay(action);
+                                continue;
+                            }
                             agent.Unlink();
                             break;
                         case ActionType.Refuel:

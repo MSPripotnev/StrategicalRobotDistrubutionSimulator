@@ -54,6 +54,7 @@ public class SnowRemover : Agent {
             switch (value) {
             case RobotState.Working:
                 if ((CurrentState == RobotState.Going || CurrentState == RobotState.Ready) && AttachedObj is Road r) {
+                    TimesReachedRoadEndPoint = 0;
                     Trajectory.Clear();
                     Vector v;
                     if (PathFinder.Distance(r.Position, Position) < PathFinder.Distance(r.EndPosition, Position)) {
@@ -122,6 +123,16 @@ public class SnowRemover : Agent {
         }
         return reason;
     }
+    private int timesReachedRoadEndPoint = 0;
+    [XmlIgnore]
+    [PropertyTools.DataAnnotations.Editable(false)]
+    public int TimesReachedRoadEndPoint {
+        get => timesReachedRoadEndPoint;
+        private set {
+            timesReachedRoadEndPoint = value;
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(TimesReachedRoadEndPoint)));
+        }
+    }
     public override void Simulate(object? sender, DateTime time) {
         switch (CurrentState) {
         case RobotState.Broken:
@@ -167,14 +178,18 @@ public class SnowRemover : Agent {
                     if (Pathfinder?.IsNear(this, r.Position, ActualSpeed) ?? false) {
                         if (!Trajectory.Contains(r.EndPosition - v))
                             Trajectory.Add(r.EndPosition - v);
-                        if (!Trajectory.Contains(r.EndPosition + v))
+                        if (!Trajectory.Contains(r.EndPosition + v)) {
                             Trajectory.Add(r.EndPosition + v);
+                            TimesReachedRoadEndPoint++;
+                        }
                     } else if (Pathfinder?.IsNear(this, r.EndPosition, ActualSpeed) ?? false) {
                         v = -v;
                         if (!Trajectory.Contains(r.Position - v))
                             Trajectory.Add(r.Position - v);
-                        if (!Trajectory.Contains(r.Position + v))
+                        if (!Trajectory.Contains(r.Position + v)) {
                             Trajectory.Add(r.Position + v);
+                            TimesReachedRoadEndPoint++;
+                        }
                     }
                     if (!Trajectory.Any()) {
                         if (PathFinder.Distance(r.Position, Position) > PathFinder.Distance(r.EndPosition, Position)) {
@@ -189,6 +204,7 @@ public class SnowRemover : Agent {
                         (v.X, v.Y) = (-v.Y, v.X);
                         Trajectory[0] -= v;
                         Trajectory.Add(Trajectory[0] + v);
+                        TimesReachedRoadEndPoint++;
                     }
                     Move();
                 }
@@ -201,7 +217,7 @@ public class SnowRemover : Agent {
                     Devices[i].Simulate((this, meteo), time);
                 }
             }
-            if (CurrentAction?.Type == ActionType.WorkOn && CurrentAction.EndTime <= time)
+            if (CurrentAction?.Type == ActionType.WorkOn && CurrentAction.EndTime <= time && TimesReachedRoadEndPoint > 2)
                 CurrentAction.Finished = true;
             break;
         }
