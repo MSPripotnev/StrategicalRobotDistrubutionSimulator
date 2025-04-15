@@ -72,15 +72,15 @@ public class Planner {
         if (action is null) return null;
         return action;
     }
-    private static Station? FindNearestRefuelStation(Agent agent, TacticalMap map) {
+    public static Station? FindNearestRefuelStation(Agent agent, TacticalMap map) {
         var refuelStations = map.Stations.Where(p => p is GasStation or AgentStation).ToArray();
         if (refuelStations is null || !refuelStations.Any()) return null;
 
-        List<double> distances = new() { double.MaxValue, };
+        List<double> distances = new();
         for (int i = 0; i < refuelStations.Length; i++) {
             AStarExplorer explorer = new AStarExplorer(agent.Position, refuelStations[i].Position, agent.Pathfinder?.Scale ?? 0, agent.Pathfinder?.Map ?? throw new InvalidOperationException(), agent.InteractDistance);
             if (!explorer.FindWaySync()) continue;
-            distances[i] = explorer.Result.Distance;
+            distances.Add(explorer.Result.Distance);
         }
         return refuelStations[distances.FindIndex(p => p == distances.Min())];
     }

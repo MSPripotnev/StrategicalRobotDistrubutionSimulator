@@ -113,12 +113,15 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public virtual void Simulate(object? sender, DateTime time) {
         if (sender is GlobalMeteo) return;
         if (CurrentState > RobotState.Thinking) {
-            if (FuelShortageCheck())
-                CurrentState = RobotState.Broken;
             Fuel -= FuelDecrease * ActualSpeed * (pathfinder is not null ? pathfinder.Map.MapScale : 1);
             FuelConsumption += FuelDecrease * ActualSpeed * (pathfinder is not null ? pathfinder.Map.MapScale : 1);
+            FuelShortageCheck(time);
+            if (Fuel <= FuelDecrease)
+                CurrentState = RobotState.Broken;
         }
         ActualSpeedRecalculate(time);
+        if (localAction is not null)
+            localAction.Started = Reaction(Execute(ref localAction), localAction);
         switch (CurrentState) {
         case RobotState.Disable:
             return;
@@ -129,19 +132,21 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
                 CurrentState = RobotState.Ready;
                 if (CurrentAction?.Type == ActionType.Refuel)
                     CurrentAction.Finished = true;
+                if (LocalAction?.Type == ActionType.Refuel) {
+                    LocalAction.Finished = true;
+                    LocalAction = null;
+                }
             }
             break;
         case RobotState.Ready:
-            if (AttachedObj is not null && !FuelShortageCheck()) {
-                TargetPosition = AttachedObj.Position;
-                break;
-            }
             break;
         case RobotState.Going:
             if (Trajectory.Count > 0)
                 Move();
-            if (Pathfinder?.IsNear(this, TargetPosition, ActualSpeed / PathFinder.GetPointHardness(
-                Position, Pathfinder.Map, CurrentState == RobotState.Working) / Pathfinder.Scale) ?? false)
+            if (Pathfinder is null)
+                break;
+            if (Pathfinder.IsNear(this, TargetPosition, ActualSpeed / PathFinder.GetPointHardness(
+                    Position, Pathfinder.Map, CurrentState == RobotState.Working) / Pathfinder.Scale))
                 Arrived();
             break;
         case RobotState.Thinking:
@@ -252,10 +257,24 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     public SystemAction? CurrentAction {
         get => currentAction;
         set {
-            if (value is null)
+            if (value is null && LocalAction is null)
                 CurrentState = RobotState.Ready;
             currentAction = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentAction)));
+        }
+    }
+    private SystemAction? localAction = null;
+    [XmlIgnore]
+    [PropertyTools.DataAnnotations.Category("Control")]
+    [PropertyTools.DataAnnotations.Editable(false)]
+    [PropertyTools.DataAnnotations.FormatString("{0}")]
+    public SystemAction? LocalAction {
+        get => localAction;
+        set {
+            if (value is null && CurrentAction is null)
+                CurrentState = RobotState.Ready;
+            localAction = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LocalAction)));
         }
     }
 
@@ -301,8 +320,26 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
             ActualSpeed = (CurrentState == RobotState.Working ? WorkSpeed : Speed) * timeFlow.TotalSeconds;
         _time = time;
     }
-    protected bool FuelShortageCheck() {
-        return (Home is not null && ActualSpeed > 0 && Fuel < (Position - Home.Position).Length / ActualSpeed * FuelDecrease);
+    protected bool FuelShortageCheck(DateTime time) {
+        if (Pathfinder is null) return false;
+        double fuelDistance = fuel / FuelDecrease,
+               workDistance = CurrentAction?.Type == ActionType.WorkOn ? PathFinder.Distance(TargetPosition, Position) * 2 * Pathfinder.Map.MapScale +
+                    2 * (CurrentAction.Object is Road r ? r.Length * 2 : 0) * Pathfinder.Map.MapScale : 0;
+        if (fuelDistance > workDistance * 1.1) return false;
+        var nearestFuelStation = Planner.FindNearestRefuelStation(this, Pathfinder.Map);
+        if (nearestFuelStation is null) return false;
+        double reservedDistance = PathFinder.Distance(nearestFuelStation.Position, Position) * 4;
+        bool shortage = fuelDistance < workDistance + reservedDistance;
+        if (shortage && CurrentAction?.Type != ActionType.Refuel && LocalAction is null) {
+            if (CurrentAction?.Started ?? false) {
+                CurrentAction.Started = false;
+                CurrentAction.Status = "interrupted";
+            }
+            LocalAction = Planner.RefuelPlan(this, Pathfinder.Map, time);
+            Trajectory.Clear();
+            CurrentState = RobotState.Ready;
+        }
+        return shortage;
     }
     #endregion
 
@@ -466,7 +503,9 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
 
     #region Action
     public virtual TaskNotExecutedReason? Execute(ref SystemAction action) {
-        if (CurrentAction != action) {
+        if (LocalAction != action && LocalAction is not null && !LocalAction.Finished)
+            return TaskNotExecutedReason.Busy;
+        if (CurrentAction != action && LocalAction is null) {
             if (CurrentAction is not null && !CurrentAction.Finished)
                 return TaskNotExecutedReason.Busy;
             CurrentAction = action;
@@ -504,11 +543,11 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     }
 
     public bool Reaction(TaskNotExecutedReason? reason, SystemAction? action = null) {
-        if (CurrentAction is null) return true;
-        action ??= CurrentAction;
+        if (CurrentAction is null && LocalAction is null) return true;
+        action ??= LocalAction ?? CurrentAction;
         switch (reason) {
         case TaskNotExecutedReason.NotReached: {
-            if (CurrentState == RobotState.Going)
+            if (CurrentState == RobotState.Going || CurrentState == RobotState.Thinking)
                 break;
 
             if (action.Object is ITargetable target) {

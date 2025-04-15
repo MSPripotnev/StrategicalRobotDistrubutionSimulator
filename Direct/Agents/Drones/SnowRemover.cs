@@ -138,6 +138,7 @@ public class SnowRemover : Agent {
         case RobotState.Broken:
         case RobotState.Thinking:
         case RobotState.Going:
+        case RobotState.Ready:
             base.Simulate(sender, time);
             return;
         case RobotState.Refuel:
@@ -149,10 +150,6 @@ public class SnowRemover : Agent {
                     CurrentAction.Finished = true;
                 CurrentState = RobotState.Ready;
             }
-            break;
-        case RobotState.Ready:
-            if (sender is Director or AgentStation)
-                ActualSpeedRecalculate(time);
             break;
         case RobotState.Working: {
             if (sender is Director or AgentStation) {
