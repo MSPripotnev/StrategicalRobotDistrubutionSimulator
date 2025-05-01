@@ -16,15 +16,17 @@ public enum SnowRemoverType {
     Shovel,
     Rotor,
     Cleaver,
-    AntiIceDistributor
+    AntiIceDistributor,
+    Loader,
 }
 public class SnowRemoveDevice : ITimeSimulatable, INotifyPropertyChanged {
     public static (double remove, double mash, double fuelDecrease) DeviceRemoveSpeed(SnowRemoverType device) => device switch {
-        SnowRemoverType.Rotor => (5.0, 0.1, 0.05),
-        SnowRemoverType.Shovel => (100.0, 0.0, 0.0),
+        SnowRemoverType.Rotor => (10.0, 0.05, 0.1),
+        SnowRemoverType.Shovel => (20.0, 0.02, 0.03),
         SnowRemoverType.AntiIceDistributor => (0.0, 0.015, 0.01),
-        SnowRemoverType.Cleaver => (0.0, 0.01, 0.02),
-        SnowRemoverType.PlowBrush => (1.0, 0.005, 0.03),
+        SnowRemoverType.Cleaver => (0.0, 0.1, 0.01),
+        SnowRemoverType.PlowBrush => (40.0, 0.0, 0.02),
+        SnowRemoverType.Loader => (10.0, 0.0, 0.05),
         _ => (0.0, 0.0, 0.0)
     };
 
@@ -138,10 +140,10 @@ public class SnowRemoveDevice : ITimeSimulatable, INotifyPropertyChanged {
             }
         }
 
-        if (Type == SnowRemoverType.Rotor || Type == SnowRemoverType.Shovel) {
+        if (Type == SnowRemoverType.Rotor || Type == SnowRemoverType.Shovel || Type == SnowRemoverType.PlowBrush) {
             Vector vrs = new Vector(v.Y, -v.X);
             vrs *= road.Height / 2 / v.Length;
-            rectStartPoint = agent.Position - vrs * 4 + (Type == SnowRemoverType.Shovel ? v / 4 : new Vector(0, 0));
+            rectStartPoint = agent.Position - vrs * 4 + (Type == SnowRemoverType.Shovel || Type == SnowRemoverType.PlowBrush ? v / 4 : new Vector(0, 0));
             Rect throwRect = new Rect(rectStartPoint.X, rectStartPoint.Y, Math.Abs(v.Length), Math.Abs(vrs.Length));
             IntensityCell[] throwArea = meteo.IntensityControl.GetIntensityArea(throwRect);
             for (int c = 0; c < throwArea.Length; c++)
