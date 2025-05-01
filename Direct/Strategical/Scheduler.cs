@@ -1,10 +1,14 @@
 using System.Collections.ObjectModel;
 
 namespace SRDS.Direct.Strategical;
+using System.Xml.Serialization;
+
 using Agents;
 using Model;
 
 using SRDS.Direct.Agents.Drones;
+using SRDS.Direct.ControlSystem;
+using SRDS.Model.Map;
 
 public class Scheduler : ITimeSimulatable {
     public event EventHandler<SystemAction>? UnitsShortage;
@@ -20,7 +24,7 @@ public class Scheduler : ITimeSimulatable {
     }
     public StrategicQualifier Qualifier { get; set; }
     public Scheduler() {
-        Qualifier = new StrategicQualifier(1, 5, 5, 10);
+        Qualifier = new StrategicQualifier();
     }
 
     public bool Add(SystemAction action) {
@@ -83,10 +87,12 @@ public class Scheduler : ITimeSimulatable {
                     if (!action.Started) {
                         Delay(action);
                         continue;
+                    } else {
+                        
                     }
                 }
                 if (action.Finished || action.EndTime <= time) {
-                    action.RealResult = StrategicQualifier.Qualify(director, action, time);
+                    action.RealResult = StrategicQualifier.Recognize(director, action, time);
                     if (action.RealResult.SubjectAfter is not Agent agent)
                         continue;
                     var recommendation = ActionRecommendation.Approve; // Qualifier.RecommendFor(action);
@@ -112,6 +118,7 @@ public class Scheduler : ITimeSimulatable {
                         action.EndTime = time;
                         action.Finished = true;
                         action.Status = "completed";
+
                         if (action.Next.Any() && action.RealResult is ActionResult realResult && realResult.EstimatedTime < action.ExpectedResult.EstimatedTime) {
                             foreach (var nextAction in action.Next) {
                                 var shiftTime = nextAction.StartTime - (action.StartTime + realResult.EstimatedTime);

@@ -775,7 +775,7 @@ public partial class MapWPF : Window {
         realWorkTime += (DateTime.Now - startTime);
         if (Director is not null) {
             Director.Recorder.SaveResults(Director, tester.Models[0].Name, realWorkTime, ref iterations);
-            Director.Learning.Select(Director.Recorder);
+            Director.Learning.Select(Director.Recorder.AllEpochsTaskQualifyReadings, Director.Recorder.SystemQuality);
             if (Director.Distributor.Qualifier is FuzzyQualifier fq)
                 Director.Learning.Mutate(ref fq.Net);
             Director.Distributor.DistributionQualifyReadings = new();

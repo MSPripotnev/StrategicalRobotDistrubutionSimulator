@@ -81,7 +81,7 @@ public class FuzzyQualifier : IQualifier {
             { nameof(r.MashSpeed), r.MashSpeed},
         }, out activatedRules);
     }
-    private double Qualify(Dictionary<string, double> input, out Dictionary<string, double> activatedRules) {
+    public double Qualify(Dictionary<string, double> input, out Dictionary<string, double> activatedRules) {
         if (input.Count < Engine.Database.VariableCount)
             throw new ArgumentException("");
         foreach (var v in input)

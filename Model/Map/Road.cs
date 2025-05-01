@@ -82,6 +82,10 @@ public class Road : ITargetable, ITimeSimulatable {
     [Category("Environment")]
     public double IcyPercent { get; set; } = 0;
     [XmlIgnore]
+    [XmlAttribute(nameof(RemovedIcy))]
+    [Category("Environment")]
+    public double RemovedIcy { get; set; } = 0;
+    [XmlIgnore]
     [XmlAttribute(nameof(Deicing))]
     [Category("Environment")]
     public double Deicing { get; set; } = 0;
@@ -321,12 +325,15 @@ public class Road : ITargetable, ITimeSimulatable {
                         cell.Deicing -= icyMeltRate * timeFlow.TotalSeconds / (cell.IcyPercent > 0 ? 1 : 10);
                     cell.Snow += icyMeltRate * timeFlow.TotalSeconds;
                     cell.IcyPercent -= icyMeltRate * timeFlow.TotalSeconds;
+                    RemovedIcy += icyMeltRate * timeFlow.TotalSeconds;
                 }
                 if (cell.Snow > 0) {
                     // melt snow on wheels and temperature
                     cell.Snow -= 0.1 * timeFlow.TotalSeconds / 60;
-                    if (cell.IcyPercent > GlobalMeteo.GetIcyPercent(SnowType.LooseSnow))
+                    if (cell.IcyPercent > GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) {
                         cell.IcyPercent += (GlobalMeteo.GetIcyPercent(SnowType.Icy) - GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) / 6 / Category / 3600 * timeFlow.TotalSeconds;
+                        RemovedIcy -= (GlobalMeteo.GetIcyPercent(SnowType.Icy) - GlobalMeteo.GetIcyPercent(SnowType.LooseSnow)) / 6 / Category / 3600 * timeFlow.TotalSeconds;
+                    }
                     if (meteo.Temperature > 0)
                         cell.Snow -= 0.1 * meteo.Temperature * timeFlow.TotalSeconds / 60;
                 }

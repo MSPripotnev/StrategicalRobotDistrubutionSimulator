@@ -10,7 +10,7 @@ using Model.Map.Stations;
 
 using Strategical;
 
-public class ExpertSnowRemovePlanner : ITimeSimulatable {
+public class ExpertSnowRemoveControlSystem : IPlanningControlSystem {
     private int strength;
     public int Strength {
         get => strength;

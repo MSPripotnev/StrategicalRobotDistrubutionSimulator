@@ -11,6 +11,9 @@ using Model.Environment;
 using Model.Map;
 using Model.Map.Stations;
 using Model.Targets;
+
+using SRDS.Direct.Agents.Drones;
+
 using Strategical;
 using Tactical;
 using Tactical.Qualifiers;
@@ -248,17 +251,19 @@ public class Director : INotifyPropertyChanged, IDisposable {
                 Remove(Targets[i]);
         MergeSnowdrifts();
 
-        var strategics = Recorder.StrategicReadings.ToList();
+        var strategics = Recorder.SystemEpochTimeReadings.ToList();
         strategics.Add(new StrategicSituationReading() {
             Seconds = (long)(time - DateTime.MinValue).TotalSeconds,
             CurrentSnow = Map.Roads.Sum(p => p.Snowness),
             CurrentIcy = Map.Roads.Average(p => p.IcyPercent),
+            RemovedIcy = Map.Roads.Sum(p => p.RemovedIcy),
             RemovedSnow = Map.Roads.Sum(p => p.SnownessRemoved),
             SummarySnow = Map.Roads.Sum(p => p.SnownessTotal),
             SnowIntensity = Map.Stations.OfType<Meteostation>().Sum(p => p.PrecipitationIntensity),
-            FuelConsumption = Agents.Sum(p => p.FuelConsumption)
+            FuelConsumption = Agents.Sum(p => p.FuelConsumption),
+            DeicingConsumption = Agents.OfType<SnowRemover>().Sum(p => p.DeicingConsumption)
         });
-        Recorder.StrategicReadings = strategics.ToArray();
+        Recorder.SystemEpochTimeReadings = strategics.ToArray();
     }
 
     public void RefreshMeteo(object? sender, PropertyChangedEventArgs e) {

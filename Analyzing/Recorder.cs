@@ -9,30 +9,43 @@ using Direct.Strategical;
 using Direct.Tactical;
 using Model.Targets;
 
+using SRDS.Model.Map.Stations;
+
+using static SRDS.Direct.Tactical.Qualifiers.FuzzyQualifier;
+
 public class Recorder : IDisposable {
     public int Epoch { get => SystemQuality.Count; }
     public List<double> SystemQuality { get; init; } = new();
-    List<List<DistributionQualifyReading>> qualifyReadings = new();
-    [XmlArray(ElementName = "QualifyReadings")]
-    [XmlArrayItem(ElementName = "QualifyReading")]
-    public DistributionQualifyReading[][] QualifyReadings {
+    List<List<StrategyTaskQualifyReading>> systemQualifyReadings = new();
+    /// <summary>
+    /// Сюда записываются результаты выполнения задач по эпохам
+    /// </summary>
+    [XmlArray(ElementName = "SystemQualifyReadings")]
+    [XmlArrayItem(ElementName = "SystemQualifyReadings")]
+    public StrategyTaskQualifyReading[][] AllEpochsTaskQualifyReadings {
         get {
-            return qualifyReadings.Select(p => p.ToArray()).ToArray();
+            return systemQualifyReadings.Select(p => p.ToArray()).ToArray();
         }
         set {
-            qualifyReadings = new List<List<DistributionQualifyReading>>(value.Select(p => p.ToList()));
-            SystemQuality.Add(value.Last().Sum(p => (p.TakedLevel - (p.TakedTarget as Snowdrift).Level)));
+            systemQualifyReadings = new List<List<StrategyTaskQualifyReading>>(value.Select(p => p.ToList()));
         }
     }
-    List<StrategicSituationReading> strategicReadings = new List<StrategicSituationReading>();
-    [XmlArray(ElementName = "StrategyReadings")]
-    [XmlArrayItem(ElementName = "StrategyReading")]
-    public StrategicSituationReading[] StrategicReadings {
+    [XmlIgnore]
+    public StrategyTaskQualifyReading[] CurrentEpochSystemQualifyReadings {
+        get => AllEpochsTaskQualifyReadings.LastOrDefault(Array.Empty<StrategyTaskQualifyReading>());
+    }
+    List<StrategicSituationReading> strategyTimeReadings = new List<StrategicSituationReading>();
+    /// <summary>
+    /// Сюда записывается статистика по времени одной эпохи
+    /// </summary>
+    [XmlArray(ElementName = "SystemEpochTimeReadings")]
+    [XmlArrayItem(ElementName = "SystemEpochTimeReadings")]
+    public StrategicSituationReading[] SystemEpochTimeReadings {
         get {
-            return strategicReadings.ToArray();
+            return strategyTimeReadings.ToArray();
         }
         set {
-            strategicReadings = new List<StrategicSituationReading>(value);
+            strategyTimeReadings = new List<StrategicSituationReading>(value);
         }
     }
     List<ModelReading> readings = new List<ModelReading>();
@@ -84,9 +97,18 @@ public class Recorder : IDisposable {
             analyzer.WayTime = Math.Round(Testing.Default.K_v / Testing.Default.K_s * analyzer.WayIterations, 14);
         }
         readings.Add(analyzer);
-        var vs = QualifyReadings.ToList();
-        vs.Add(director.Distributor.DistributionQualifyReadings.Values.ToArray());
-        QualifyReadings = vs.ToArray();
+        var vs = AllEpochsTaskQualifyReadings.ToList();
+        for (int i = 0; i < SystemEpochTimeReadings.Length; i++)
+            SystemEpochTimeReadings[i].FuelConsumption
+            vs.Add(director.Map.Stations.OfType<AgentStation>().First().PlannerModule.)
+
+        // Take last epoch and aggregated value of actions quality
+        double qEnv = 1, qL = 5, qF = 2, fuelCostRub = 70, deicingCostRub = 80;
+        var last = SystemEpochTimeReadings.Last();
+        SystemQuality.Add(qEnv * last.RemovedSnow + qL * last.CurrentIcy + qF * (fuelCostRub * last.FuelConsumption + deicingCostRub * last.DeicingConsumption));
+        // vs.Add(director.Distributor.DistributionQualifyReadings.Values.ToArray());
+
+        AllEpochsTaskQualifyReadings = vs.ToArray();
         iterations = 0;
     }
     private void SaveInXMLFile(string resFileName) {
@@ -116,7 +138,7 @@ public class Recorder : IDisposable {
                 serializer.Serialize(xmlWriter, Readings[i], null);
             }
         File.AppendAllLines(resFileName, new string[] { "</" + nameof(Readings) + ">" });
-
+        /*
         using (StreamWriter fstream = new StreamWriter($"epoch{Epoch}.txt", false)) {
             fstream.WriteLine($"Time = {QualifyReadings.Last().Sum(p => p.SumTime)}\n" +
                 $"Targets collected = {QualifyReadings.Last().Length}\n" +
@@ -125,7 +147,7 @@ public class Recorder : IDisposable {
                 $"WorkingTime = {QualifyReadings.Last().Sum(p => p.WorkingTime)}\n" +
                 $"SumLevel = {QualifyReadings.Last().Sum(p => p.TakedLevel)}\n" +
                 $"LeavedLevel = {QualifyReadings.Last().Sum(p => (p.TakedTarget as Snowdrift).Level)}\n");
-        }
+        }*/
     }
 
     public void SaveStrategy(string resFileName) {
@@ -140,10 +162,10 @@ public class Recorder : IDisposable {
                 };
                 var writer = XmlWriter.Create(fs, settings);
                 writer.WriteStartDocument();
-                writer.WriteStartElement(nameof(StrategicReadings));
+                writer.WriteStartElement(nameof(SystemEpochTimeReadings));
                 writer.Close();
             }
-        for (int i = 0; i < StrategicReadings.Length; i++)
+        for (int i = 0; i < SystemEpochTimeReadings.Length; i++)
             using (FileStream fs = new FileStream(resFileName, FileMode.Append)) {
                 XmlWriterSettings settings = new XmlWriterSettings {
                     OmitXmlDeclaration = true,
@@ -153,9 +175,9 @@ public class Recorder : IDisposable {
                     ConformanceLevel = ConformanceLevel.Auto
                 };
                 XmlWriter xmlWriter = XmlWriter.Create(fs, settings);
-                serializer.Serialize(xmlWriter, StrategicReadings[i], null);
+                serializer.Serialize(xmlWriter, SystemEpochTimeReadings[i], null);
             }
-        File.AppendAllLines(resFileName, new string[] { "</" + nameof(StrategicReadings) + ">" });
+        File.AppendAllLines(resFileName, new string[] { "</" + nameof(SystemEpochTimeReadings) + ">" });
     }
 
     public void Dispose() {

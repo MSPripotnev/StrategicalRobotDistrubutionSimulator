@@ -1,18 +1,26 @@
 ﻿using FuzzyLogic.Inference.Engines.Base;
+
+using SRDS.Direct.Strategical;
 using SRDS.Direct.Tactical;
 using SRDS.Model.Targets;
 
 namespace SRDS.Analyzing;
 public class Learning {
-    DistributionQualifyReading[] best = Array.Empty<DistributionQualifyReading>();
+    /// <summary>
+    /// The maximum qualified epoch as array of strategy readings
+    /// </summary>
+    StrategyTaskQualifyReading[] best = Array.Empty<StrategyTaskQualifyReading>();
     public Learning() { }
     private double forgetRate = 0.001, learnRate = 0.02;
     const int survivors = 20;
     public List<double> CurrentWeights { get; private set; } = new List<double>();
-    public void Mutate(ref object eng) {
-        var rs = (eng as FuzzyInferenceEngine).Rulebase.GetAllRules();
+    public void Mutate(ref object engine) {
+        if (engine is not FuzzyInferenceEngine eng) { return; }
+        var rs = eng.Rulebase.GetAllRules();
         CurrentWeights.Clear();
-        var survived = best.OrderByDescending(p => (p.TakedLevel - (p.TakedTarget as Snowdrift).Level) / p.SumTime).Take(survivors);
+        double qEnv = 1, qL = 5, qF = 2, fuelCostRub = 70, deicingCostRub = 80;
+
+        var survived = best.OrderByDescending(p => (qEnv * p.RemovedSnow + qL * p.RemovedIcy + qF * (p.FuelCost * fuelCostRub + p.DeicingCost * deicingCostRub)) / p.TaskTime.TotalSeconds).Take(survivors);
         for (int i = 0; i < rs.Count; i++) {
             var c = rs[i].Conditions.First();
             if (c.Weight > 0)
@@ -24,7 +32,12 @@ public class Learning {
             CurrentWeights.Add(Math.Round(c.Weight.Value, 4));
         }
     }
-    public void Select(Recorder recorder) {
-        best = recorder.QualifyReadings[recorder.SystemQuality.IndexOf(recorder.SystemQuality.Max())];
+    /// <summary>
+    /// Select best epoch as max qualified array of readings
+    /// </summary>
+    /// <param name="qualifyReadings">Array of epochs where epoch is array of readings</param>
+    /// <param name="systemQuality">List of epoch system qualifies</param>
+    public void Select(StrategyTaskQualifyReading[][] qualifyReadings, List<double> systemQuality) {
+        best = qualifyReadings[systemQuality.IndexOf(systemQuality.Max())];
     }
 }

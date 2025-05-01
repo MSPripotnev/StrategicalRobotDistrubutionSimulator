@@ -409,7 +409,7 @@ public abstract class Agent : IControllable, IDrone, INotifyPropertyChanged {
     protected BitmapImage? bitmapImage = null;
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
-    public int Size {get; set;} = 20;
+    public int Size { get; set; } = 20;
     public virtual UIElement Build() {
         if (ui is not null)
             return ui;
