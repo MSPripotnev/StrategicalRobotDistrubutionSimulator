@@ -14,6 +14,8 @@ using Model.Environment;
 using Model.Map.Stations;
 using Model.Targets;
 
+using PropertyTools.Wpf;
+
 using SRDS.Direct.Tactical.Explorers.AStar;
 
 public enum RoadType {
@@ -58,6 +60,9 @@ public class Crossroad : IPlaceable {
 }
 
 public class Road : ITargetable, ITimeSimulatable {
+    [XmlAttribute("Name")]
+    [Category("Identify")]
+    public string Name { get; set; } = "";
     [XmlIgnore]
     [Browsable(false)]
     public double SnownessTotal { get; set; } = 0;
@@ -176,12 +181,14 @@ public class Road : ITargetable, ITimeSimulatable {
         Connect(roads);
     }
     public Road() {
+        Name = ToString();
         intensityCells = new();
     }
     public Road(Road road) : this() {
         Position = road.Position;
         EndPosition = road.EndPosition;
         Category = road.Category;
+        Name = road.Name;
     }
     public UIElement Build() {
         Vector v = EndPosition - Position;
