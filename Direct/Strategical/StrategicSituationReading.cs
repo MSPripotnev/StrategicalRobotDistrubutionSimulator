@@ -6,5 +6,7 @@ public struct StrategicSituationReading {
     public double SummarySnow { get; set; }
     public double SnowIntensity { get; set; }
     public double CurrentIcy { get; set; }
+    public double RemovedIcy { get; set; }
     public double FuelConsumption { get; set; }
+    public double DeicingConsumption { get; set; }
 }
