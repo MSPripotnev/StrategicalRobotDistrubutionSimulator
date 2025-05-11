@@ -775,7 +775,7 @@ public partial class MapWPF : Window {
         realWorkTime += (DateTime.Now - startTime);
         if (Director is not null) {
             Director.Recorder.SaveResults(Director, tester.Models[0].Name, realWorkTime, ref iterations);
-            Director.Learning.Select(Director.Recorder);
+            Director.Learning.Select(Director.Recorder.AllEpochsTaskQualifyReadings, Director.Recorder.SystemQualifyReadings);
             if (Director.Distributor.Qualifier is FuzzyQualifier fq)
                 Director.Learning.Mutate(ref fq.Net);
             Director.Distributor.DistributionQualifyReadings = new();
@@ -959,12 +959,12 @@ public partial class MapWPF : Window {
                    icy = Math.Round(Director.Map.Roads.Max(p => p.IcyPercent));
             localTimeL.Content = $"Местное время: {Director.Time.ToLongTimeString()} {Director.Time.ToLongDateString()}";
             systemQualityL.Content = $"Заснеженность дорог: {snow} мм\t\nУровень гололёда: {icy}%";
-            if (Director.Recorder.SystemQuality.Any()) {
-                double best_qualitity = Director.Recorder.SystemQuality.Max();
-                int best_quality_epoch = Director.Recorder.SystemQuality.IndexOf(best_qualitity) + 1;
+            if (Director.Recorder.SystemQualifyReadings.Any()) {
+                double best_qualitity = Director.Recorder.SystemQualifyReadings.Max();
+                int best_quality_epoch = Director.Recorder.SystemQualifyReadings.IndexOf(best_qualitity) + 1;
 
                 bestQualityL.Content = $"Q_best: {Math.Round(best_qualitity, 4)} (эп. {best_quality_epoch})" +
-                    $" Q_{Director.Recorder.SystemQuality.Count}: {Director.Recorder.SystemQuality.Last()}";
+                    $" Q_{Director.Recorder.SystemQualifyReadings.Count}: {Director.Recorder.SystemQualifyReadings.Last()}";
             }
             if (drawCB.IsChecked == true) {
                 if (Director.Agents.Any())

@@ -25,6 +25,12 @@ public class SnowRemover : Agent {
     [XmlIgnore]
     [PropertyTools.DataAnnotations.Browsable(false)]
     public double DeicingConsumption { get; set; } = 0;
+    [PropertyTools.DataAnnotations.Browsable(false)]
+    [XmlIgnore]
+    public double DeicingCurrent {
+        get => Devices.Any(p => p.Type == SnowRemoverType.AntiIceDistributor) ? 
+                Devices.First(p => p.Type == SnowRemoverType.AntiIceDistributor).DeicingCurrent : 0.0;
+    }
     private SnowRemoveDevice[] devices;
     [XmlArray("Devices")]
     [XmlArrayItem("Device")]

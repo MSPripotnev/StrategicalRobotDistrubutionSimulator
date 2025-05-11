@@ -1,8 +1,11 @@
-﻿using System.IO;
+﻿using System.Data;
+using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
 namespace SRDS.Analyzing;
+
 using Direct;
 using Direct.Executive;
 using Direct.Strategical;
@@ -10,29 +13,28 @@ using Direct.Tactical;
 using Model.Targets;
 
 public class Recorder : IDisposable {
-    public int Epoch { get => SystemQuality.Count; }
-    public List<double> SystemQuality { get; init; } = new();
-    List<List<DistributionQualifyReading>> qualifyReadings = new();
-    [XmlArray(ElementName = "QualifyReadings")]
-    [XmlArrayItem(ElementName = "QualifyReading")]
-    public DistributionQualifyReading[][] QualifyReadings {
-        get {
-            return qualifyReadings.Select(p => p.ToArray()).ToArray();
-        }
+    public int Epoch { get => SystemQualifyReadings.Count; }
+    public List<double> SystemQualifyReadings { get; init; } = new();
+    List<List<StrategyTaskQualifyReading>> allEpochsTaskQualifyReadings = new();
+    [XmlArray(ElementName = "AllEpochsTaskQualifyReadings")]
+    [XmlArrayItem(ElementName = "AllEpochsTaskQualifyReadings")]
+    public StrategyTaskQualifyReading[][] AllEpochsTaskQualifyReadings {
+        get => allEpochsTaskQualifyReadings.Select(p => p.ToArray()).ToArray();
         set {
-            qualifyReadings = new List<List<DistributionQualifyReading>>(value.Select(p => p.ToList()));
-            SystemQuality.Add(value.Last().Sum(p => (p.TakedLevel - (p.TakedTarget as Snowdrift).Level)));
+            allEpochsTaskQualifyReadings = new List<List<StrategyTaskQualifyReading>>(value.Select(p => p.ToList()));
         }
     }
-    List<StrategicSituationReading> strategicReadings = new List<StrategicSituationReading>();
-    [XmlArray(ElementName = "StrategyReadings")]
-    [XmlArrayItem(ElementName = "StrategyReading")]
-    public StrategicSituationReading[] StrategicReadings {
-        get {
-            return strategicReadings.ToArray();
-        }
+    [XmlIgnore]
+    public StrategyTaskQualifyReading[] CurrentEpochSystemQualifyReadings {
+        get => AllEpochsTaskQualifyReadings.LastOrDefault(Array.Empty<StrategyTaskQualifyReading>());
+    }
+    List<StrategicSituationReading> systemEpochTimeReadings = new List<StrategicSituationReading>();
+    [XmlArray(ElementName = "SystemEpochTimeReadings")]
+    [XmlArrayItem(ElementName = "SystemEpochTimeReadings")]
+    public StrategicSituationReading[] SystemEpochTimeReadings {
+        get => systemEpochTimeReadings.ToArray();
         set {
-            strategicReadings = new List<StrategicSituationReading>(value);
+            systemEpochTimeReadings = new List<StrategicSituationReading>(value);
         }
     }
     List<ModelReading> readings = new List<ModelReading>();
@@ -84,9 +86,18 @@ public class Recorder : IDisposable {
             analyzer.WayTime = Math.Round(Testing.Default.K_v / Testing.Default.K_s * analyzer.WayIterations, 14);
         }
         readings.Add(analyzer);
-        var vs = QualifyReadings.ToList();
-        vs.Add(director.Distributor.DistributionQualifyReadings.Values.ToArray());
-        QualifyReadings = vs.ToArray();
+        var vs = AllEpochsTaskQualifyReadings.ToList();
+        vs.Add(director.Scheduler.TaskQualifies.Values.ToArray());
+
+        // Take last epoch and aggregated value of actions quality
+        double qEnv = 1, qL = 5, qF = 2, fuelCostRub = 70, deicingCostRub = 80;
+        var last = SystemEpochTimeReadings.Last();
+        SystemQualifyReadings.Add(qEnv * SystemEpochTimeReadings.Sum(p => p.RemovedSnow) / SystemEpochTimeReadings.Length
+            + qL * SystemEpochTimeReadings.Sum(p => p.CurrentIcy) / SystemEpochTimeReadings.Length
+            + qF * (fuelCostRub * SystemEpochTimeReadings.Sum(p => p.FuelConsumption)
+                + deicingCostRub * SystemEpochTimeReadings.Sum(p => p.DeicingConsumption) / SystemEpochTimeReadings.Length));
+
+        AllEpochsTaskQualifyReadings = vs.ToArray();
         iterations = 0;
     }
     private void SaveInXMLFile(string resFileName) {
@@ -116,16 +127,17 @@ public class Recorder : IDisposable {
                 serializer.Serialize(xmlWriter, Readings[i], null);
             }
         File.AppendAllLines(resFileName, new string[] { "</" + nameof(Readings) + ">" });
-
+        /*
         using (StreamWriter fstream = new StreamWriter($"epoch{Epoch}.txt", false)) {
-            fstream.WriteLine($"Time = {QualifyReadings.Last().Sum(p => p.SumTime)}\n" +
-                $"Targets collected = {QualifyReadings.Last().Length}\n" +
-                $"Quality = {SystemQuality.Last()}\n" +
-                $"WayTime = {QualifyReadings.Last().Sum(p => p.WayTime)}\n" +
-                $"WorkingTime = {QualifyReadings.Last().Sum(p => p.WorkingTime)}\n" +
-                $"SumLevel = {QualifyReadings.Last().Sum(p => p.TakedLevel)}\n" +
-                $"LeavedLevel = {QualifyReadings.Last().Sum(p => (p.TakedTarget as Snowdrift).Level)}\n");
+            fstream.WriteLine($"Time = {AllEpochsTaskQualifyReadings.Last().Sum(p => p.SumTime)}\n" +
+                $"Targets collected = {AllEpochsTaskQualifyReadings.Last().Length}\n" +
+                $"Quality = {SystemQualifyReadings.Last()}\n" +
+                $"TaskTime = {AllEpochsTaskQualifyReadings.Last().Sum(p => p.TaskTime)}\n" +
+                $"WorkingTime = {AllEpochsTaskQualifyReadings.Last().Sum(p => p.WorkingTime)}\n" +
+                $"SumLevel = {AllEpochsTaskQualifyReadings.Last().Sum(p => p.TakedLevel)}\n" +
+                $"LeavedLevel = {AllEpochsTaskQualifyReadings.Last().Sum(p => (p.TakedTarget as Snowdrift).Level)}\n");
         }
+        */
     }
 
     public void SaveStrategy(string resFileName) {
@@ -140,10 +152,10 @@ public class Recorder : IDisposable {
                 };
                 var writer = XmlWriter.Create(fs, settings);
                 writer.WriteStartDocument();
-                writer.WriteStartElement(nameof(StrategicReadings));
+                writer.WriteStartElement(nameof(SystemEpochTimeReadings));
                 writer.Close();
             }
-        for (int i = 0; i < StrategicReadings.Length; i++)
+        for (int i = 0; i < SystemEpochTimeReadings.Length; i++)
             using (FileStream fs = new FileStream(resFileName, FileMode.Append)) {
                 XmlWriterSettings settings = new XmlWriterSettings {
                     OmitXmlDeclaration = true,
@@ -153,9 +165,9 @@ public class Recorder : IDisposable {
                     ConformanceLevel = ConformanceLevel.Auto
                 };
                 XmlWriter xmlWriter = XmlWriter.Create(fs, settings);
-                serializer.Serialize(xmlWriter, StrategicReadings[i], null);
+                serializer.Serialize(xmlWriter, SystemEpochTimeReadings[i], null);
             }
-        File.AppendAllLines(resFileName, new string[] { "</" + nameof(StrategicReadings) + ">" });
+        File.AppendAllLines(resFileName, new string[] { "</" + nameof(SystemEpochTimeReadings) + ">" });
     }
 
     public void Dispose() {

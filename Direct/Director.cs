@@ -250,7 +250,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
                 Remove(Targets[i]);
         MergeSnowdrifts();
 
-        var strategics = Recorder.StrategicReadings.ToList();
+        var strategics = Recorder.SystemEpochTimeReadings.ToList();
         strategics.Add(new StrategicSituationReading() {
             Seconds = (long)(time - DateTime.MinValue).TotalSeconds,
             CurrentSnow = Map.Roads.Sum(p => p.Snowness),
@@ -262,7 +262,7 @@ public class Director : INotifyPropertyChanged, IDisposable {
             FuelConsumption = Agents.Sum(p => p.FuelConsumption),
             DeicingConsumption = Agents.OfType<SnowRemover>().Sum(p => p.DeicingConsumption)
         });
-        Recorder.StrategicReadings = strategics.ToArray();
+        Recorder.SystemEpochTimeReadings = strategics.ToArray();
     }
 
     public void RefreshMeteo(object? sender, PropertyChangedEventArgs e) {

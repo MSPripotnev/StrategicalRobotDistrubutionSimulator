@@ -142,9 +142,14 @@ public class SystemAction : INotifyPropertyChanged {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Header)));
     }
     public override string? ToString() => Header;
-    public override bool Equals(object? obj) => obj is SystemAction action && action.StartTime == StartTime && action.EndTime == EndTime &&
-        action.Subject == Subject && action.Object == Object && action.Type == Type;
-    public override int GetHashCode() => StartTime.GetHashCode() + EndTime.GetHashCode() + Type.GetHashCode();
+    public int ID { get; set; } = -1;
+    public override bool Equals(object? obj) => obj is SystemAction action && action.ID == ID &&
+        action.Subject?.GetType() == Subject?.GetType() && 
+        (action.Subject as Agent)?.ID == (Subject as Agent)?.ID && action.Type == Type;
+    public static bool operator==(SystemAction action1, SystemAction action2) => 
+        action1 is not null && action2 is not null && action1.Equals(action2);
+    public static bool operator!=(SystemAction action1, SystemAction action2) => !(action1 == action2);
+    public override int GetHashCode() => ID.GetHashCode() + Type.GetHashCode();
 }
 
 public static class SystemActionEx {
