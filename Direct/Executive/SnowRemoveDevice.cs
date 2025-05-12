@@ -131,6 +131,7 @@ public class SnowRemoveDevice : ITimeSimulatable, INotifyPropertyChanged {
                 iArea[c].Snow -= cellRemoveAmount;
                 iArea[c].IcyPercent -= mash_amount;
             } else {
+                mash_amount = Math.Min(DeicingCurrent, mash_amount);
                 iArea[c].Deicing += mash_amount;
                 agent.DeicingConsumption += mash_amount;
                 DeicingCurrent -= mash_amount;
