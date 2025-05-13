@@ -260,11 +260,11 @@ public class Road : ITargetable, ITimeSimulatable {
         return road.DistanceToRoad(res) >= 0 ? res : PathFinder.Distance(res, road.position) < PathFinder.Distance(res, road.endPosition) ? road.position : road.endPosition;
     }
     public static explicit operator Vector(Road self) => self.EndPosition - self.Position;
-    public static bool operator ==(Road left, Road right) {
+    public static bool operator ==(Road? left, Road? right) {
         return left is not null && right is not null && Math.Abs(left.Position.X - right.Position.X) < 10.0 && Math.Abs(left.Position.Y - right.Position.Y) < 10.0 &&
             Math.Abs(left.EndPosition.X - right.EndPosition.X) < 10.0 && Math.Abs(left.EndPosition.Y - right.EndPosition.Y) < 10.0; ;
     }
-    public static bool operator !=(Road left, Road right) {
+    public static bool operator !=(Road? left, Road? right) {
         return !(left == right);
     }
 
