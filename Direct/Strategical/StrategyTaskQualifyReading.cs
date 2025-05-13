@@ -55,7 +55,7 @@ public class StrategyTaskQualifyReading {
     /// <summary>
     /// Calculate task reading after task is started
     /// </summary>
-    public void TaskStartUpdate(DateTime taskStartTime, double taskStartAgentFuel, double taskStartRoadSnow, 
+    public void TaskStartUpdate(DateTime taskStartTime, double taskStartAgentFuel, double taskStartRoadSnow,
             double taskStartRoadIcy, double taskStartAgentDeicing, double taskStartAgentDeicingCapacity) {
         TaskPlanDifferenceTime = taskStartTime - startPlanningTime;
         startTime = taskStartTime;

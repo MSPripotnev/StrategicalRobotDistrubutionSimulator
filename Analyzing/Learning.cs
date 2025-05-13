@@ -17,7 +17,7 @@ public class Learning {
         double qEnv = 1, qL = 5, qF = 2, fuelCostRub = 70, deicingCostRub = 80;
 
         var survived = best.OrderByDescending(
-            p => (qEnv * p.RealRemovedSnow + qL * p.RealRemovedIcy + qF * (p.RealFuelCost * fuelCostRub + p.RealDeicingCost * deicingCostRub)) 
+            p => (qEnv * p.RealRemovedSnow + qL * p.RealRemovedIcy + qF * (p.RealFuelCost * fuelCostRub + p.RealDeicingCost * deicingCostRub))
                                         / p.TaskTime.TotalSeconds).Take(survivors);
         for (int i = 0; i < rs.Count; i++) {
             var c = rs[i].Conditions.First();

@@ -39,7 +39,7 @@ public class AgentStation : Station, IControllable, IRefueller {
     [XmlIgnore]
     public SystemAction[] LocalPlans { get; set; } = Array.Empty<SystemAction>();
     [XmlIgnore]
-    public ExpertSnowRemovePlanner PlannerModule { get; set; } = new();
+    public IPlanningControlSystem PlannerModule { get; set; } = new ExpertSnowRemoveControlSystem();
     [XmlIgnore]
     public SystemAction? CurrentAction { get; set; }
     #endregion
@@ -52,13 +52,12 @@ public class AgentStation : Station, IControllable, IRefueller {
 
         if (sender is not Director director) return;
 
-        // TODO: replace new plan by plans correction
         if (time.Second == 0 && time.Minute % 10 == 0) {
             var hasUnfinishedPlans = LocalPlans.Any(p => p.Descendants().Any(p => !p.Finished));
             var snownedRoads = director.Map.Roads.Any(p => p.Snowness > 0 ||
                     director.Map.Roads.Any(p => p.IcyPercent > 0));
             if (!hasUnfinishedPlans) {
-                LocalPlans = PlannerModule.PlanPrepare(this, director.Map, time, snownedRoads && PlannerModule.Strength > 0);
+                LocalPlans = PlannerModule.PlanPrepare(this, director.Map, time, snownedRoads && PlannerModule is ExpertSnowRemoveControlSystem { Strength: > 0 });
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LocalPlans)));
             }
             PlannerModule.Simulate(sender, time);

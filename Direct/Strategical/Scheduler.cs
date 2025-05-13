@@ -26,7 +26,7 @@ public class Scheduler : ITimeSimulatable {
     }
     public StrategicQualifier Qualifier { get; set; }
     public Scheduler() {
-        Qualifier = new StrategicQualifier(1, 5, 5, 10);
+        Qualifier = new StrategicQualifier();
     }
     private int taskScheduled = 0;
     public bool Add(SystemAction action) {

@@ -1,5 +1,6 @@
 namespace SRDS.Direct.Strategical;
 
+using System.IO;
 using System.Windows;
 
 using Agents;
@@ -10,6 +11,8 @@ using Executive;
 using Model.Map;
 using Model.Map.Stations;
 
+using SRDS.Direct.Tactical.Qualifiers;
+
 using Tactical;
 
 public enum ActionRecommendation {
@@ -19,86 +22,10 @@ public enum ActionRecommendation {
 }
 
 public class StrategicQualifier {
-    public double SnownessDelayThreshold { get; set; }
-    public double SnownessIncreasePowerThreshold { get; set; }
-    public double IcyDelayThreshold { get; set; }
-    public double IcyIncreasePowerThreshold { get; set; }
-    public double DistanceThreshold { get; set; }
-    public StrategicQualifier(double snowDelay, double snowIncrease, double icyDelay, double icyIncrease, double distance = 15.0) {
-        SnownessDelayThreshold = snowDelay;
-        SnownessIncreasePowerThreshold = snowIncrease;
-        IcyDelayThreshold = icyDelay;
-        IcyIncreasePowerThreshold = icyIncrease;
-        DistanceThreshold = distance;
+    public StrategicQualifier() { 
     }
-    public ActionRecommendation RecommendFor(SystemAction action) {
-        ActionType type = action.Type;
-        ActionResult expected = action.ExpectedResult;
-        ActionResult? real = action.RealResult;
-        switch (type) {
-        case ActionType.GoTo: {
-            if (expected.SubjectAfter is not Agent agent || real?.SubjectAfter is not Agent realAgent) throw new InvalidCastException();
-
-            if (PathFinder.Distance(agent.Position, realAgent.Position) < realAgent.ActualSpeed)
-                return ActionRecommendation.Approve;
-            return ActionRecommendation.Delay;
-        }
-        case ActionType.WorkOn: {
-            if (expected.SubjectAfter is not Agent agent || real?.SubjectAfter is not Agent realAgent) throw new InvalidCastException();
-            if (real?.ObjectAfter is AgentStation station) {
-                if (station.AssignedAgents.Contains(agent))
-                    return ActionRecommendation.Approve;
-                else return ActionRecommendation.Delay;
-            }
-            if (expected.ObjectAfter is Road roadExpected && real?.ObjectAfter is Road roadReal && agent is SnowRemover remover) {
-                ActionRecommendation prior;
-                if (remover.Devices.Contains(SnowRemoverType.AntiIceDistributor)) {
-                    if (roadReal.Deicing > 40 || roadReal.IcyPercent < IcyDelayThreshold || roadExpected.IcyPercent < 0)
-                        prior = ActionRecommendation.Approve;
-                    else prior = ActionRecommendation.Delay;
-                } else if (remover.Devices.Contains(SnowRemoverType.Shovel) || remover.Devices.Contains(SnowRemoverType.Rotor) || remover.Devices.Contains(SnowRemoverType.PlowBrush)) {
-                    if (roadReal.Snowness - roadExpected.Snowness < SnownessDelayThreshold || roadExpected.Snowness < 0)
-                        prior = ActionRecommendation.Approve;
-                    else if (roadReal.Snowness - roadExpected.Snowness < SnownessIncreasePowerThreshold)
-                        prior = ActionRecommendation.Delay;
-                    else prior = ActionRecommendation.IncreasePower;
-                } else if (remover.Devices.Contains(SnowRemoverType.Cleaver)) {
-                    if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyDelayThreshold || roadExpected.IcyPercent < 0)
-                        prior = ActionRecommendation.Approve;
-                    else if (roadReal.IcyPercent - roadExpected.IcyPercent < IcyIncreasePowerThreshold)
-                        prior = ActionRecommendation.Delay;
-                    else prior = ActionRecommendation.IncreasePower;
-                } else prior = ActionRecommendation.Approve;
-
-                if (prior == ActionRecommendation.Approve && action.Next.Any(p => p.Type == ActionType.GoTo)) {
-                    var a = action.Next.First(p => p.Type == ActionType.GoTo);
-                    if (a.Object is not Point p) return ActionRecommendation.Approve;
-                    if (agent.Pathfinder?.IsNear(realAgent, roadReal, roadReal.Height * 4 / agent.Pathfinder.Scale * agent.ActualSpeed) ?? false)
-                        return ActionRecommendation.Approve;
-                    return ActionRecommendation.Delay;
-                }
-                return prior;
-            }
-
-            if (expected.ObjectAfter is null) return ActionRecommendation.Approve;
-            return ActionRecommendation.Delay;
-        }
-        case ActionType.ChangeDevice: {
-            if (real?.SubjectAfter is not SnowRemover remover || real?.ObjectAfter is not SnowRemoveDevice device) throw new InvalidCastException();
-            if (remover.Devices.Contains(device))
-                return ActionRecommendation.Approve;
-            return ActionRecommendation.Delay;
-        }
-        case ActionType.Refuel: {
-            if (real?.SubjectAfter is not Agent agentReal || expected.SubjectAfter is not Agent agentExpected) throw new InvalidCastException();
-            if (agentReal.Fuel >= agentExpected.Fuel)
-                return ActionRecommendation.Approve;
-            return ActionRecommendation.Delay;
-        }
-        default: throw new ArgumentException($"Action type '{type}' not found");
-        }
-    }
-    public static ActionResult Qualify(Director director, SystemAction action, DateTime time) {
+    
+    public static ActionResult Recognize(Director director, SystemAction action, DateTime time) {
         IControllable? subject;
         {
             if (action.Subject is AgentStation station)
@@ -122,5 +49,92 @@ public class StrategicQualifier {
             ObjectAfter = _object,
             EstimatedTime = time - action.StartTime
         };
+    }
+    public static void Qualify(AgentStation station, Meteostation meteostation, Road[] roads, FuzzyQualifier deviceQualifier, FuzzyQualifier workQualifier,
+            out Dictionary<SnowRemover, Dictionary<SnowRemoveDevice, double>> agentToDeviceQualifies, 
+            out Dictionary<SnowRemover, Dictionary<Road, double>> agentToRoadQualifies,
+            out Dictionary<SnowRemoveDevice, Dictionary<string, double>> activatedRulesForDevice,
+            out Dictionary<Road, Dictionary<string, double>> activatedRulesForRoad) {
+        agentToRoadQualifies = new Dictionary<SnowRemover, Dictionary<Road, double>>();
+        agentToDeviceQualifies = new Dictionary<SnowRemover, Dictionary<SnowRemoveDevice, double>>();
+        activatedRulesForDevice = new();
+        activatedRulesForRoad = new();
+        if (!station.AssignedAgents.Any()) return;
+
+        SnowRemover[] snowRemovers = station.FreeAgents.OfType<SnowRemover>().ToArray();
+        Dictionary<Road, double> roadsMaxQualifies = new();
+        for (int i = 0; i < snowRemovers.Length; i++) {
+            SnowRemover snowRemover = snowRemovers[i];
+            Qualify(snowRemover, meteostation, roads, deviceQualifier, workQualifier, ref roadsMaxQualifies,
+                out var roadsQualifyForAgent, out var deviceQualifyForAgent);
+            agentToDeviceQualifies.Add(snowRemover, deviceQualifyForAgent);
+            agentToRoadQualifies.Add(snowRemover, roadsQualifyForAgent);
+        }
+
+        if (station.FreeAgents.Length < roadsMaxQualifies.Count) {
+            var t = roadsMaxQualifies.OrderBy(p => p.Value).Take(roadsMaxQualifies.Count - station.FreeAgents.Length).ToArray();
+            for (int i = 0; i < t.Length; i++) {
+                roadsMaxQualifies.Remove(t[i].Key);
+                for (int j = 0; j < snowRemovers.Length; j++)
+                    agentToRoadQualifies[snowRemovers[j]].Remove(t[i].Key);
+            }
+        }
+    }
+    public static void Qualify(SnowRemover snowRemover, Meteostation meteostation, Road[] roads, 
+            FuzzyQualifier deviceQualifier, FuzzyQualifier workQualifier,
+            ref Dictionary<Road, double> roadsMaxQualifies,
+            out Dictionary<Road, double> roadsQualifyForAgent,
+            out Dictionary<SnowRemoveDevice, double> deviceQualifyForAgent) {
+        roadsQualifyForAgent = new Dictionary<Road, double>();
+        deviceQualifyForAgent = new Dictionary<SnowRemoveDevice, double>();
+        roadsMaxQualifies = new Dictionary<Road, double>();
+        var meteoInputs = new Dictionary<string, double>() {
+                { nameof(meteostation.Humidity), meteostation.Humidity },
+                { nameof(meteostation.Pressure), meteostation.Pressure },
+                { nameof(meteostation.Temperature), meteostation.Temperature },
+                { nameof(meteostation.HumidityChange), meteostation.HumidityChange },
+                { nameof(meteostation.PressureChange), meteostation.PressureChange },
+                { nameof(meteostation.TemperatureChange), meteostation.TemperatureChange },
+                { nameof(meteostation.WindSpeed), meteostation.WindSpeed },
+                { nameof(meteostation.PrecipitationIntensity), meteostation.PrecipitationIntensity },
+                { nameof(meteostation.CloudnessType), (int)meteostation.CloudnessType},
+            };
+        var devices = typeof(SnowRemoverType).GetEnumValues();
+        for (int j = 0; j < devices.Length; j++) {
+            if (devices.GetValue(j) is not SnowRemoveDevice device) continue;
+            deviceQualifyForAgent.Add(device, Qualify(snowRemover, device, meteoInputs, deviceQualifier));
+        }
+        for (int j = 0; j < roads.Length; j++) {
+            Road road = roads[j];
+            double q = Qualify(snowRemover, road, meteoInputs, workQualifier);
+            roadsQualifyForAgent.Add(road, q);
+            if (!roadsMaxQualifies.ContainsKey(road))
+                roadsMaxQualifies.Add(road, q);
+            else
+                roadsMaxQualifies[road] = Math.Max(roadsMaxQualifies[road], q);
+        }
+    }
+    public static double Qualify(SnowRemover snowRemover, SnowRemoveDevice device, Dictionary<string, double> meteoInputs, FuzzyQualifier deviceQualifier) {
+        var deviceQualifyInput = new Dictionary<string, double>() {
+                    { nameof(snowRemover.Fuel), snowRemover.Fuel },
+                    { nameof(device.MashSpeed), snowRemover.MashSpeed},
+                    { nameof(device.RemoveSpeed), snowRemover.RemoveSpeed},
+                    { nameof(device.FuelRate), device.FuelRate }
+                };
+        deviceQualifyInput = deviceQualifyInput.Concat(meteoInputs).ToDictionary(p => p.Key, i => i.Value);
+        return deviceQualifier.Qualify(deviceQualifyInput, out var activatedRules);
+    }
+    public static double Qualify(SnowRemover snowRemover, Road road, Dictionary<string, double> meteoInputs, FuzzyQualifier workQualifier) {
+        double DistanceToRoad = road.DistanceToRoad(snowRemover.Position);
+        var workQualifyInput = new Dictionary<string, double>() {
+                    { nameof(snowRemover.Fuel), snowRemover.Fuel },
+                    { nameof(snowRemover.MashSpeed), snowRemover.MashSpeed},
+                    { nameof(snowRemover.RemoveSpeed), snowRemover.RemoveSpeed},
+                    { nameof(DistanceToRoad), DistanceToRoad },
+                    { nameof(road.Category), road.Category },
+                    { nameof(road.Length), road.Length },
+                };
+        workQualifyInput = workQualifyInput.Concat(meteoInputs).ToDictionary(p => p.Key, i => i.Value);
+        return workQualifier.Qualify(workQualifyInput, out var activatedRules);
     }
 }
